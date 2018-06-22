@@ -47,7 +47,6 @@ done
 cat time.txt | grep "real" | awk '{print $2}' > RealTime.txt
 paste -d "	" RealTime.txt FileNames_and_Lengths.txt > StatisticsMinimap2.txt
 
-
-#will be plotted in R
+#will be plotted in Python
 
 
