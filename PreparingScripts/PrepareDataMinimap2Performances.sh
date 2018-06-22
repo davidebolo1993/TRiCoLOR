@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ### Minimap2 performances ##
 
 
