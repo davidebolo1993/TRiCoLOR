@@ -41,7 +41,7 @@ mv $Index.minimap2.srt.bam.bai "$(echo "$Index.minimap2.srt.bam.bai" | sed -e 's
 done
 
 cat time.txt | grep "real" | awk '{print $2}' > RealTime.txt
-paste -d "	" FileLengths.txt RealTime.txt > StatisticsMinimap2.txt
+paste -d "\t" FileLengths.txt RealTime.txt > StatisticsMinimap2.txt
 
 #will be plotted in Python
 
