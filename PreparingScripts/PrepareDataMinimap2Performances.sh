@@ -5,13 +5,7 @@
 
 # Number of reads per file
 
-find . -name "*.gz" > FileNames.txt
 find . -name "*.gz" | while read -r file; do zcat -f "$file" | wc -l ; done > FileLengths.txt
-paste -d "	" FileNames.txt FileLengths.txt > FileNames_and_Lengths.txt
-
-rm FileNames.txt
-rm FileLengths.txt
-
 
 # Time of Analysis with minimap2
 
@@ -47,7 +41,7 @@ mv $Index.minimap2.srt.bam.bai "$(echo "$Index.minimap2.srt.bam.bai" | sed -e 's
 done
 
 cat time.txt | grep "real" | awk '{print $2}' > RealTime.txt
-paste -d "	" RealTime.txt FileNames_and_Lengths.txt > StatisticsMinimap2.txt
+paste -d "	" FileLengths.txt RealTime.txt > StatisticsMinimap2.txt
 
 #will be plotted in Python
 
