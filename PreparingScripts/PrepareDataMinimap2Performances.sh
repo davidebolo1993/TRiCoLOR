@@ -2,10 +2,12 @@
 
 ### Minimap2 performances ##
 
-
 # Number of reads per file
 
-find . -name "*.gz" | while read -r file; do zcat -f "$file" | wc -l ; done > FileLengths.txt
+find . -name "*gz" > FileNames.txt
+find . -name "*.gz" | while read -r file; do zcat -f "$file" | wc -l ; done > FileLengths.txt #has to be divided by 4 as each sequence is described by 4 lines in .fastq file
+
+
 
 # Time of Analysis with minimap2
 
@@ -18,8 +20,6 @@ find . -name "*.gz" | while read -r file; do zcat -f "$file" | wc -l ; done > Fi
 MyFiles="HG00733_lib01_20171205_FAH36618_DD_guppy_0.5.1.fq.gz HG00733_lib01_20171205_FAH36664_DD_guppy_0.5.1.fq.gz HG00733_lib01_20171205_FAH36718_DD_guppy_0.5.1.fq.gz HG00733_lib02_20171207_FAH36590_DD_guppy_0.5.1.fq.gz HG00733_lib02_20171207_FAH36591_DD_guppy_0.5.1.fq.gz HG00733_lib02_20171207_FAH36626_DD_guppy_0.5.1.fq.gz HG00733_lib02_20171207_FAH36653_DD_guppy_0.5.1.fq.gz HG00733_lib03_20171207_FAH36732_DD_guppy_0.5.1.fq.gz HG00733_lib04_20171213_FAH36433_DD_guppy_0.5.1.fq.gz HG00733_lib04_20171213_FAH37423_DD_guppy_0.5.1.fq.gz HG00733_lib04_20171213_FAH37574_DD_guppy_0.5.1.fq.gz HG00733_lib05_20171213_FAH36467_DD_guppy_0.5.1.fq.gz HG00733_lib05_20171213_FAH36476_DD_guppy_0.5.1.fq.gz HG00733_lib05_20171213_FAH36782_DD_guppy_0.5.1.fq.gz HG00733_lib06_20171218_FAH36588_DD_guppy_0.5.1.fq.gz HG00733_lib06_20171218_FAH36624_DD_guppy_0.5.1.fq.gz HG00733_lib06_20171218_FAH36752_DD_guppy_0.5.1.fq.gz"
 
 Hg38mmRef="/home/davideb/nanopore/hg38Reference/hg38.mmi"
-
-FileResults="head.txt"
 
 FileTime="time.txt"
 
@@ -40,8 +40,36 @@ mv $Index.minimap2.srt.bam.bai "$(echo "$Index.minimap2.srt.bam.bai" | sed -e 's
 
 done
 
+
 cat time.txt | grep "real" | awk '{print $2}' > RealTime.txt
-paste -d "\t" FileLengths.txt RealTime.txt > StatisticsMinimap2.txt
+
+paste -d "\t" FileNames.txt FileLengths.txt RealTime.txt > FileNamesLengthsTime.txt 
+
+rm RealTime.txt 
+
+
+### distribution of length for each fastq file
+
+
+MyFiles="HG00733_lib01_20171205_FAH36618_DD_guppy_0.5.1.fq.gz HG00733_lib01_20171205_FAH36664_DD_guppy_0.5.1.fq.gz HG00733_lib01_20171205_FAH36718_DD_guppy_0.5.1.fq.gz HG00733_lib02_20171207_FAH36590_DD_guppy_0.5.1.fq.gz HG00733_lib02_20171207_FAH36591_DD_guppy_0.5.1.fq.gz HG00733_lib02_20171207_FAH36626_DD_guppy_0.5.1.fq.gz HG00733_lib02_20171207_FAH36653_DD_guppy_0.5.1.fq.gz HG00733_lib03_20171207_FAH36732_DD_guppy_0.5.1.fq.gz HG00733_lib04_20171213_FAH36433_DD_guppy_0.5.1.fq.gz HG00733_lib04_20171213_FAH37423_DD_guppy_0.5.1.fq.gz HG00733_lib04_20171213_FAH37574_DD_guppy_0.5.1.fq.gz HG00733_lib05_20171213_FAH36467_DD_guppy_0.5.1.fq.gz HG00733_lib05_20171213_FAH36476_DD_guppy_0.5.1.fq.gz HG00733_lib05_20171213_FAH36782_DD_guppy_0.5.1.fq.gz HG00733_lib06_20171218_FAH36588_DD_guppy_0.5.1.fq.gz HG00733_lib06_20171218_FAH36624_DD_guppy_0.5.1.fq.gz HG00733_lib06_20171218_FAH36752_DD_guppy_0.5.1.fq.gz"
+
+
+for Index in $MyFiles
+
+do 
+
+zcat $Index | awk '{if(NR%4==2) print length($1)}' > $Index_length.txt && #length of each sequence
+
+zcat $Index | awk '{if(NR%4==2) print length($1)}' | awk '{ sum += $1; n++ } END { if (n > 0) print sum / n; }' > $Index_mean_length.txt #mean length of each .fastq file
+
+done
+
+
+## end preparing data for minimap2 performances on ONT data ###
+
+## will be plotted in Python ###
+
+
 
 #will be plotted in Python
 
