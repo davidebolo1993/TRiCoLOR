@@ -1,12 +1,12 @@
-#!/bin/bash
 
 ### Minimap2 performances ##
+
+#!/bin/bash
 
 # Number of reads per file
 
 find . -name "*gz" > FileNames.txt
 find . -name "*.gz" | while read -r file; do zcat -f "$file" | wc -l ; done > FileLengths.txt #has to be divided by 4 as each sequence is described by 4 lines in .fastq file
-
 
 
 # Time of Analysis with minimap2
@@ -43,10 +43,6 @@ done
 
 cat time.txt | grep "real" | awk '{print $2}' > RealTime.txt
 
-paste -d "\t" FileNames.txt FileLengths.txt RealTime.txt > FileNamesLengthsTime.txt 
-
-rm RealTime.txt 
-
 
 ### distribution of length for each fastq file
 
@@ -58,19 +54,24 @@ for Index in $MyFiles
 
 do 
 
-zcat $Index | awk '{if(NR%4==2) print length($1)}' > $Index_length.txt && #length of each sequence
+zcat $Index | awk '{if(NR%4==2) print length($1)}' > $Index"_Length.txt" && #length of each sequence
 
-zcat $Index | awk '{if(NR%4==2) print length($1)}' | awk '{ sum += $1; n++ } END { if (n > 0) print sum / n; }' > $Index_mean_length.txt #mean length of each .fastq file
+zcat $Index | awk '{if(NR%4==2) print length($1)}' | awk '{ sum += $1; n++ } END { if (n > 0) print sum / n; }' > $Index"_Mean_Length.txt" && #mean length of each .fastq file
+
+zcat $Index | awk '{if(NR%4==2) print length($1)}' | sort -n | awk ' { a[i++]=$1; } END { x=int((i+1)/2); if (x < (i+1)/2) print (a[x-1]+a[x])/2; else print a[x-1]; }' > $Index"_Median_Length.txt" ###median length of each .fastq file
 
 done
+
+cat *_Mean_Length.txt > SequencesMeanLength.txt
+cat *_Median_Length.txt > SequencesMedianLength.txt
+
+paste -d "\t" FileNames.txt FileLengths.txt RealTime.txt SequencesMeanLength.txt SequencesMedianLength.txt > Informations.txt 
+
+rm RealTime.txt 
 
 
 ## end preparing data for minimap2 performances on ONT data ###
 
 ## will be plotted in Python ###
-
-
-
-#will be plotted in Python
 
 
