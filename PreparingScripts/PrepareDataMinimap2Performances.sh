@@ -67,7 +67,11 @@ cat *_Median_Length.txt > SequencesMedianLength.txt
 
 paste -d "\t" FileNames.txt FileLengths.txt RealTime.txt SequencesMeanLength.txt SequencesMedianLength.txt > Informations.txt 
 
+awk 'BEGIN{FS=OFS="\t" }{$2 = $2 /4}1' Informations.txt 
+
 rm RealTime.txt 
+rm *_Mean_Length.txt
+rm *_Median_Length.txt
 
 
 ## end preparing data for minimap2 performances on ONT data ###
