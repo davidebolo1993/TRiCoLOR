@@ -67,7 +67,7 @@ cat *_Median_Length.txt > SequencesMedianLength.txt
 
 paste -d "\t" FileNames.txt FileLengths.txt RealTime.txt SequencesMeanLength.txt SequencesMedianLength.txt > Informations.txt 
 
-awk 'BEGIN{FS=OFS="\t" }{$2 = $2 /4}1' Informations.txt 
+awk 'BEGIN{FS=OFS="\t" }{$2 = $2 /4}1{$3 = $3 /60}1' Informations.txt > InformationsNormalized.txt
 
 rm RealTime.txt 
 rm *_Mean_Length.txt
