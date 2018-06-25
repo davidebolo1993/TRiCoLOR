@@ -1,3 +1,4 @@
+#!/usr/bin/python
 
 import pandas as pd
 import plotly.plotly as py
@@ -7,7 +8,7 @@ from plotly import tools
 
 
 File = "/home/davideb/STRCallerProject/ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/hgsv_sv_discovery/working/20180502_ONT_rebasecalled/PyInfo.txt"
-Names = ["File_Name", "Number_of_Sequences", "Minimap_Time", "Mean_Length", "Median_Length"]
+Names = ["File_Name", "Number_of_Sequences", "Minimap_Time", "Mean_Length", "Min_Length", "Max_Length"]
 
 
 Table = pd.read_table(File, delimiter='\t',names=Names)
@@ -19,8 +20,18 @@ MinimapTime = go.Scatter(
     y=PyTable['Number_of_Sequences'],
     mode = 'lines+markers',
     text=PyTable['File_Name'],
-    fill='tozeroy',
+    fill='tozeroy'
 )
+
+MinimapTimeLayout = go.Layout(
+    title= 'Alignment time',
+    xaxis= dict(title='Time (minutes)'),
+    yaxis=dict(title='Number of reads', side='right'),
+)
+
+MiniPlot = [MinimapTime]
+MinimapFigure = go.Figure(data=MiniPlot, layout=MinimapTimeLayout)
+plot(MinimapFigure,filename="Time.html" )
 
 
 MeanLength = go.Scatter(	
@@ -28,29 +39,34 @@ MeanLength = go.Scatter(
     y=PyTable['Mean_Length'],
     mode = 'lines+markers',
     text=PyTable['File_Name'],
-    fill='tozeroy'
-)
+    fill='tozeroy',
+    name='Mean'
 
-MedianLength = go.Scatter(
+)
+MinLength = go.Scatter(
     x=PyTable['Number_of_Sequences'],
-    y=PyTable['Median_Length'],
+    y=PyTable['Min_Length'],
     mode = 'lines+markers',
     text=PyTable['File_Name'],
-    fill='tozeroy'
+    fill='tozeroy',
+    name='Min'
+)
+MaxLength = go.Scatter(
+    x=PyTable['Number_of_Sequences'],
+    y=PyTable['Max_Length'],
+    mode = 'lines+markers',
+    text=PyTable['File_Name'],
+    fill='tozeroy',
+    name='Max'
+
 )
 
-
-Satistics = tools.make_subplots(rows=3, cols=2,specs=[[{'colspan': 2, 'rowspan': 2},None],[None, None],[{}, {}]],print_grid=True)
-
-Satistics.append_trace(MinimapTime, 1, 1)
-Satistics.append_trace(MeanLength, 3, 1)
-Satistics.append_trace(MedianLength, 3, 2)
-Satistics['layout']['xaxis1'].update(title='Time (minutes)')
-Satistics['layout']['xaxis2'].update(title='Number of reads')
-Satistics['layout']['xaxis3'].update(title='Number of reads')
-Satistics['layout']['yaxis1'].update(title='Number of reads',side='right')
-Satistics['layout']['yaxis2'].update(title='Mean length')
-Satistics['layout']['yaxis3'].update(title='Median length')
-Satistics['layout'].update(height=1000, width=1200, title='Statistics',showlegend=False)
-plot(Satistics, filename="Statistics.html")
+LengthPlot = [MeanLength, MinLength, MaxLength]
+LengthPlotLayout = go.Layout(
+    title= 'Sequence min/mean/max length',
+    xaxis= dict(title='Number of reads'),
+    yaxis=dict(title='Length'),
+)
+LengthFigure = go.Figure(data=LengthPlot, layout=LengthPlotLayout)
+plot(LengthFigure,filename="Length.html" )
 
