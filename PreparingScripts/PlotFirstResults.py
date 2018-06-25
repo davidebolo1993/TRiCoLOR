@@ -1,4 +1,3 @@
-#!/usr/bin/python
 
 import pandas as pd
 import plotly.plotly as py
@@ -16,12 +15,13 @@ PyTable = Table.sort_values('Number_of_Sequences')
 
 
 MinimapTime = go.Scatter(
-    x=PyTable['Number_of_Sequences'],
-    y=PyTable['Minimap_Time'],
+    x=PyTable['Minimap_Time'],
+    y=PyTable['Number_of_Sequences'],
     mode = 'lines+markers',
     text=PyTable['File_Name'],
-    fill='tozeroy'
+    fill='tozeroy',
 )
+
 
 MeanLength = go.Scatter(	
     x=PyTable['Number_of_Sequences'],
@@ -39,14 +39,16 @@ MedianLength = go.Scatter(
     fill='tozeroy'
 )
 
-Satistics = tools.make_subplots(rows=3, cols=1,subplot_titles=('Minimap2 alignment time for different number of reads','Mean length of reads', 'Median length of reads'))
+
+Satistics = tools.make_subplots(rows=3, cols=2,specs=[[{'colspan': 2, 'rowspan': 2},None],[None, None],[{}, {}]],print_grid=True)
+
 Satistics.append_trace(MinimapTime, 1, 1)
-Satistics.append_trace(MeanLength, 2, 1)
-Satistics.append_trace(MedianLength, 3, 1)
-Satistics['layout']['xaxis1'].update(title='Number of reads')
+Satistics.append_trace(MeanLength, 3, 1)
+Satistics.append_trace(MedianLength, 3, 2)
+Satistics['layout']['xaxis1'].update(title='Time (minutes)')
 Satistics['layout']['xaxis2'].update(title='Number of reads')
 Satistics['layout']['xaxis3'].update(title='Number of reads')
-Satistics['layout']['yaxis1'].update(title='Time (minutes)')
+Satistics['layout']['yaxis1'].update(title='Number of reads',side='right')
 Satistics['layout']['yaxis2'].update(title='Mean length')
 Satistics['layout']['yaxis3'].update(title='Median length')
 Satistics['layout'].update(height=1000, width=1200, title='Statistics',showlegend=False)
