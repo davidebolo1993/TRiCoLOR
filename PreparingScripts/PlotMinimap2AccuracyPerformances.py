@@ -1,7 +1,3 @@
-#!/usr/bin/python
-
-
-### number of reads aligned/unaligned in region
 
 import os
 import pysam
@@ -65,8 +61,12 @@ UnMapped = go.Bar(
 data = [Mapped, UnMapped]
 
 BarLay = go.Layout(
-    barmode='stack'
+    barmode='stack',
+    title= 'Mapped/Unmapped sequences',
+    xaxis= dict(title='ID'),
+    yaxis=dict(title='Number of mapped and unmapped')
 )
+
 
 MapUnmap = go.Figure(data=data, layout=BarLay)
 
