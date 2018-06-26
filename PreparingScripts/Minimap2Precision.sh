@@ -1,3 +1,5 @@
+#!/usr/bin/bash
+
 
 ###### Minimap2 precision #####
 
@@ -88,5 +90,5 @@ samtools index $Index.minimap2.srt.bam
 
 done
 
-
+## will be plotted in python
 
