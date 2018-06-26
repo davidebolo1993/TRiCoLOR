@@ -9,24 +9,24 @@ from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 from plotly import tools
 
 
-## Plot Minimap2 time performances
-
 File = "/home/davideb/STRCallerProject/ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/hgsv_sv_discovery/working/20180502_ONT_rebasecalled/PyInfo.txt"
 Names = ["File_Name", "Number_of_Sequences", "Minimap_Time", "Mean_Length", "Min_Length", "Max_Length"]
+
 
 Table = pd.read_table(File, delimiter='\t',names=Names)
 PyTable = Table.sort_values('Number_of_Sequences')
 
+
 MinimapTime = go.Scatter(
-    x=PyTable['Minimap_Time'],
-    y=PyTable['Number_of_Sequences'],
+    x=PyTable['Number_of_Sequences'],
+    y=PyTable['Minimap_Time'],
     mode = 'lines+markers',
     text=PyTable['File_Name'],
     fill='tozeroy'
 )
 
 MinimapTimeLayout = go.Layout(
-    title= 'Alignment time',
+    title= '#Alignment time',
     xaxis= dict(title='#Time (minutes)'),
     yaxis=dict(title='#Number of Reads', side='right'),
 )
@@ -65,15 +65,13 @@ MaxLength = go.Scatter(
 
 LengthPlot = [MeanLength, MinLength, MaxLength]
 LengthPlotLayout = go.Layout(
-    title= 'Sequence min/mean/max length',
+    title= '#Sequence min/mean/max length',
     xaxis= dict(title='#Number of Reads'),
     yaxis=dict(title='#Length'),
 )
 LengthFigure = go.Figure(data=LengthPlot, layout=LengthPlotLayout)
 plot(LengthFigure,filename="Length.html" )
 
-
-## Plot minimap2 mapped/unmapped sequences informations 
 
 MyDir = "/home/davideb/STRCallerProject/ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/hgsv_sv_discovery/working/20180502_ONT_rebasecalled/Minimap2Mapping"
 
@@ -162,5 +160,3 @@ PlotTable = [TableInfoNew]
 
 plot(PlotTable, filename = 'InfoTable.html')
 
-
-### return html files
