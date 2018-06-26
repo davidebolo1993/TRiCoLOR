@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
 
+### number of reads aligned/unaligned in region
+
 import os
 import pysam
 import pandas as pd
@@ -18,7 +20,10 @@ ID=[]
 for file in os.listdir(MyDir):
     if file.endswith(".srt.bam"):
         BamList.append(os.path.join(MyDir, file))
-        ID.append(os.path.basename(os.path.join(MyDir, file)))
+        IDLab = os.path.basename(os.path.join(MyDir, file))
+        NewIdLab=IDLab.split(".")[0]
+        ID.append(NewIdLab)
+
 
 
 Total = []
@@ -32,6 +37,8 @@ for Bam in BamList:
 	Total.append(int(TotalNumber))
 	MapList.append(int(bamfile.mapped)) # == samtools view -F 0x40 "srt.bam" | cut -f1 | sort | wc -l
 	UnMapList.append(int(bamfile.unmapped)) # == samtools view -f 4 | cut -f1 | sort | wc -l
+
+
 
 
 InfoTable = pd.DataFrame(
