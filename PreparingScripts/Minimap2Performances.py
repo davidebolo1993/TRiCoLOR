@@ -27,8 +27,8 @@ MinimapTime = go.Scatter(
 
 MinimapTimeLayout = go.Layout(
     title= '#Alignment time',
-    xaxis= dict(title='#Time (minutes)'),
-    yaxis=dict(title='#Number of Reads', side='right'),
+    xaxis= dict(title='#Number of Reads'),
+    yaxis=dict(title='#Time (minutes)', side='left'),
 )
 
 MiniPlot = [MinimapTime]
