@@ -7,7 +7,7 @@ import plotly.plotly as py
 import plotly.graph_objs as go
 from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 from plotly import tools
-
+import pysam
 
 File = "/home/davideb/STRCallerProject/ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/hgsv_sv_discovery/working/20180502_ONT_rebasecalled/PyInfo.txt"
 Names = ["File_Name", "Number_of_Sequences", "Minimap_Time", "Mean_Length", "Min_Length", "Max_Length"]
@@ -26,9 +26,9 @@ MinimapTime = go.Scatter(
 )
 
 MinimapTimeLayout = go.Layout(
-    title= '#Alignment time',
-    xaxis= dict(title='#Number of Reads'),
-    yaxis=dict(title='#Time (minutes)', side='left'),
+    title= 'Alignment time',
+    xaxis= dict(title='# Reads'),
+    yaxis=dict(title='Time (minutes)', side='left'),
 )
 
 MiniPlot = [MinimapTime]
@@ -65,9 +65,9 @@ MaxLength = go.Scatter(
 
 LengthPlot = [MeanLength, MinLength, MaxLength]
 LengthPlotLayout = go.Layout(
-    title= '#Sequence min/mean/max length',
-    xaxis= dict(title='#Number of Reads'),
-    yaxis=dict(title='#Length'),
+    title= 'Sequence min/mean/max length',
+    xaxis= dict(title='# Reads'),
+    yaxis=dict(title='Length'),
 )
 LengthFigure = go.Figure(data=LengthPlot, layout=LengthPlotLayout)
 plot(LengthFigure,filename="Length.html" )
@@ -111,7 +111,6 @@ Mapped = go.Bar(
     x=InfoTable['ID'],
     y=InfoTable['Mapped'],
     name='Mapped',
-    text=InfoTable['Number of sequeces in bam']
 )
 
 UnMapped = go.Bar(
@@ -124,9 +123,9 @@ data = [Mapped, UnMapped]
 
 BarLay = go.Layout(
     barmode='stack',
-    title= 'Mapped/Unmapped sequences',
-    xaxis= dict(title='#Read Identifier'),
-    yaxis=dict(title='#Mapped/Unmapped Reads')
+    title= '# Mapped/Unmapped reads',
+    xaxis= dict(title='Read Identifier'),
+    yaxis=dict(title='# Mapped/Unmapped Reads')
 )
 
 
@@ -141,7 +140,7 @@ MeanAccuracy=[0.85,0.85,0.85,0.90,0.90,0.90,0.95,0.95,0.95,0.90,0.98] #data used
 
 
 TableInfoNew = go.Table(
-    header=dict(values=['#ID','#Mean Length','#Mean Accuracy', '#Mapped Reads', '#Unmapped Reads', '#Total Reads'],
+    header=dict(values=['ID','Mean Length','Mean Accuracy', '# Mapped Reads', '# Unmapped Reads', '# Total Reads'],
                 line = dict(color='#7D7F80'),
                 fill = dict(color='#a1c3d1'),
                 align = ['left'] * 5),
