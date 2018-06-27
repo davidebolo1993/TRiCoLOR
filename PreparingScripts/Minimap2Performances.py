@@ -86,46 +86,72 @@ for file in os.listdir(MyDir):
         ID.append(NewIdLab)
 
 Total = []
-MapList = []
-UnMapList = []
+TotalMap = []
+TotalUnmap = []
+MapInRegionList = []
+UnmapInRegionList = []
 
 
 for Bam in BamList:
-	TotalNumber = pysam.view("-c",Bam) 
-	bamfile = pysam.AlignmentFile(Bam, "rb")
-	Total.append(int(TotalNumber))
-	MapList.append(int(bamfile.mapped)) # == samtools view -F 0x40 "srt.bam" | cut -f1 | sort | wc -l
-	UnMapList.append(int(bamfile.unmapped)) # == samtools view -f 4 | cut -f1 | sort | wc -l
-
+	TotalAligned = pysam.view("-c",Bam) 
+	Total.append(int(TotalAligned))
+	bamfile = pysam.AlignmentFile(Bam, 'rb')
+	TotalMap.append(int(bamfile.mapped)) # == samtools view -F 0x40 "srt.bam" | cut -f1 | sort | wc -l
+	TotalUnmap.append(int(bamfile.unmapped)) # == samtools view -f 4 | cut -f1 | sort | wc -l
+	mapinregion = 0
+	unmapinregion = 0
+	for read in bamfile.fetch('chr1',1000001,40000000):
+		if not read.is_unmapped:
+			mapinregion+=1
+		else:
+			unmapinregion+=1
+	MapInRegionList.append(mapinregion)
+	UnmapInRegionList.append(unmapinregion)
 
 
 InfoTable = pd.DataFrame(
     {'ID': ID,
-     'Number of sequeces in bam': Total,
-     'Mapped': MapList,
-     'Unmapped':UnMapList
+     '# Mapped in Bam': TotalMap,
+     '# Unmapped in Bam':TotalUnmap,
+     '# Mapped in region': MapInRegionList,
+     '# Unmapped in region': UnmapInRegionList
     })
 
+InfoTable = InfoTable [['ID','# Mapped in Bam','# Unmapped in Bam','# Mapped in region','# Unmapped in region']]
 
-Mapped = go.Bar(
+TotMapped = go.Bar(
     x=InfoTable['ID'],
-    y=InfoTable['Mapped'],
-    name='Mapped',
+    y=InfoTable['# Mapped in Bam'],
+    name='# Mapped in Bam',
 )
 
-UnMapped = go.Bar(
+TotUnMapped = go.Bar(
     x=InfoTable['ID'],
-    y=InfoTable['Unmapped'],
-    name='Unmapped'
+    y=InfoTable['# Unmapped in Bam'],
+    name='# Unmapped in Bam'
 )
 
-data = [Mapped, UnMapped]
+MappedInRegion = go.Bar(
+    x=InfoTable['ID'],
+    y=InfoTable['# Mapped in region'],
+    name='# Mapped in region'
+)
+
+
+UnMappedInRegion = go.Bar(
+    x=InfoTable['ID'],
+    y=InfoTable['# Unmapped in region'],
+    name='# Unmapped in region'
+)
+
+
+data = [TotMapped, TotUnMapped, MappedInRegion, UnMappedInRegion]
 
 BarLay = go.Layout(
-    barmode='stack',
+    barmode='base-bar',
     title= '# Mapped/Unmapped reads',
     xaxis= dict(title='Read Identifier'),
-    yaxis=dict(title='# Mapped/Unmapped Reads')
+    yaxis=dict(title='# Mapped and Unmapped Reads')
 )
 
 
@@ -138,18 +164,24 @@ MeanLength=[3000,8000,13000,3000,8000,13000,3000,8000,13000,10000,100000] #data 
 
 MeanAccuracy=[0.85,0.85,0.85,0.90,0.90,0.90,0.95,0.95,0.95,0.90,0.98] #data used for create syntetic fastq with pbsim
 
+MapFraction = InfoTable['# Mapped in Bam']/(InfoTable['# Mapped in Bam']+InfoTable['# Unmapped in Bam'])
+RightMapped = InfoTable['# Mapped in region']/InfoTable['# Mapped in Bam']
+
 
 TableInfoNew = go.Table(
-    header=dict(values=['ID','Mean Length','Mean Accuracy', '# Mapped Reads', '# Unmapped Reads', '# Total Reads'],
+    header=dict(values=['ID','Mean Length','Mean Accuracy', '# Mapped Reads in Bam', '# Unmapped Reads in Bam', '# Mapped Reads in Region', '# UnMapped Reads in Region', '# Mapped Reads in Bam / #Total', '# Mapped Reads in Region / # Mapped Reads in Bam'],
                 line = dict(color='#7D7F80'),
                 fill = dict(color='#a1c3d1'),
                 align = ['left'] * 5),
     cells=dict(values=[InfoTable['ID'],
     	               MeanLength,
                        MeanAccuracy,
-                       InfoTable['Mapped'],
-                       InfoTable['Unmapped'],
-                       InfoTable['Number of sequeces in bam']
+                       InfoTable['# Mapped in Bam'],
+                       InfoTable['# Unmapped in Bam'],
+                       InfoTable['# Mapped in region'],
+                       InfoTable['# Unmapped in region'],
+                       ["{0:.4f}".format(i) for i in MapFraction],
+                       ["{0:.4f}".format(i) for i in RightMapped]
                        ],
                line = dict(color='#7D7F80'),
                fill = dict(color='#EDFAFF'),
