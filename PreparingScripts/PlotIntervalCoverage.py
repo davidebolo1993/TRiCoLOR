@@ -1,4 +1,4 @@
-
+#!/usr/bin/python
 
 import os
 import numpy as np
@@ -37,28 +37,34 @@ for i in range(len(Coverage)):
 	Indexes = np.where(Gap>1)
 	Pos=[]
 	MedianCov=[]
-	Posit=int(round(np.median(Table['Locus'][0:Indexes[0][0]]).tolist())) # mean position for first interval
-	Cover=int(round(np.median(Table['Depth'][0:Indexes[0][0]]).tolist())) # mean depth for first interval
+	AltLen=[]
+
+	Posit=int(round(np.median(Table['Locus'][0:Indexes[0][0]]).tolist())) # median position for first interval
+	Cover=int(round(np.median(Table['Depth'][0:Indexes[0][0]]).tolist())) # median depth for first interval
 	Pos.append(Posit)
 	MedianCov.append(Cover)
+	AltLen.append(len(Table['Locus'][0:Indexes[0][0]]))
 
 	for j in range(len(Indexes[0])-1):
 		Posit = int(round(np.median(Table['Locus'][(Indexes[0][j]+1):Indexes[0][j+1]]).tolist())) 
 		Cover = int(round(np.median(Table['Depth'][(Indexes[0][j]+1):Indexes[0][j+1]]).tolist()))
 		Pos.append(Posit)
 		MedianCov.append(Cover)
+		AltLen.append(len(Table['Locus'][(Indexes[0][j]+1):Indexes[0][j+1]]))
 
-	Posit = int(round(np.median(Table['Locus'][(Indexes[0][-1]+1):len(Table['Locus'])].tolist()))) # mean position for last interval
-	Cover = int(round(np.median(Table['Depth'][(Indexes[0][-1]+1):len(Table['Depth'])].tolist()))) # mean depth for last interval
+	Posit = int(round(np.median(Table['Locus'][(Indexes[0][-1]+1):len(Table['Locus'])]).tolist())) # median position for last interval
+	Cover = int(round(np.median(Table['Depth'][(Indexes[0][-1]+1):len(Table['Depth'])]).tolist())) # median depth for last interval
 	
 	Pos.append(Posit)
 	MedianCov.append(Cover)
+	AltLen.append(len(Table['Locus'][(Indexes[0][-1]+1):len(Table['Locus'])]))
 
 
 	Title=["Coverage " + ID[i]]
 	FileName=["Coverage_" + ID[i] + ".html"]
 
-	CoveragePlot = go.Bar(x=Pos,y=MedianCov,text=['Median Coverage for test regions'],name="Coverage")
+
+	CoveragePlot = go.Bar(x=Pos,y=MedianCov,name="Coverage in event",text=AltLen)
 	MeanLine = go.Scatter(x=Pos,y=rep(np.median(MedianCov).tolist(),len(MedianCov)),mode = 'lines',name="Median coverage")
 
 	CoverageLay = go.Layout(title=''.join(Title),xaxis= dict(title='Mean interval position'),yaxis=dict(title='Mean interval coverage'),barmode='base-bar')
@@ -66,6 +72,6 @@ for i in range(len(Coverage)):
 	CovPlot = [CoveragePlot,MeanLine]
 	Cov = go.Figure(data=CovPlot, layout=CoverageLay)
     
-	plot(Cov,filename=''.join(FileName))
+	plot(Cov,filename=''.join(FileName),auto_open=False)
 
 
