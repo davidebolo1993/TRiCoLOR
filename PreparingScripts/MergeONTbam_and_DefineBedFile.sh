@@ -29,7 +29,7 @@ samtools merge -b ListBam ONTReads.bam
 samtools index ONTReads.bam
 
 
-BedFile="/home/davideb/HG00733.calls_plus_loci.bed"
+#BedFile="/home/davideb/HG00733.calls_plus_loci.bed"
 
 
 #Will be modified to extract only deletions
