@@ -23,7 +23,7 @@ FakeSVtype = []
 FakeSvAnn = []
 
 ## add fake regions in which no alterations were identified
-## minimum length of these regions is 1000 bp (if Start-End differs of exactly 10000 bp)
+## minimum length of these regions is 1000 bp (if Start-End differs of exactly 100000 bp)
 
 
 for i in range(len(Start)-1):
