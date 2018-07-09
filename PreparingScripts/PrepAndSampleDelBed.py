@@ -27,7 +27,7 @@ FakeSvAnn = []
 
 
 for i in range(len(Start)-1):
-	if (Start[i+1]-End[i])>100000:
+	if (Start[i+1]-End[i])>=100000:
 		NewStart = End[i]+44500
 		NewEnd = Start[i+1]-44500
 		FakeChrom.append(Chromosome[i])
