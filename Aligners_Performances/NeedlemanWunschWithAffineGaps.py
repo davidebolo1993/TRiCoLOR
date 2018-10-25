@@ -2,7 +2,7 @@
 
 #Pure Python, does not need any additional module
 
-def QuickMatrixPrinter(list): #as this cose works with lists, this is a function that allows to print list as they were tables, just to have a look at the disposition of the values inside them.
+def QuickMatrixPrinter(list): #as this code works with lists, this is a function that allows to print list as they were tables, just to have a look at the disposition of the values inside them.
 
 	s = [[str(e) for e in row] for row in list]
 	lens = [max(map(len, col)) for col in zip(*s)]
