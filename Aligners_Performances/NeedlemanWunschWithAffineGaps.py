@@ -136,7 +136,7 @@ def Backtrace(seq1,seq2,Ix,Iy,M):
 			b += seq2[i-1]
 			i -= 1
 		elif (j>0 and M[i][j] == Ix[i][j]):
-			a += seq1[j-1]from Bio import SeqIO
+			a += seq1[j-1]
 
 			b += '-'
 			j -= 1
