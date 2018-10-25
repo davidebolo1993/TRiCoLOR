@@ -197,6 +197,7 @@ list_of_nucleotides=["A","C","T","G"]
 substitution_matrix=MatchMismatch(list_of_nucleotides,matchscore=1,mismatchscore=-3)
 minimum_value=float("-inf")
 
+#if you want an overview of the matrices, just uncomment the "QuickMatrixPrinter" lines
 #changing the penalty for opening-extending of course change the alignment
 #try with inverting the h_penalty and g_penalty
 
