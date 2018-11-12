@@ -12,7 +12,7 @@ def QuickMatrixPrinter(list): #as this code works with lists, this is a function
 
 
 
-def MatchMismatch(list_of_nucleotides, matchscore=1, mismatchscore=-3): #given the penalty for match and mismathc, returns a dictionary with the score (nested dictionary)
+def MatchMismatch(list_of_nucleotides, matchscore=1, mismatchscore=-3): #given the penalty for match and mismatch, returns a dictionary with the score (nested dictionary)
 
 	d = {} 
 
