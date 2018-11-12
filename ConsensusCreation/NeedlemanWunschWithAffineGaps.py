@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 #Pure Python, does not need any additional module
+#It is not used in the project, as it is too slow but it's good ad excersize !
 
 def QuickMatrixPrinter(list): #as this code works with lists, this is a function that allows to print list as they were tables, just to have a look at the disposition of the values inside them.
 
