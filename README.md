@@ -1,2 +1,2 @@
 # TRiCoLOR
-![alt text](TRiCoLOR_logo2.png)
+![alt text](TRiCoLOR.png)
