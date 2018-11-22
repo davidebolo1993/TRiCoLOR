@@ -15,7 +15,7 @@ def main():
 	parser.add_argument("--reference", help="reference file")
 	parser.add_argument("--bed", help="bed file containing all the microsatellites for classic chromosomes")
 	parser.add_argument("--chromosome", help="chromosome to be modified")
-  parser.add_argument("--mode", help="expand or contract the repetition?")
+  	parser.add_argument("--mode", help="expand or contract the repetition?")
 	parser.add_argument("--position", type=int, help="get the nearest repetition to the specified position")
 	parser.add_argument("--size", type=int, help="How many repetitions do you want to remove/add?")
 	parser.add_argument("--mismatch",default=False, help="Change a nucleotide with one of the other three, randomly")
