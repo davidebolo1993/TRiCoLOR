@@ -41,8 +41,6 @@ def plotPrecisionRecallDiagram(title=None, points=None, labels=None,colors=None)
 	plt.xlabel("Precision")
 	plt.ylabel("Recall")
 	plotFMeasures()
-
-
 	scps = [] 
 	
 	for i, (x, y) in enumerate(points):
