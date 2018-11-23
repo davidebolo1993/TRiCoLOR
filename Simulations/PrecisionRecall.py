@@ -34,7 +34,7 @@ def plotFMeasures(fstepsize=.1, stepsize=0.001):
 
 
 
-def plotPrecisionRecallDiagram(title=None, points=None, labels=None,colors=None):
+def plotPrecisionRecallDiagram(title=None, points=None, labels=None,colors=None,loc=0):
 
 	ax = plt.gca()   
 	plt.title(title)
@@ -49,12 +49,15 @@ def plotPrecisionRecallDiagram(title=None, points=None, labels=None,colors=None)
 		color=colors[i]
 		scp = ax.scatter(x, y, label=label, c=color,s=50, linewidths=0.75, alpha=0.75)
 		scps.append(scp)
-		plt.legend(scps, labels, loc=0, scatterpoints=1, numpoints=1, fancybox=False) #loc=0 guess the best location for legend
+		plt.legend(scps, labels, loc=loc, scatterpoints=1, numpoints=1, fancybox=False) #loc=0 guess the best location for legend
 	
   plt.axis([-0.02, 1.02, -0.02, 1.02])
 
 
-#points must be a list of tuples [(pr1,re1),(pr2,re2)], labels a list-like ["A","B"], colors a list like ["#924242","#212977"]
+#points must be a list of tuples, such as: [(pr1,re1),(pr2,re2),...];
+#labels are a list-like object, such as: ["A","B",...];
+#colors are a list-likeobject, such as: ["#924242","#212977",...]
+#loc must be an integer or a tuple of coordinates, as specified here: https://matplotlib.org/api/legend_api.html
 
 
 plotPrecisionRecallDiagram("Title",points, labels, colors)
