@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-#Plot precision and recall of a method with harmonic means (f1 scores)
+#Plot precision and recall with harmonic means (f1 scores)
 
 import scipy
 import matplotlib.pyplot as plt
