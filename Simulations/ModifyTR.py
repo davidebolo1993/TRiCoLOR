@@ -53,7 +53,7 @@ def ExtractSequence(genome,chromosome,start,end):
 	chrom=ref[chromosome]
 	seq=chrom[:len(chrom)].seq
 	bef_=seq[:start]
-	wanted=seq[start:end-1] #pyfaidx wau to get the true coordinates
+	wanted=seq[start:end-1] #pyfaidx way to get the true coordinates
 	aft_=seq[end-1:]
 
 	return bef_,wanted,aft_
