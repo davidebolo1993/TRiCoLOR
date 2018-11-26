@@ -137,7 +137,7 @@ def Contract_Repetitions(genome,bed,chromosome,deletion_approximate_point,restri
 
 
 
-def Expand_Repetitions(genome,bed,chromosome,deletion_approximate_point,restriction_size, mismatch,howmany,label,pathout):
+def Expand_Repetitions(genome,bed,chromosome,deletion_approximate_point,expansion_size, mismatch,howmany,label,pathout):
 
 	chr_start=[]
 	chr_end=[]
@@ -160,7 +160,7 @@ def Expand_Repetitions(genome,bed,chromosome,deletion_approximate_point,restrict
 	ind_closest=TakeClosest(deletion_approximate_point,chr_start)
 	before,seq,after=ExtractSequence(genome,chromosome,chr_start[ind_closest],chr_end[ind_closest])
 	occurences=num_rep[ind_closest]
-	new_occurences=occurences+restriction_size
+	new_occurences=occurences+expansion_size
 	new_seq=repetition[ind_closest]*new_occurences
 
 
