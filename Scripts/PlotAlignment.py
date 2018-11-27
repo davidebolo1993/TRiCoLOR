@@ -38,7 +38,6 @@ def Get_Alignment_Position(bamfile):
 	for read in BamFile.fetch():
 
 		coords = read.get_reference_positions(full_length=True)
-
 		seq=read.seq
 
 	return coords,seq
@@ -102,9 +101,7 @@ def Modifier(list_of_coord,seq):
 
 		where_dup.append(dup)
 
-
 	mod_dup=[]
-
 
 	for dups in where_dup:
 
@@ -116,7 +113,6 @@ def Modifier(list_of_coord,seq):
 	for i in range(len(mod_dup)):
 
 		coords_without_insertions[min(where_dup[i][1]):max(where_dup[i][1])+1]=mod_dup[i][1]
-
 
 	#Modify deletions
 	
@@ -137,13 +133,11 @@ def Modifier(list_of_coord,seq):
 			coords_purified.append(coords_without_insertions[i])
 			NewSeq+=seq[i]
 
-
 	return coords_purified,NewSeq
 
 
 
 def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,ref_table,hap1_table,hap2_table,label,out):
-
 
 	#deal with reference first
 	for record in SeqIO.parse(reference_fasta,"fasta"):
@@ -174,10 +168,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,ref_table,hap1_t
 	Ind_ref_start=[i for i,s in enumerate(ref_tot_coords) if s == min_][0]
 	Ind_ref_end=[i for i,e in enumerate(ref_tot_coords) if e == max_][0]
 
-
 	ref_seq=ref_tot_seq[Ind_ref_start:Ind_ref_end+1]
-
-
 
 	Reference_Trace = go.Scatter(
 		x = list(range(min_,max_+1)), # works with positions
@@ -228,7 +219,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,ref_table,hap1_t
 	elif ref_table is not None and hap1_table is None and hap2_table is None:
 
 		ref_rep=pd.read_csv(os.path.abspath(ref_table),sep="\t")
-
 		cluster_ref=[]
 
 		for i in range(len(ref_rep["Start"])):
@@ -247,7 +237,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,ref_table,hap1_t
 
 
 		hap1_rep=pd.read_csv(os.path.abspath(hap1_table),sep="\t")
-
 		cluster_hap1=[]
 
 		for i in range(len(hap1_rep["Start"])):
@@ -263,7 +252,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,ref_table,hap1_t
 
 
 		hap2_rep=pd.read_csv(os.path.abspath(hap2_table),sep="\t")
-
 		cluster_hap2=[]
 
 		for i in range(len(hap2_rep["Start"])):
@@ -280,7 +268,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,ref_table,hap1_t
 	elif ref_table is not None and hap1_table is not None and hap2_table is None:
 
 		ref_rep=pd.read_csv(os.path.abspath(ref_table),sep="\t")
-
 		cluster_ref=[]
 
 		for i in range(len(ref_rep["Start"])):
@@ -292,7 +279,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,ref_table,hap1_t
 
 
 		hap1_rep=pd.read_csv(os.path.abspath(hap1_table),sep="\t")
-
 		cluster_hap1=[]
 
 		for i in range(len(hap1_rep["Start"])):
@@ -308,7 +294,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,ref_table,hap1_t
 	elif ref_table is not None and hap1_table is None and hap2_table is not None:
 
 		ref_rep=pd.read_csv(os.path.abspath(ref_table),sep="\t")
-
 		cluster_ref=[]
 
 		for i in range(len(ref_rep["Start"])):
@@ -320,7 +305,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,ref_table,hap1_t
 
 
 		hap2_rep=pd.read_csv(os.path.abspath(hap2_table),sep="\t")
-
 		cluster_hap2=[]
 
 		for i in range(len(hap2_rep["Start"])):
@@ -335,7 +319,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,ref_table,hap1_t
 	elif ref_table is None and hap1_table is not None and hap2_table is not None:
 
 		hap1_rep=pd.read_csv(os.path.abspath(hap1_table),sep="\t")
-
 		cluster_hap1=[]
 
 		for i in range(len(hap1_rep["Start"])):
@@ -345,7 +328,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,ref_table,hap1_t
 
 
 		hap2_rep=pd.read_csv(os.path.abspath(hap2_table),sep="\t")
-
 		cluster_hap2=[]
 
 		for i in range(len(hap2_rep["Start"])):
@@ -359,7 +341,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,ref_table,hap1_t
 	else:
 
 		ref_rep=pd.read_csv(os.path.abspath(ref_table),sep="\t")
-
 		cluster_ref=[]
 
 		for i in range(len(ref_rep["Start"])):
@@ -370,7 +351,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,ref_table,hap1_t
 				cluster_ref.append(cluster_dict)
 
 		hap1_rep=pd.read_csv(os.path.abspath(hap1_table),sep="\t")
-
 		cluster_hap1=[]
 
 		for i in range(len(hap1_rep["Start"])):
@@ -380,7 +360,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,ref_table,hap1_t
 
 
 		hap2_rep=pd.read_csv(os.path.abspath(hap2_table),sep="\t")
-
 		cluster_hap2=[]
 
 		for i in range(len(hap2_rep["Start"])):
