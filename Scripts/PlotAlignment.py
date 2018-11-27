@@ -17,12 +17,12 @@ import argparse
 def main():
 
 	parser = argparse.ArgumentParser()
-	parser.add_argument("--reference_fasta", help="reference fasta file generated during the repeats calculation")
-	parser.add_argument("--hap1_bam", help="hap1 .srt.bam file generated during the repeats calculation for a certain window")
-	parser.add_argument("--hap2_bam", help="hap2 .srt.bam file generated during the repeats calculation for a certain window")
+	parser.add_argument("--reference_fasta", help="reference fasta file generated during the repeats identification")
+	parser.add_argument("--hap1_bam", help="hap1 .srt.bam file generated during the repeats identification for a certain window")
+	parser.add_argument("--hap2_bam", help="hap2 .srt.bam file generated during the repeats identification for a certain window")
 	parser.add_argument("--ref_table", default=None,help="reference table containing repetitions for the reference")
-	parser.add_argument("--hap1_table",default=None, help="hap1 table containing repetitions for the reference fasta window")
-	parser.add_argument("--hap2_table", default=None, help="hap2 table containing repetitions for the reference fasta window")
+	parser.add_argument("--hap1_table",default=None, help="table containing repetitions for the haplotype 1 fasta window")
+	parser.add_argument("--hap2_table", default=None, help="table containing repetitions for the haplotype 2 fasta window")
 	parser.add_argument("--label", help="label to identify the plot")
 	parser.add_argument("--out", help="where to save the .html file")
 	args = parser.parse_args()
