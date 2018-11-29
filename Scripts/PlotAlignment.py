@@ -401,10 +401,3 @@ if __name__ == main():
 
 
 
-
-# python TRiCoLOR_AlignmentPlotter.py --reference Run/reference/Reference.fa --hap1_bam Run/haplotype1/Haplo1.merged.srt.bam --hap2_bam Run/haplotype2/Haplo2.merged.srt.bam --chromosome chr20 --start 17002000 --end 17004000 --out Run/ --label Try --ref_table Run/reference/RepetitionsTable.tsv --hap1_table Run/haplotype1/RepetitionsTable.tsv --hap2_table Run/haplotype2/RepetitionsTable.tsv
-
-
-
-
-
