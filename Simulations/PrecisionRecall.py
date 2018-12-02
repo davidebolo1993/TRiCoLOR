@@ -126,8 +126,11 @@ def plotPrecisionRecallDiagram(title=None, points=None, labels=None,colors=None,
 
 
 #points must be a list of lists of tuples, such as: [[(pr1.0,re1.0),(pr2.0,re2.0),...],[(pr1.1,re1.1),(pr2.1,re2.1),...],...]
-#labels are a list of list-like object, such as: [["A","B",...],["C","D",...],...]
+#labels are a list of list-like object, such as: [["A","B",...],["C","D",...],...]blu
 #colors are a list of list-like object, such as: [["#924242","#212977",...],["#23D23F", "#EEAA12",...],...]
+#example of blue and red color palettes with 5 points that can be used:
+#blue color palette:["#ece7f2", "#a6bddb","#2b8cbe", "#4522D8", "#1C1960"]
+#red color palette:["#fee8c8", "#fdbb84", "#e34a33", "#E21919", "#B01212"]
 #loc must be an integer or a tuple of coordinates, as specified here: https://matplotlib.org/api/legend_api.html
 
 
