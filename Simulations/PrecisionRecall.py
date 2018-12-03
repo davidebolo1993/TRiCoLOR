@@ -140,5 +140,5 @@ def plotPrecisionRecallDiagram(title=None, points=None, labels=None,colors=None,
 #loc must be an integer or a tuple of coordinates, as specified here: https://matplotlib.org/api/legend_api.html
 
 
-plotPrecisionRecallDiagram("Precision and Recall for exact number of repetitions",result, labels, colors, linecolors=["blue", "red"])
+plotPrecisionRecallDiagram("Precision and Recall for exact number of repetitions",points, labels, colors)
 plt.show()
