@@ -100,7 +100,7 @@ def plotFMeasures(fstepsize=.1, stepsize=0.001):
 
 
 
-def plotPrecisionRecallDiagram(title=None, points=None, labels=None,colors=None,loc=0):
+def plotPrecisionRecallDiagram(title=None, points=None, labels=None,colors=None,linecolors=None,loc=0):
 
 	ax = plt.gca()   
 	plt.title(title)
@@ -118,7 +118,13 @@ def plotPrecisionRecallDiagram(title=None, points=None, labels=None,colors=None,
 			scp = ax.scatter(x, y, label=label, c=color,s=50, linewidths=0.75, alpha=0.75)
 			scps.append(scp)
 
-		lines = ax.plot([el[0] for el in points[h]],[el[1] for el in points[h]],":", color="black", linewidth=0.5)
+		if linecolors is not None:
+
+			lines = ax.plot([el[0] for el in points[h]],[el[1] for el in points[h]],":", color=linecolors[h], linewidth=0.5)
+
+		else:
+
+			lines= ax.plot([el[0] for el in points[h]],[el[1] for el in points[h]],":", color="black", linewidth=0.5)
 		
 		plt.legend(loc=loc, scatterpoints=1, numpoints=1, fancybox=False) #loc=0 guess the best location for legend
 	
@@ -134,7 +140,5 @@ def plotPrecisionRecallDiagram(title=None, points=None, labels=None,colors=None,
 #loc must be an integer or a tuple of coordinates, as specified here: https://matplotlib.org/api/legend_api.html
 
 
-plotPrecisionRecallDiagram("Title",points, labels, colors)
+plotPrecisionRecallDiagram("Precision and Recall for exact number of repetitions",result, labels, colors, linecolors=["blue", "red"])
 plt.show()
-
-
