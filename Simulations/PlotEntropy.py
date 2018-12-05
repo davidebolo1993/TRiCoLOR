@@ -105,8 +105,8 @@ def Get_Entropy_From_Simulations(path, number_of_simulations):
 		
     	if en_ != []:
 			
-			In_en.append(en_)
-			In_se.append(se_)
+		In_en.append(en_)
+		In_se.append(se_)
 
 	In_distributions=[]
 
