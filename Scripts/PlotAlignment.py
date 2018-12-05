@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+#!/usr/bin/python
+
 import os
 import glob
 import pyfaidx
@@ -13,6 +15,7 @@ from plotly.offline import plot
 import argparse
 
 
+
 def main():
 
 	parser = argparse.ArgumentParser()
@@ -21,7 +24,7 @@ def main():
 	parser.add_argument("--hap2_bam", help=".srt.bam file created by merging all the  consensus .srt.bam file generated for haplotype 2")
 	parser.add_argument("--chromosome", help="chromosome number")
 	parser.add_argument("--start", type=int, help="start coordinate of the repetition you are interested to look at. Even the neighbors repetitions are plotted")
-	parser.add_argument("--end", type=int, help="end coordinate  of the repetition you are interested to look at. Evend the neighbors repetitions are plotted")
+	parser.add_argument("--end", type=int, help="end coordinate of the repetition you are interested to look at. Evend the neighbors repetitions are plotted")
 	parser.add_argument("--ref_table", default=None,help=".tsv file containing repetitions found in reference")
 	parser.add_argument("--hap1_table",default=None, help=".tsv file containing repetitions found in haplotype 1")
 	parser.add_argument("--hap2_table", default=None, help=".tsv file containing repetitions found in haplotype 2")
@@ -30,6 +33,7 @@ def main():
 	args = parser.parse_args()
 
 	Generate_Alignment_ToPlot(args.reference_fasta,args.hap1_bam,args.hap2_bam,args.chromosome,args.start,args.end,args.ref_table,args.hap1_table,args.hap2_table,args.label,args.out)
+
 
 
 def Get_Alignment_Positions(bamfile,chromosome,start,end):
@@ -55,27 +59,46 @@ def list_duplicates(list_of_seq):
 	return ((key,locs) for key,locs in a_.items() if len(locs) > 1)
 
 
-def modifier(coordinates): #substitue None with the closest available coordinate. Use iterators, a lot faster than the previous version
-
-	start = next(ele for ele in coordinates if ele is not None)
-
-	for ind, ele in enumerate(coordinates):
-		
-		if ele is None:
-
-			coordinates[ind] = start
-		
-		else:
-
-			start = ele
-
-	return coordinates
-
 
 def Modifier(list_of_coord,seq):
 
 
-	coords_without_insertions=modifier(list_of_coord)
+	coords_without_insertions=[] #remove insertion from coordinates; they are substituted with the previous available coordinate
+
+	for i in range(len(list_of_coord)):
+
+		if list_of_coord[i] is not None:
+
+			coords_without_insertions.append(list_of_coord[i]+1)
+
+		else:
+
+			l=i
+
+			while list_of_coord[l] is None:
+
+				if l==0:
+
+					break
+
+				else:
+
+					l-= 1
+
+			if l !=0:
+
+				coords_without_insertions.append(list_of_coord[l]+1)
+
+			else:
+
+				l=i
+
+				while list_of_coord[l] is None:
+
+					l+=1
+
+				coords_without_insertions.append(list_of_coord[l])
+
 
 	where_dup=[]
 
@@ -116,6 +139,7 @@ def Modifier(list_of_coord,seq):
 			NewSeq+=seq[i]
 
 	return coords_purified,NewSeq
+
 
 
 def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start,end,ref_table,hap1_table,hap2_table,label,out):
@@ -374,8 +398,3 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 if __name__ == main():
 
 	main()
-
-
-
-
-
