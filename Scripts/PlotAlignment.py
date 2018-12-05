@@ -13,7 +13,6 @@ from plotly.offline import plot
 import argparse
 
 
-
 def main():
 
 	parser = argparse.ArgumentParser()
@@ -31,7 +30,6 @@ def main():
 	args = parser.parse_args()
 
 	Generate_Alignment_ToPlot(args.reference_fasta,args.hap1_bam,args.hap2_bam,args.chromosome,args.start,args.end,args.ref_table,args.hap1_table,args.hap2_table,args.label,args.out)
-
 
 
 def Get_Alignment_Positions(bamfile,chromosome,start,end):
@@ -118,8 +116,6 @@ def Modifier(list_of_coord,seq):
 			NewSeq+=seq[i]
 
 	return coords_purified,NewSeq
-
-
 
 
 def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start,end,ref_table,hap1_table,hap2_table,label,out):
