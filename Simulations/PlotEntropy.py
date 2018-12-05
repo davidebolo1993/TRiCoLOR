@@ -103,7 +103,7 @@ def Get_Entropy_From_Simulations(path, number_of_simulations):
 
 		en_,se_=BamScanner(bam[0])		
 		
-    if en_ != []:
+    	if en_ != []:
 			
 			In_en.append(en_)
 			In_se.append(se_)
