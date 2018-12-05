@@ -57,46 +57,27 @@ def list_duplicates(list_of_seq):
 	return ((key,locs) for key,locs in a_.items() if len(locs) > 1)
 
 
+def modifier(coordinates): #substitue None with the closest available coordinate. Use iterators, a lot faster than the previous version
+
+	start = next(ele for ele in coordinates if ele is not None)
+
+	for ind, ele in enumerate(coordinates):
+		
+		if ele is None:
+
+			coordinates[ind] = start
+		
+		else:
+
+			start = ele
+
+	return coordinates
+
 
 def Modifier(list_of_coord,seq):
 
 
-	coords_without_insertions=[] #remove insertion from coordinates; they are substituted with the previous available coordinate
-
-	for i in range(len(list_of_coord)):
-
-		if list_of_coord[i] is not None:
-
-			coords_without_insertions.append(list_of_coord[i]+1)
-
-		else:
-
-			l=i
-
-			while list_of_coord[l] is None:
-
-				if l==0:
-
-					break
-
-				else:
-
-					l-= 1
-
-			if l !=0:
-
-				coords_without_insertions.append(list_of_coord[l]+1)
-
-			else:
-
-				l=i
-
-				while list_of_coord[l] is None:
-
-					l+=1
-
-				coords_without_insertions.append(list_of_coord[l])
-
+	coords_without_insertions=modifier(list_of_coord)
 
 	where_dup=[]
 
@@ -137,6 +118,7 @@ def Modifier(list_of_coord,seq):
 			NewSeq+=seq[i]
 
 	return coords_purified,NewSeq
+
 
 
 
