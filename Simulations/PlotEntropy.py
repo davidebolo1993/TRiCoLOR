@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 
-#Plot entropy results for simulations. Useful to identify a treshold (mean - 3 stddevs, in this case) that allows to discriminate between sequences with a repetition (lower entropy) and sequences without repetitions (higher entropy). The scanning size is 50 bp
+#Plot entropy results for simulations. Useful to identify a treshold (mean - 3 stddevs, the one that we used) that allows to discriminate between sequences with a repetition (lower entropy) and sequences without repetitions (higher entropy). The scanning size is 50 bp
 
 
 import os
