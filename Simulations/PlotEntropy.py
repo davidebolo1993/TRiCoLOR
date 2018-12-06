@@ -8,6 +8,7 @@ import os
 import glob
 import math
 import random
+import pysam
 import plotly.graph_objs as go
 from plotly.offline import plot
 import plotly.figure_factory as ff
