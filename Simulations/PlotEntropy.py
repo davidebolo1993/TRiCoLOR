@@ -118,7 +118,7 @@ def Get_Entropy_From_Simulations(path, number_of_simulations):
 
 
 
-	#Normal
+	#Normals
 
 	No_en=[]
 	No_se=[]
