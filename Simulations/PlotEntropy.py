@@ -48,7 +48,6 @@ def BamScanner(bamfile,scansize=20):
 	BamFile=pysam.AlignmentFile(bamfile,"rb")
 
 	ent__=[]
-	seq__=[]
 
 	for read in BamFile.fetch():
 
@@ -65,18 +64,16 @@ def BamScanner(bamfile,scansize=20):
 				if len(sequence)-start >= scansize:
 
 					ent__.append(entropy(sequence[start:end]))
-					seq__.append(sequence[start:end])
 					start+=scansize
 					end+=scansize
 
 				else:
 
 					ent__.append(entropy(sequence[start:len(sequence)]))
-					seq__.append(sequence[start:len(sequence)])
 				
 					break
 
-	return ent__,seq__
+	return ent__
 
 
 
@@ -97,17 +94,15 @@ def Get_Consensus_Entropy_From_Simulations(path, number_of_simulations):
 	#Insertions
 
 	In_en=[]
-	In_se=[]
 
 
 	for bam in Insertions_bam:
 
-		en_,se_=BamScanner(bam[0])		
+		en_=BamScanner(bam[0])		
 		
     	if en_ != []:
 			
 		In_en.append(en_)
-		In_se.append(se_)
 
 	In_distributions=[]
 
@@ -122,17 +117,14 @@ def Get_Consensus_Entropy_From_Simulations(path, number_of_simulations):
 	#Normals
 
 	No_en=[]
-	No_se=[]
-
 
 	for bam in Normals_bam:
 
-		en_,se_=BamScanner(bam[0])
+		en_=BamScanner(bam[0])
 		
 		if en_ != []:
 			
 			No_en.append(en_)
-			No_se.append(se_)
 
 	No_distributions=[]
 
@@ -148,17 +140,14 @@ def Get_Consensus_Entropy_From_Simulations(path, number_of_simulations):
 	#Deletions
 
 	Del_en=[]
-	Del_se=[]
-
 
 	for bam in Deletions_bam:
 
-		en_,se_=BamScanner(bam[0])
+		en_=BamScanner(bam[0])
     
 		if en_ != []:
 			
 			Del_en.append(en_)
-			Del_se.append(se_)
 
 	Del_distributions=[]
 
@@ -196,14 +185,11 @@ def Get_Raw_Entropy_From_Simulations(path, number_of_simulations):
 	#Insertions
 
 	In_en=[]
-	In_se=[]
-
 
 	for bam in Insertions_bam:
 
-		en_,se_=BamScanner(bam)	
+		en_=BamScanner(bam)	
 		In_en.append(en_)
-		In_se.append(se_)
 
 	In_distributions=[]
 
@@ -218,14 +204,11 @@ def Get_Raw_Entropy_From_Simulations(path, number_of_simulations):
 	#Normal
 
 	No_en=[]
-	No_se=[]
-
 
 	for bam in Normals_bam:
 
-		en_,se_=BamScanner(bam)
+		en_=BamScanner(bam)
 		No_en.append(en_)
-		No_se.append(se_)
 
 	No_distributions=[]
 
@@ -241,15 +224,12 @@ def Get_Raw_Entropy_From_Simulations(path, number_of_simulations):
 	#Deletions
 
 	Del_en=[]
-	Del_se=[]
-
 
 	for bam in Deletions_bam:
 
 
-		en_,se_=BamScanner(bam)	
+		en_=BamScanner(bam)	
 		Del_en.append(en_)
-		Del_se.append(se_)
 
 	Del_distributions=[]
 
