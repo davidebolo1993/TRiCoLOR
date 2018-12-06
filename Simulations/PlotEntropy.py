@@ -70,7 +70,6 @@ def BamScanner(bamfile,scansize=20):
 				else:
 
 					ent__.append(entropy(sequence[start:len(sequence)]))
-				
 					break
 
 	return ent__
@@ -91,10 +90,10 @@ def Get_Consensus_Entropy_From_Simulations(path, number_of_simulations):
 	Deletions_bam=[glob.glob(os.path.abspath(path+'/Deletions/Sim'+str(i)+'/Res'+str(i)+'/haplotype1')+'/*.srt.bam') for i in range(1,number_of_simulations+1)]
 	Deletions_bam=[x for x in Deletions_bam if x != []]
 
+	
 	#Insertions
 
 	In_en=[]
-
 
 	for bam in Insertions_bam:
 
@@ -111,7 +110,6 @@ def Get_Consensus_Entropy_From_Simulations(path, number_of_simulations):
 		In_distributions.extend(el[0:-1])
 
 	In_MS=mean(In_distributions) - 3 *stddev(In_distributions)
-
 
 
 	#Normals
@@ -132,9 +130,7 @@ def Get_Consensus_Entropy_From_Simulations(path, number_of_simulations):
 
 		No_distributions.extend(el[0:-1])
 
-
 	No_MS=mean(No_distributions) - 3 *stddev(No_distributions)
-
 
 
 	#Deletions
@@ -182,6 +178,7 @@ def Get_Raw_Entropy_From_Simulations(path, number_of_simulations):
 	Deletions_bam=[os.path.abspath(path + '/Deletions/Sim'+str(i)+'/DelSimh1_'+str(i)+'.srt.bam') for i in range(1,number_of_simulations+1)][:10]
 	Deletions_bam=[x for x in Deletions_bam if x != []]
 
+	
 	#Insertions
 
 	In_en=[]
@@ -198,7 +195,6 @@ def Get_Raw_Entropy_From_Simulations(path, number_of_simulations):
 		In_distributions.extend(el[0:-1])
 
 	In_MS=mean(In_distributions) - 3 *stddev(In_distributions)
-
 
 
 	#Normal
@@ -218,7 +214,6 @@ def Get_Raw_Entropy_From_Simulations(path, number_of_simulations):
 
 
 	No_MS=mean(No_distributions) - 3 *stddev(No_distributions)
-
 
 
 	#Deletions
