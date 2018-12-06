@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 
-#Plot entropy results for simulations. Useful to identify a treshold (mean - 3 stddevs, the one that we used) that allows to discriminate between sequences with a repetition (lower entropy) and sequences without repetitions (higher entropy). The scanning size is 50 bp
+#Plot entropy results for simulations. Useful to identify a treshold (mean - 3 stddevs, the one that we used) that allows to discriminate between sequences with a repetition (lower entropy) and sequences without repetitions (higher entropy). The scanning size is 20 bp. The resulting treshold was 1.1
 
 
 import os
@@ -42,7 +42,7 @@ def entropy(string):
 	return entropy
 
 
-def BamScanner(bamfile,scansize=50):
+def BamScanner(bamfile,scansize=20):
 
 	BamFile=pysam.AlignmentFile(bamfile,"rb")
 
@@ -177,5 +177,5 @@ def Get_Entropy_From_Simulations(path, number_of_simulations):
 
 
 
-
+#This was tested both on raw and consensus .bam files. Of course consensus .bam files, as they are corrected, have lower entropy in repetitive regions than the raw ones. For the raw ones, the treshold we calculated in the same way is 1.2-1.3 but plotting so many values in plotly is very expensive from a computational point of view.
 
