@@ -39,8 +39,10 @@ def Get_Alignment_Positions(bamfile,chromosome,start,end):
 
 	for read in BamFile.fetch(chromosome, start, end):
 
-		coords = read.get_reference_positions(full_length=True)
-		seq=read.seq
+		if not read.is_unmapped and not read.is_secondary:
+
+			coords = read.get_reference_positions(full_length=True)
+			seq=read.seq
 
 	return coords,seq
 
