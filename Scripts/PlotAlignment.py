@@ -1,13 +1,10 @@
 #!/usr/bin/python
 
-#!/usr/bin/python
-
 import os
 import glob
 import pyfaidx
 import pysam
 from collections import defaultdict
-from Bio import SeqIO
 import pandas as pd
 import plotly.plotly as py
 import plotly.graph_objs as go
@@ -19,7 +16,7 @@ import argparse
 def main():
 
 	parser = argparse.ArgumentParser()
-	parser.add_argument("--reference_fasta", help="reference fasta file generated during the repeats identification")
+	parser.add_argument("--reference_fasta", help="reference fasta")
 	parser.add_argument("--hap1_bam", help=".srt.bam file created by merging all the  consensus .srt.bam file generated for haplotype 1")
 	parser.add_argument("--hap2_bam", help=".srt.bam file created by merging all the  consensus .srt.bam file generated for haplotype 2")
 	parser.add_argument("--chromosome", help="chromosome number")
@@ -63,7 +60,7 @@ def list_duplicates(list_of_seq):
 def modifier(coordinates): #fast way to remove None and substitute with closest number in list
 
 	
-	coordinates=[el+1 if el is not None else el for el in coordinates]
+	coordinates=[el+1 if el is not None else el for el in coordinates] #get true coordinates
 	start = next(ele for ele in coordinates if ele is not None)
 
 	for ind, ele in enumerate(coordinates):
@@ -129,14 +126,6 @@ def Modifier(list_of_coord,seq):
 
 def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start,end,ref_table,hap1_table,hap2_table,label,out):
 
-	#deal with reference first
-	for record in SeqIO.parse(reference_fasta,"fasta"):
-
-		header=record.id
-		chromosome=header.split(":")[0]
-		reference_left_right_coords=(int(header.split(":")[1].split("-")[0]),int(header.split(":")[1].split("-")[1]))
-		ref_tot_seq=record.seq
-
 	# deal with Haplo1 and Haplo2
 	bam1_coords,bam1_seq=Get_Alignment_Positions(hap1_bam,chromosome,start,end)
 	bam1_mod_coords,bam1_mod_seq=Modifier(bam1_coords,bam1_seq)
@@ -153,12 +142,10 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 	min_=min(mins)
 	max_=max(maxs)
 
-	ref_tot_coords=list(range(reference_left_right_coords[0],reference_left_right_coords[1]+1))
-
-	Ind_ref_start=[i for i,s in enumerate(ref_tot_coords) if s == min_][0]
-	Ind_ref_end=[i for i,e in enumerate(ref_tot_coords) if e == max_][0]
-
-	ref_seq=ref_tot_seq[Ind_ref_start:Ind_ref_end+1]
+	ref=pyfaidx.Fasta(reference_fasta)
+	chrom=ref[chromosome]
+	ref_seq=chrom[:len(chrom)].seq
+	ref_seq=ref_seq[min_-1:max_]
 
 	Reference_Trace = go.Scatter(
 		x = list(range(min_,max_+1)), # works with positions
