@@ -15,21 +15,21 @@ import argparse
 
 def main():
 
-	parser = argparse.ArgumentParser()
-	parser.add_argument("--reference_fasta", help="reference fasta")
-	parser.add_argument("--hap1_bam", help=".srt.bam file created by merging all the  consensus .srt.bam file generated for haplotype 1")
-	parser.add_argument("--hap2_bam", help=".srt.bam file created by merging all the  consensus .srt.bam file generated for haplotype 2")
-	parser.add_argument("--chromosome", help="chromosome number")
-	parser.add_argument("--start", type=int, help="start coordinate of the repetition you are interested to look at. Even the neighbors repetitions are plotted")
-	parser.add_argument("--end", type=int, help="end coordinate of the repetition you are interested to look at. Evend the neighbors repetitions are plotted")
-	parser.add_argument("--ref_table", default=None,help=".tsv file containing repetitions found in reference")
-	parser.add_argument("--hap1_table",default=None, help=".tsv file containing repetitions found in haplotype 1")
-	parser.add_argument("--hap2_table", default=None, help=".tsv file containing repetitions found in haplotype 2")
-	parser.add_argument("--label", help="label to identify the plot")
-	parser.add_argument("--out", help="where to save the .html file")
+	parser = argparse.ArgumentParser(prog='TRiCoLOR', description='''Interactive Viewer for main TRiCoLOR results''', epilog='''This program was developed by Davide Bolognini and Tobias Rausch at the European Molecular Biology Laboratory/European Bioinformatic Institute( EMBL/EBI)''')
+	parser.add_argument("-g", "--genome", metavar='', help="reference fasta")
+	parser.add_argument("-mb1", "--merged_bam1",metavar='', help=".srt.bam file created by merging all the  consensus .srt.bam file generated for haplotype 1")
+	parser.add_argument("-mb2","--merged_bam2", metavar='', help=".srt.bam file created by merging all the  consensus .srt.bam file generated for haplotype 2")
+	parser.add_argument("-chr", "--chromosome",metavar='', help="chromosome number")
+	parser.add_argument("-s", "--start", type=int, metavar='',help="start coordinate of the repetition you are interested to look at. Even the neighbors repetitions are plotted")
+	parser.add_argument("-e","--end", type=int, metavar='',help="end coordinate of the repetition you are interested to look at. Even the neighbors repetitions are plotted")
+	parser.add_argument("-rt", "--ref_table", metavar='',default=None, help=".tsv file containing repetitions found in reference")
+	parser.add_argument("-b1t", "--bam1_table", metavar='', default=None, help=".tsv file containing repetitions found in haplotype 1")
+	parser.add_argument("-b2t", "--bam2_table", metavar='', default=None, help=".tsv file containing repetitions found in haplotype 2")
+	parser.add_argument("-l", "--label", metavar='', help="label to identify the plot")
+	parser.add_argument("-o", "--out", metavar='', help="where to save the .html file")
 	args = parser.parse_args()
 
-	Generate_Alignment_ToPlot(args.reference_fasta,args.hap1_bam,args.hap2_bam,args.chromosome,args.start,args.end,args.ref_table,args.hap1_table,args.hap2_table,args.label,args.out)
+	Generate_Alignment_ToPlot(args.genome,args.merged_bam1,args.merged_bam2,args.chromosome,args.start,args.end,args.ref_table,args.bam1_table,args.bam2_table,args.label,args.out)
 
 
 
