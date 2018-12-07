@@ -15,7 +15,7 @@ import argparse
 
 def main():
 
-	parser = argparse.ArgumentParser(prog='TRiCoLOR', description='''Interactive viewer for TRiCoLOR results''', epilog='''This program was developed by Davide Bolognini and Tobias Rausch at the European Molecular Biology Laboratory/European Bioinformatic Institute( EMBL/EBI)''')
+	parser = argparse.ArgumentParser(prog='TRiCoLOR', description='''Interactive viewer for TRiCoLOR results''', epilog='''This program was developed by Davide Bolognini and Tobias Rausch at the European Molecular Biology Laboratory/European Bioinformatic Institute (EMBL/EBI)''')
 	parser.add_argument("-g", "--genome", metavar='', help="reference fasta")
 	parser.add_argument("-mb1", "--merged_bam1",metavar='', help=".srt.bam file created by merging all the  consensus .srt.bam file generated for haplotype 1")
 	parser.add_argument("-mb2","--merged_bam2", metavar='', help=".srt.bam file created by merging all the  consensus .srt.bam file generated for haplotype 2")
