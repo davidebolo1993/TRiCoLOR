@@ -100,7 +100,7 @@ def plotFMeasures(fstepsize=.1, stepsize=0.001):
 
 
 
-def plotPrecisionRecallDiagram(title=None, points=None, labels=None,colors=None,linecolors=None,loc=0):
+def plotPrecisionRecallDiagram(title=None, points=None, labels=None,colors=None,lines=None, linecolors=None,loc=0):
 
 	ax = plt.gca()   
 	plt.title(title)
@@ -118,14 +118,16 @@ def plotPrecisionRecallDiagram(title=None, points=None, labels=None,colors=None,
 			scp = ax.scatter(x, y, label=label, c=color,s=50, linewidths=0.75, alpha=0.75)
 			scps.append(scp)
 
-		if linecolors is not None:
+		if lines is not None:
+			
+			if linecolors is not None:
 
-			lines = ax.plot([el[0] for el in points[h]],[el[1] for el in points[h]],":", color=linecolors[h], linewidth=0.5)
+				lines = ax.plot([el[0] for el in points[h]],[el[1] for el in points[h]],":", color=linecolors[h], linewidth=0.5)
 
-		else:
+			else:
 
-			lines= ax.plot([el[0] for el in points[h]],[el[1] for el in points[h]],":", color="black", linewidth=0.5)
-		
+				lines= ax.plot([el[0] for el in points[h]],[el[1] for el in points[h]],":", color="black", linewidth=0.5)
+				
 		plt.legend(loc=loc, scatterpoints=1, numpoints=1, fancybox=False) #loc=0 guess the best location for legend
 	
 	plt.axis([-0.02, 1.02, -0.02, 1.02])
