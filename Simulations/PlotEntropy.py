@@ -44,7 +44,7 @@ def entropy(string):
 	return entropy
 
 
-def BamScanner(bamfile,scansize=20):
+def BamScanner(bamfile,scansize):
 
 	BamFile=pysam.AlignmentFile(bamfile,"rb")
 
@@ -77,7 +77,7 @@ def BamScanner(bamfile,scansize=20):
 
 
 
-def Get_Consensus_Entropy_From_Simulations(path, number_of_simulations):
+def Get_Consensus_Entropy_From_Simulations(path, number_of_simulations,scansize):
 
 
 	Insertions_bam=[glob.glob(os.path.abspath(path + '/Insertions/Sim'+str(i)+'/Res'+str(i)+'/haplotype1')+'/*.srt.bam') for i in range(1,number_of_simulations+1)]
@@ -98,7 +98,7 @@ def Get_Consensus_Entropy_From_Simulations(path, number_of_simulations):
 
 	for bam in Insertions_bam:
 
-		en_=BamScanner(bam[0])		
+		en_=BamScanner(bam[0],scansize)		
 		
     	if en_ != []:
 			
@@ -119,7 +119,7 @@ def Get_Consensus_Entropy_From_Simulations(path, number_of_simulations):
 
 	for bam in Normals_bam:
 
-		en_=BamScanner(bam[0])
+		en_=BamScanner(bam[0],scansize)
 		
 		if en_ != []:
 			
@@ -140,7 +140,7 @@ def Get_Consensus_Entropy_From_Simulations(path, number_of_simulations):
 
 	for bam in Deletions_bam:
 
-		en_=BamScanner(bam[0])
+		en_=BamScanner(bam[0],scansize)
     
 		if en_ != []:
 			
@@ -186,7 +186,7 @@ def Get_Raw_Entropy_From_Simulations(path, number_of_simulations):
 
 	for bam in Insertions_bam:
 
-		en_=BamScanner(bam)	
+		en_=BamScanner(bam,scansize)	
 		In_en.append(en_)
 
 	In_distributions=[]
@@ -204,7 +204,7 @@ def Get_Raw_Entropy_From_Simulations(path, number_of_simulations):
 
 	for bam in Normals_bam:
 
-		en_=BamScanner(bam)
+		en_=BamScanner(bam,scansize)
 		No_en.append(en_)
 
 	No_distributions=[]
@@ -224,7 +224,7 @@ def Get_Raw_Entropy_From_Simulations(path, number_of_simulations):
 	for bam in Deletions_bam:
 
 
-		en_=BamScanner(bam)	
+		en_=BamScanner(bam,scansize)	
 		Del_en.append(en_)
 
 	Del_distributions=[]
