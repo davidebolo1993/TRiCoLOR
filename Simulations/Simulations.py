@@ -401,7 +401,7 @@ def Precision_Recall_and_Exact_Core(number_of_simulations, out):
 
 	Correct_Core1=0
 	Incorrect_Core1=0
-	Traspose_Core1=0
+	Transpose_Core1=0
 
 
 
@@ -424,7 +424,7 @@ def Precision_Recall_and_Exact_Core(number_of_simulations, out):
 
 		elif TableDel['Hap1_Core'][i].split(':')[2] in Shifted(TableDel['Hap1_Core'][i].split(':')[1].split('-')[0]):
 
-			Traspose_Core1 += 1
+			Transpose_Core1 += 1
 
 		else:
 
@@ -446,7 +446,7 @@ def Precision_Recall_and_Exact_Core(number_of_simulations, out):
 
 		elif TableDel['Hap2_Core'][i].split(':')[2] in Shifted(TableDel['Hap2_Core'][i].split(':')[1].split('-')[0]):
 
-			Traspose_Core1 += 1
+			Transpose_Core1 += 1
 
 		else:
 
@@ -459,7 +459,7 @@ def Precision_Recall_and_Exact_Core(number_of_simulations, out):
 	Deletions_Precision_Recall1=(DeletionPrecision1,DeletionRecall1)
 
 
-	#Exact_Core_Del=[[Correct_Core1,Traspose_Core1],[Incorrect_Core1,.0]] #fraction of correct cores. Others are shifted cores. For other deletions is the same, of course
+	#Exact_Core_Del=[[Correct_Core1,Transpose_Core1],[Incorrect_Core1,.0]] #fraction of correct cores. Others are shifted cores. For other deletions is the same, of course
 
 
 	#Exact Number of Repetitions +-2
@@ -599,7 +599,7 @@ def Precision_Recall_and_Exact_Core(number_of_simulations, out):
 
 	Correct_Core2=0
 	Incorrect_Core2=0
-	Traspose_Core2=0
+	Transpose_Core2=0
 
 
 
@@ -621,7 +621,7 @@ def Precision_Recall_and_Exact_Core(number_of_simulations, out):
 
 		elif TableExp['Hap1_Core'][i].split(':')[2] in Shifted(TableExp['Hap1_Core'][i].split(':')[1].split('-')[0]):
 
-			Traspose_Core2 +=1
+			Transpose_Core2 +=1
 
 
 		else:
@@ -645,7 +645,7 @@ def Precision_Recall_and_Exact_Core(number_of_simulations, out):
 
 		elif TableExp['Hap2_Core'][i].split(':')[2] in Shifted(TableExp['Hap2_Core'][i].split(':')[1].split('-')[0]):
 
-			Traspose_Core2 +=1
+			Transpose_Core2 +=1
 
 
 		else:
@@ -660,7 +660,7 @@ def Precision_Recall_and_Exact_Core(number_of_simulations, out):
 
 
 
-	Exact_Core=[[(Correct_Core1+Correct_Core2)/(Correct_Core1+Correct_Core2+Traspose_Core1+Traspose_Core2+Incorrect_Core1+Incorrect_Core2),(Traspose_Core1+Traspose_Core2)/(Correct_Core1+Correct_Core2+Traspose_Core1+Traspose_Core2+Incorrect_Core1+Incorrect_Core2)],[(Incorrect_Core1+Incorrect_Core2)/(Correct_Core1+Correct_Core2+Traspose_Core1+Traspose_Core2+Incorrect_Core1+Incorrect_Core2),0]] #fraction of correct cores. Others are shifted cores. For other deletions is the same, of course
+	Exact_Core=[[(Correct_Core1+Correct_Core2)/(Correct_Core1+Correct_Core2+Transpose_Core1+Transpose_Core2+Incorrect_Core1+Incorrect_Core2),(Transpose_Core1+Transpose_Core2)/(Correct_Core1+Correct_Core2+Transpose_Core1+Transpose_Core2+Incorrect_Core1+Incorrect_Core2)],[(Incorrect_Core1+Incorrect_Core2)/(Correct_Core1+Correct_Core2+Transpose_Core1+Transpose_Core2+Incorrect_Core1+Incorrect_Core2),0]] #fraction of correct cores. Others are shifted cores. For other deletions is the same, of course
 
 
 
