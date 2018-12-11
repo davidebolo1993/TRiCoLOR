@@ -867,13 +867,13 @@ def ConstructPie(title=None, points=None):
 
 
 
-
+#Example
 #Executing codes...
 
 
 for simtype in ['contraction', 'expansion']:
 
-	Simulate(bed, reference, number_of_simulations, sim_type=simtype, model_qc, accuracy, out)
+	Simulate(bed, reference, number_of_simulations, sim_type=simtype, model_qc, accuracy=0.9, out)
 
 	#or run in parallel in 2 different ipython idles
 	#Simulate('/home/bolognin/DataForSim/KnownRepetitions.bed', '/home/bolognin/TRiCoLOR/GenomeDir/GRCh38Decoy.fa', 100, 'contraction', '/home/bolognin/DataForSim/model_qc_clr', 0.9, '/home/bolognin/Simulations_Accuracy_09')
