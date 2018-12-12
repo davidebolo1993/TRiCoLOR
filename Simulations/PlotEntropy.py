@@ -1,3 +1,5 @@
+
+
 #!/usr/bin/python
 
 
@@ -80,23 +82,23 @@ def BamScanner(bamfile,scansize):
 def Get_Consensus_Entropy_From_Simulations(path, number_of_simulations,scansize):
 
 
-	Insertions_bam=[glob.glob(os.path.abspath(path + '/Insertions/Sim'+str(i)+'/Res'+str(i)+'/haplotype1')+'/*.srt.bam') for i in range(1,number_of_simulations+1)]
-	Insertions_bam=[x for x in Insertions_bam if x != []]
+	Expansions_bam=[glob.glob(os.path.abspath(path + '/Expansions/Sim'+str(i)+'/Res'+str(i)+'/haplotype1')+'/*.srt.bam') for i in range(1,number_of_simulations+1)]
+	Expansions_bam=[x for x in Expansions_bam if x != []]
 
 
-	Normals_bam=[glob.glob(os.path.abspath(path+ '/Insertions/Sim'+str(i)+'/Res'+str(i)+'/haplotype2')+'/*.srt.bam') for i in range(1,number_of_simulations+1)]
+	Normals_bam=[glob.glob(os.path.abspath(path+ '/Expansions/Sim'+str(i)+'/Res'+str(i)+'/haplotype2')+'/*.srt.bam') for i in range(1,number_of_simulations+1)]
 	Normals_bam=[x for x in Normals_bam if x != []]
 
 
-	Deletions_bam=[glob.glob(os.path.abspath(path+'/Deletions/Sim'+str(i)+'/Res'+str(i)+'/haplotype1')+'/*.srt.bam') for i in range(1,number_of_simulations+1)]
-	Deletions_bam=[x for x in Deletions_bam if x != []]
+	Contractions_bam=[glob.glob(os.path.abspath(path+'/Contractions/Sim'+str(i)+'/Res'+str(i)+'/haplotype1')+'/*.srt.bam') for i in range(1,number_of_simulations+1)]
+	Contractions_bam=[x for x in Contractions_bam if x != []]
 
 	
-	#Insertions
+	#Expansions
 
 	In_en=[]
 
-	for bam in Insertions_bam:
+	for bam in Expansions_bam:
 
 		en_=BamScanner(bam[0],scansize)		
 		
@@ -134,11 +136,11 @@ def Get_Consensus_Entropy_From_Simulations(path, number_of_simulations,scansize)
 	No_MS=mean(No_distributions) - 3 *stddev(No_distributions)
 
 
-	#Deletions
+	#Contractions
 
 	Del_en=[]
 
-	for bam in Deletions_bam:
+	for bam in Contractions_bam:
 
 		en_=BamScanner(bam[0],scansize)
     
@@ -165,26 +167,26 @@ def Get_Consensus_Entropy_From_Simulations(path, number_of_simulations,scansize)
 
 #When we are scanning the genome for the first time, we use raw reads, so the treshold must be calculated using raw reads. The previous was just an example. 
 	
-def Get_Raw_Entropy_From_Simulations(path, number_of_simulations):
+def Get_Raw_Entropy_From_Simulations(path, number_of_simulations,scansize):
 
 
-	Insertions_bam=[os.path.abspath(path + '/Insertions/Sim'+str(i)+'/InsSimh1_'+str(i)+'.srt.bam') for i in range(1,number_of_simulations+1)][:10]
-	Insertions_bam=[x for x in Insertions_bam if x != []]
+	Expansions_bam=[os.path.abspath(path + '/Expansions/Sim'+str(i)+'/Simh1.srt.bam') for i in range(1,number_of_simulations+1)][:10]
+	Expansions_bam=[x for x in Expansions_bam if x != []]
 
 
-	Normals_bam=[os.path.abspath(path + '/Insertions/Sim'+str(i)+'/InsSimh2_'+str(i)+'.srt.bam') for i in range(1,number_of_simulations+1)][:10]
+	Normals_bam=[os.path.abspath(path + '/Expansions/Sim'+str(i)+'/Simh2.srt.bam') for i in range(1,number_of_simulations+1)][:10]
 	Normals_bam=[x for x in Normals_bam if x != []]
 
 
-	Deletions_bam=[os.path.abspath(path + '/Deletions/Sim'+str(i)+'/DelSimh1_'+str(i)+'.srt.bam') for i in range(1,number_of_simulations+1)][:10]
-	Deletions_bam=[x for x in Deletions_bam if x != []]
+	Contractions_bam=[os.path.abspath(path + '/Contractions/Sim'+str(i)+'/Simh1.srt.bam') for i in range(1,number_of_simulations+1)][:10]
+	Contractions_bam=[x for x in Contractions_bam if x != []]
 
 	
-	#Insertions
+	#Expansions
 
 	In_en=[]
 
-	for bam in Insertions_bam:
+	for bam in Expansions_bam:
 
 		en_=BamScanner(bam,scansize)	
 		In_en.append(en_)
@@ -217,11 +219,11 @@ def Get_Raw_Entropy_From_Simulations(path, number_of_simulations):
 	No_MS=mean(No_distributions) - 3 *stddev(No_distributions)
 
 
-	#Deletions
+	#Contractions
 
 	Del_en=[]
 
-	for bam in Deletions_bam:
+	for bam in Contractions_bam:
 
 
 		en_=BamScanner(bam,scansize)	
@@ -249,4 +251,3 @@ def Get_Raw_Entropy_From_Simulations(path, number_of_simulations):
 
 
 	plot(fig, filename=os.path.abspath(path + '/RawEntropy.html'), auto_open=False)
-
