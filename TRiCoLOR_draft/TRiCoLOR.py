@@ -631,7 +631,7 @@ def CleanResults(out):
 
 		try:
 
-			subprocess.check_call(['sh', '/home/bolognin/TRiCoLOR_py/Merging.sh', os.path.abspath(out_[1]),os.path.abspath(out_[1]+'/Haplotype2.merged')],stderr=open(os.devnull, 'wb'))
+			subprocess.check_call(['sh', '/home/bolognin/TRiCoLOR_py/Merging.sh', os.path.abspath(out_[2]),os.path.abspath(out_[2]+'/Haplotype2.merged')],stderr=open(os.devnull, 'wb'))
 
 		except:
 
