@@ -7,4 +7,4 @@ samtools view -bH $file > $2.bam
 find $1 -name '*srt.bam' -exec samtools view -b {} \; >> $2'.bam'
 samtools sort $2'.bam' > $2'.srt.bam'
 rm $2'.bam'
-samtools index $2'srt.bam'
+samtools index $2'.srt.bam'
