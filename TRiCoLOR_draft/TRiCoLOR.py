@@ -539,13 +539,33 @@ def CompareTables(out, iteration):
 
 	#Compare repetitions found in the reference and in the 2 haplotype-resolved .bam files for the region
 
-	MergedHaploTab=Haplo_One_Tab.merge(Haplo_Two_Tab, how='outer', indicator=True)
-	MergedHaploTab.sort_values(by=['Chromosome','Start'], inplace=True) #don't know if it's needed
-	MergedHaploTab.replace(to_replace={'_merge':{'left_only':'H1', 'right_only':'H2'}}, inplace=True)
-	MergedHaploTab.rename({'_merge': 'haplo_differences'}, axis='columns', inplace=True) #rename to avoid problem with the next indicator
-	MergedRefHaplo=MergedHaploTab=Reference_Tab.merge(MergedHaploTab, how='outer', indicator=True)
-	MergedRefHaplo.sort_values(by=['Chromosome','Start'], inplace=True) #don't know if it's needed
-	MergedRefHaplo.reset_index(inplace=True)
+	try:
+
+		MergedHaploTab=Haplo_One_Tab.merge(Haplo_Two_Tab, how='outer', indicator=True)
+		MergedHaploTab.sort_values(by=['Chromosome','Start'], inplace=True) #don't know if it's needed
+		MergedHaploTab.replace(to_replace={'_merge':{'left_only':'H1', 'right_only':'H2'}}, inplace=True)
+		MergedHaploTab.rename({'_merge': 'haplo_differences'}, axis='columns', inplace=True) #rename to avoid problem with the next indicator
+		MergedRefHaplo=MergedHaploTab=Reference_Tab.merge(MergedHaploTab, how='outer', indicator=True)
+		MergedRefHaplo.sort_values(by=['Chromosome','Start'], inplace=True) #don't know if it's needed
+		MergedRefHaplo.reset_index(inplace=True)
+
+	except: #the previous way of comparing tables fails when a table is empty and the other one has just one line
+
+		if Haplo_One_Tab.empty:
+
+			MergedHaploTab=Haplo_Two_Tab
+			MergedHaploTab['haplo_differences']='H2'
+			MergedRefHaplo=MergedHaploTab=Reference_Tab.merge(MergedHaploTab, how='outer', indicator=True)
+			MergedRefHaplo.sort_values(by=['Chromosome','Start'], inplace=True) #don't know if it's needed
+			MergedRefHaplo.reset_index(inplace=True)
+
+		else:
+
+			MergedHaploTab=Haplo_One_Tab
+			MergedHaploTab['haplo_differences']='H2'
+			MergedRefHaplo=MergedHaploTab=Reference_Tab.merge(MergedHaploTab, how='outer', indicator=True)
+			MergedRefHaplo.sort_values(by=['Chromosome','Start'], inplace=True) #don't know if it's needed
+			MergedRefHaplo.reset_index(inplace=True)
 
 
 	FinalCol=[]
