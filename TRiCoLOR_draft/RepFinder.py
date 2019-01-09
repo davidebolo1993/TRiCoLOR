@@ -1,5 +1,3 @@
-#!/usr/bin/python env
-
 import re
 import itertools
 import bisect
@@ -120,6 +118,9 @@ def RepeatsFinder(string,kmer,times): #find repetitions in string using the RegE
 
 
 def Get_Alignment_Positions(bamfilein): #as the consensus sequence is supposed to generate just one sequence aligned to the reference, secondary alignments are removed
+	
+	coords=[]
+	seq=[]
 
 	bamfile=pysam.AlignmentFile(bamfilein,'rb')
 
@@ -129,6 +130,11 @@ def Get_Alignment_Positions(bamfilein): #as the consensus sequence is supposed t
 
 			coords = read.get_reference_positions(full_length=True)
 			seq=read.seq
+
+		else:
+
+			bamfile.close()
+			return coords,seq
 
 	bamfile.close()
 
