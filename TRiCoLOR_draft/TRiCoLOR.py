@@ -562,7 +562,7 @@ def CompareTables(out, iteration):
 		else:
 
 			MergedHaploTab=Haplo_One_Tab
-			MergedHaploTab['haplo_differences']='H2'
+			MergedHaploTab['haplo_differences']='H1'
 			MergedRefHaplo=MergedHaploTab=Reference_Tab.merge(MergedHaploTab, how='outer', indicator=True)
 			MergedRefHaplo.sort_values(by=['Chromosome','Start'], inplace=True) #don't know if it's needed
 			MergedRefHaplo.reset_index(inplace=True)
