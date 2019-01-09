@@ -613,11 +613,6 @@ def CleanResults(out, bam1, bam2):
 			return
 
 
-		for files in Hap1_Bams:
-
-			os.remove(files)
-
-
 	Hap2_Bams=glob.glob(os.path.abspath(out_[2])+'/*.srt.bam')
 
 
@@ -636,11 +631,6 @@ def CleanResults(out, bam1, bam2):
 			print('Something wrong in final merging for haplotype 2. Aborted last step')
 
 			return
-
-		
-		for files in Hap2_Bams:
-
-			os.remove(files)
 
 
 	RefTables=glob.glob(os.path.abspath(out_[0])+'/*.tsv')
@@ -682,4 +672,3 @@ def CleanResults(out, bam1, bam2):
 if __name__ == main():
 
 	main()
-
