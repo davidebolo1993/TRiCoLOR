@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#merging .bam files without exeeding limit of 1024 open files at time
+#merging .bam files without exceeding the number of opened files at the same time
 
 cd $2
 samtools view -H $1 > $3.sam
