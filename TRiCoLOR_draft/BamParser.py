@@ -1,5 +1,3 @@
-#!/usr/bin/python env
-
 import sys
 import os
 import glob
@@ -66,6 +64,10 @@ def Get_Coords(pysam_AlignedSegment,start,end):
 	ind_end=Get_End_Ind(a_coord,end)
 
 	if ind_start is None or ind_end is None:
+
+		return
+
+	elif ind_end[0] - ind_start[0] <= 10: #set a cut-off. If start and end indexes are approximatley the same, it means that wanted coordinates are not in the sequence (closest are taken)
 
 		return
 
