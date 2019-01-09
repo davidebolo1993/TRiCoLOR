@@ -174,29 +174,29 @@ def main():
 
 		print(start, end)
 
-		try:
+		#try:
 
-			further = Ref_Repeats(ref_seq, chromosome, start, end, args.motif, args.times, args.size, args.output,i)
+		further = Ref_Repeats(ref_seq, chromosome, start, end, args.motif, args.times, args.size, args.output,i)
 
-			if further:
+		if further:
 
-				p1=Process(target=Haplo1_Repeats, args=(os.path.abspath(args.bam1), chromosome, start, end, args.motif, args.times, args.size, ref_seq, mmi_ref, args.output, i))
-				p2=Process(target=Haplo2_Repeats, args=(os.path.abspath(args.bam2), chromosome, start, end, args.motif, args.times, args.size, ref_seq, mmi_ref, args.output, i))
-				p1.start()
-				p2.start()
-				p1.join()
-				p2.join()
-				CompareTables(args.output,i)
+			p1=Process(target=Haplo1_Repeats, args=(os.path.abspath(args.bam1), chromosome, start, end, args.motif, args.times, args.size, ref_seq, mmi_ref, args.output, i))
+			p2=Process(target=Haplo2_Repeats, args=(os.path.abspath(args.bam2), chromosome, start, end, args.motif, args.times, args.size, ref_seq, mmi_ref, args.output, i))
+			p1.start()
+			p2.start()
+			p1.join()
+			p2.join()
+			CompareTables(args.output,i)
 
-			else:
+		else:
 
-				continue
+			continue
 
-		except:
+		#except:
 
-			with open (os.path.abspath(args.output + '/Log.txt'),'a') as logout:
+		#with open (os.path.abspath(args.output + '/Log.txt'),'a') as logout:
 
-				logout.write('Something wrong in region ' + str(start) + '-' + str(end) + '\n')
+			#logout.write('Something wrong in region ' + str(start) + '-' + str(end) + '\n')
 
 	CleanResults(args.output, os.path.abspath(args.bam1), os.path.abspath(args.bam2))
 
@@ -396,23 +396,33 @@ def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq,
 		for bam in consensus_bams:
 
 			coords,seq=Get_Alignment_Positions(bam)
-			repetitions=list(RepeatsFinder(seq,kmer,times))
 
-			if isEmpty(repetitions): #no repetitions found in the region
+			if isEmpty(seq):
 
-				if bam != consensus_bams[-1]: #not the last one
+				Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '_RepetitionsTable.tsv'))
+				Table.write()
 
-					continue
-
-				else:
-
-					Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '_RepetitionsTable.tsv'))
-					Table.write()
+				continue
 
 			else:
 
-				cor_coord_reps=corrector(ref_seq, seq, repetitions, coords, size, allowed=1) #probably an exception here is needed
-				ResultsWriter_FromCons(chromosome, cor_coord_reps,out_,iteration)
+				repetitions=list(RepeatsFinder(seq,kmer,times))
+
+				if isEmpty(repetitions): #no repetitions found in the region
+
+					if bam != consensus_bams[-1]: #not the last one
+
+						continue
+
+					else:
+
+						Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '_RepetitionsTable.tsv'))
+						Table.write()
+
+				else:
+
+					cor_coord_reps=corrector(ref_seq, seq, repetitions, coords, size, allowed=1) #probably an exception here is needed
+					ResultsWriter_FromCons(chromosome, cor_coord_reps,out_,iteration)
 
 		if len(consensus_bams) == 1:
 
@@ -464,23 +474,33 @@ def Haplo2_Repeats(bamfile2, chromosome, start, end, kmer, times, size, ref_seq,
 		for bam in consensus_bams:
 
 			coords,seq=Get_Alignment_Positions(bam)
-			repetitions=list(RepeatsFinder(seq,kmer,times))
 
-			if isEmpty(repetitions): #no repetitions found in the region
+			if isEmpty(seq):
 
-				if bam != consensus_bams[-1]: #not the last one
+				Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '_RepetitionsTable.tsv'))
+				Table.write()
 
-					continue
-
-				else:
-
-					Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '_RepetitionsTable.tsv'))
-					Table.write()
+				continue
 
 			else:
 
-				cor_coord_reps=corrector(ref_seq, seq, repetitions, coords, size, allowed=1) #probably an exception here is needed
-				ResultsWriter_FromCons(chromosome, cor_coord_reps,out_,iteration)
+				repetitions=list(RepeatsFinder(seq,kmer,times))
+
+				if isEmpty(repetitions): #no repetitions found in the region
+
+					if bam != consensus_bams[-1]: #not the last one
+
+						continue
+
+					else:
+
+						Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '_RepetitionsTable.tsv'))
+						Table.write()
+
+				else:
+
+					cor_coord_reps=corrector(ref_seq, seq, repetitions, coords, size, allowed=1) #probably an exception here is needed
+					ResultsWriter_FromCons(chromosome, cor_coord_reps,out_,iteration)
 
 		if len(consensus_bams) == 1:
 
@@ -507,9 +527,6 @@ def Haplo2_Repeats(bamfile2, chromosome, start, end, kmer, times, size, ref_seq,
 def CompareTables(out, iteration):
 
 	out=os.path.abspath(out)
-
-	#merge all the .srt.bam files for the two haplotypes
-
 	out_=[os.path.abspath(out+j) for j in ['/reference', '/haplotype1', '/haplotype2']]
 
 	Reference_Tsv=os.path.abspath(out_[0] + '/' + str(iteration +1) + '_RepetitionsTable.tsv')
