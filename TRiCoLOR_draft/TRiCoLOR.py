@@ -6,7 +6,7 @@ import pysam
 import glob
 import subprocess
 import itertools
-import bisect
+#import bisect
 import csv
 import math
 from collections import defaultdict
