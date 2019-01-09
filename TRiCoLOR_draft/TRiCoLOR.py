@@ -1,5 +1,3 @@
-#!/usr/bin/python env
-
 import sys
 import os
 import re
@@ -182,8 +180,8 @@ def main():
 
 			if further:
 
-				p1=Process(target=Haplo1_Repeats, args=(args.bam1, chromosome, start, end, args.motif, args.times, args.size, ref_seq, mmi_ref, args.output, i))
-				p2=Process(target=Haplo2_Repeats, args=(args.bam2, chromosome, start, end, args.motif, args.times, args.size, ref_seq, mmi_ref, args.output, i))
+				p1=Process(target=Haplo1_Repeats, args=(os.path.abspath(args.bam1), chromosome, start, end, args.motif, args.times, args.size, ref_seq, mmi_ref, args.output, i))
+				p2=Process(target=Haplo2_Repeats, args=(os.path.abspath(args.bam2), chromosome, start, end, args.motif, args.times, args.size, ref_seq, mmi_ref, args.output, i))
 				p1.start()
 				p2.start()
 				p1.join()
@@ -200,7 +198,7 @@ def main():
 
 				logout.write('Something wrong in region ' + str(start) + '-' + str(end) + '\n')
 
-	CleanResults(args.output)
+	CleanResults(args.output, os.path.abspath(args.bam1), os.path.abspath(args.bam2))
 
 
 	end_t=timeit.default_timer()
@@ -589,7 +587,7 @@ def CompareTables(out, iteration):
 
 
 
-def CleanResults(out):
+def CleanResults(out, bam1, bam2):
 
 	#merge all the .srt.bam files for the two haplotypes
 
@@ -606,7 +604,7 @@ def CleanResults(out):
 
 		try:
 
-			subprocess.check_call(['sh', '/home/bolognin/TRiCoLOR_py/Merging.sh', os.path.abspath(out_[1]),os.path.abspath(out_[1]+'/Haplotype1.merged')],stderr=open(os.devnull, 'wb'))
+			subprocess.check_call(['sh', '/home/bolognin/TRiCoLOR_py/Merging.sh', bam1, os.path.abspath(out_[1]),os.path.abspath(out_[1]+'/Haplotype1.merged')],stderr=open(os.devnull, 'wb'))
 
 		except:
 
@@ -631,7 +629,7 @@ def CleanResults(out):
 
 		try:
 
-			subprocess.check_call(['sh', '/home/bolognin/TRiCoLOR_py/Merging.sh', os.path.abspath(out_[2]),os.path.abspath(out_[2]+'/Haplotype2.merged')],stderr=open(os.devnull, 'wb'))
+			subprocess.check_call(['sh', '/home/bolognin/TRiCoLOR_py/Merging.sh', bam2, os.path.abspath(out_[2]),os.path.abspath(out_[2]+'/Haplotype2.merged')],stderr=open(os.devnull, 'wb'))
 
 		except:
 
@@ -684,3 +682,4 @@ def CleanResults(out):
 if __name__ == main():
 
 	main()
+
