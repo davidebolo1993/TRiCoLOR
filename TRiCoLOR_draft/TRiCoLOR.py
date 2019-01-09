@@ -539,11 +539,11 @@ def CompareTables(out, iteration):
 
 	#Compare repetitions found in the reference and in the 2 haplotype-resolved .bam files for the region
 
-	MergeHaploTab=Haplo_One_Tab.merge(Haplo_Two_Tab, how='outer', indicator=True)
-	MergeHaploTab.sort_values(by=['Chromosome','Start'], inplace=True)
-	MergeHaploTab.replace(to_replace={'_merge':{'left_only':'haplotype_1', 'right_only':'haplotype_2'}}, inplace=True)
-	MergeHaploTab.rename({'_merge': 'haplo_differences'}, axis='columns', inplace=True) #rename to avoid problem with the next indicator
-	MergedRefHaplo=MergeHaploTab=Reference_Tab.merge(MergeHaploTab, how='outer', indicator=True)
+	MergedHaploTab=Haplo_One_Tab.merge(Haplo_Two_Tab, how='outer', indicator=True)
+	MergedHaploTab.sort_values(by=['Chromosome','Start'], inplace=True) #don't know if it's needed
+	MergedHaploTab.replace(to_replace={'_merge':{'left_only':'H1', 'right_only':'H2'}}, inplace=True)
+	MergedHaploTab.rename({'_merge': 'haplo_differences'}, axis='columns', inplace=True) #rename to avoid problem with the next indicator
+	MergedRefHaplo=MergedHaploTab=Reference_Tab.merge(MergedHaploTab, how='outer', indicator=True)
 	MergedRefHaplo.sort_values(by=['Chromosome','Start'], inplace=True) #don't know if it's needed
 	MergedRefHaplo.reset_index(inplace=True)
 
@@ -563,17 +563,17 @@ def CompareTables(out, iteration):
 
 				if MergedRefHaplo['haplo_differences'][i] == 'both' and  MergedRefHaplo['_merge'][i] == 'both':
 
-					FinalCol.append('all')
+					FinalCol.append('A')
 
 				elif MergedRefHaplo['haplo_differences'][i] != 'both' and  MergedRefHaplo['_merge'][i] == 'both':
 
-					FinalCol.append('reference and '+str(MergedRefHaplo['haplo_differences'][i]))
+					FinalCol.append('R and '+str(MergedRefHaplo['haplo_differences'][i]))
 
 				elif MergedRefHaplo['haplo_differences'][i] != 'both' and  MergedRefHaplo['_merge'][i] != 'both':
 
 					if  MergedRefHaplo['_merge'][i] == 'left_only':
 
-						FinalCol.append('reference')
+						FinalCol.append('R')
 
 					else:
 
@@ -581,11 +581,11 @@ def CompareTables(out, iteration):
 
 				elif MergedRefHaplo['haplo_differences'][i] == 'both' and  MergedRefHaplo['_merge'][i] != 'both':
 
-					FinalCol.append('haplotype_1 and haplotype_2')
+					FinalCol.append('H1 + H2')
 
 			else:
 
-				FinalCol.append('reference')
+				FinalCol.append('R')
 
 	MergedRefHaplo.drop(columns=['index','_merge','haplo_differences'], inplace=True)
 	MergedRefHaplo['Where']=FinalCol
