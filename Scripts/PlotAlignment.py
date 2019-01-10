@@ -141,8 +141,8 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 	mins=[((next(item for item in bam1_mod_coords if item is not None)),(next(item for item in bam2_mod_coords if item is not None)))][0]
 	maxs=[((next(item for item in reversed(bam1_mod_coords) if item is not None)),(next(item for item in reversed(bam2_mod_coords) if item is not None)))][0]
 
-	min_=min(mins)
-	max_=max(maxs)
+	min_=int(min(mins))
+	max_=int(max(maxs))
 
 	ref=pyfaidx.Fasta(reference_fasta)
 	chrom=ref[chromosome]
