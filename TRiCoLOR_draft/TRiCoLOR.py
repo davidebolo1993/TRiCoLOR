@@ -471,13 +471,12 @@ def Ref_Repeats(reference_seq, chromosome, start, end, kmer, times, size, out, i
 			Table=EmptyTable(os.path.abspath(out_ + '/' + str(iteration +1) + '_RepetitionsTable.tsv'))
 			Table.write()
 
-			return
-
 		else:
 
 			TableWriter(chromosome,filtered,out_, iteration)
 
-			return filtered
+		
+		return filtered
 
 
 
