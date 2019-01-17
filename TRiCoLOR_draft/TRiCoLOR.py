@@ -11,7 +11,7 @@ import csv
 import math
 from collections import defaultdict
 from operator import itemgetter
-from multiprocessing import Process
+from multiprocessing import Process,Manager
 from shutil import which
 import pandas as pd
 import plotly.graph_objs as go
@@ -19,6 +19,7 @@ from plotly.offline import plot
 from RepFinder import *
 from BamParser import *
 import argparse
+import logging
 
 
 
@@ -39,25 +40,26 @@ def main():
 
 	#check the presence of needed external tools
 
+	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
 	import timeit
 
 	start_t=timeit.default_timer()
 
+	logging.info('Analysis starts now')
+
 	external_tools=['samtools', 'minimap2', 'htsbox']
 
 	for tools in external_tools:
 
-		try:
+		if which(tools) is not None:
 
-			assert(which(tools) is not None)
-
-		except:
-
-			sys.exit(tools + ' was not found as an executable command. Install ' + tools + ' and restart TRiCoLOR')
+			logging.error(tools + ' was not found as an executable command. Install ' + tools + ' and re-run TRiCoLOR')
+			sys.exit(1)
 
 
 	#check inputs validity
+
 
 	#check if the genome file exists, is readable and is in .fasta format
 
@@ -69,7 +71,8 @@ def main():
 
 	except:
 
-		sys.exit('The reference file does not exist, is not readable or is not in .fasta format')
+		logging.exception('The reference file does not exist, is not readable or is not in valid .fasta format.')
+		sys.exit(1)
 
 
 	#check if the two .bam files exist, are readable and are valid .bam files
@@ -81,7 +84,8 @@ def main():
 
 	except:
 
-		sys.exit('The .bam1 file does not exist, is not readable or is not a valid .bam file')
+		logging.exception('The .bam1 file does not exist, is not readable or is not a valid .bam file')
+		sys.exit(1)
 
 
 	try:
@@ -90,34 +94,45 @@ def main():
 		
 	except:
 
-		sys.exit('The .bam2 file does not exist, is not readable or is not a valid .bam file')
+		logging.exception('The .bam2 file does not exist, is not readable or is not a valid .bam file')
+		sys.exit(1)
 
-
+	
 	#look for the index of the .bam files
-
 
 	if not os.path.exists(os.path.abspath(args.bam1 + '.bai')):
 
-		print('Creating index for bam1, as no index was found in folder...')
+		logging.info('Creating index for bam1, as no index was found in folder...')
 
-		subprocess.call(['samtools', 'index', os.path.abspath(args.bam1)])
+		try:
+
+			subprocess.check_call(['samtools', 'index', os.path.abspath(args.bam1)])
+
+		except:
+
+			logging.exception('The .bam1 file cannot be indexed')
+			sys.exit(1)
+
 
 	if not os.path.exists(os.path.abspath(args.bam2 + '.bai')):
 
-		print('Creating index for bam2, as no index was found in folder...')
+		logging.info('Creating index for bam2, as no index was found in folder...')
 
-		subprocess.call(['samtools', 'index', os.path.abspath(args.bam2)])
+		try:
 
-	#check write permissions on the path where the output will be saved
+			subprocess.check_call(['samtools', 'index', os.path.abspath(args.bam2)])
 
-	try:
+		except:
 
-		assert(os.access(os.path.dirname(os.path.abspath(args.output)),os.W_OK))
+			logging.exception('The .bam2 file cannot be indexed')
+			sys.exit(1)
 
-	except:
+	#check write permissions on needed folders
 
-		sys.exit('You do not have write permissions on the directory in which the directory result will be created: please use for which you have write permissions')
+	if not os.access(os.path.dirname(os.path.abspath(args.output)),os.W_OK):
 
+		logging.error('You do not have write permissions on the directory in which the directory result will be created: you must specify a folder for which you have write permissions')
+		sys.exit(1)
 
 	if args.mmiref is not None:
 
@@ -126,7 +141,6 @@ def main():
 	else:
 
 		mmi_abspath=os.path.dirname(os.path.abspath(args.genome))
-
 
 	ref=pyfaidx.Fasta(args.genome)
 	b_in=Bed_Reader(args.bed)
@@ -149,15 +163,12 @@ def main():
 
 			#check if we have write permissions on reference directory
 
-				try:
+				if not os.access(mmi_abspath, os.W_OK):
 
-					assert(os.access(mmi_abspath, os.W_OK))
+					logging.error('You do not have write permissions on the reference folder: create a new folder with a copy of the reference and use that folder or change permissions')
+					sys.exit(1)
 
-				except:
-
-					sys.exit('You do not have write permissions on the reference folder: please create a new folder with a copy of the reference and use that folder')
-
-				print('Creating a .mmi index for ' + chromosome + '...')
+				logging.info('Creating a .mmi index for ' + chromosome + '...')
 
 				try:
 
@@ -165,46 +176,56 @@ def main():
 
 				except:
 
-					sys.exit('Something went wrong with the creation of the .mmi chromosome index, most likely your genome is in .fasta format but does not contain the information for chromosome ' + chromosome)
-
+					logging.exception('Something went wrong with the creation of the .mmi chromosome index, most likely your genome is in .fasta format but does not contain the information for ' + chromosome)
+					sys.exit(1)
 
 				subprocess.call(['minimap2','-d', os.path.abspath(mmi_abspath + '/' + chromosome + '.mmi'),os.path.abspath(mmi_abspath + '/' + chromosome + '.fa')]) #must work if the previous step was done correctly
-				
+
 			mmi_ref=os.path.abspath(mmi_abspath + '/' + chromosome + '.mmi')
 
-		print(start, end)
+		try:
 
-		#try:
+			further = Ref_Repeats(ref_seq, chromosome, start, end, args.motif, args.times, args.size, args.output,i)
 
-		further = Ref_Repeats(ref_seq, chromosome, start, end, args.motif, args.times, args.size, args.output,i)
+			if further:
 
-		if further:
 
-			p1=Process(target=Haplo1_Repeats, args=(os.path.abspath(args.bam1), chromosome, start, end, args.motif, args.times, args.size, ref_seq, mmi_ref, args.output, i))
-			p2=Process(target=Haplo2_Repeats, args=(os.path.abspath(args.bam2), chromosome, start, end, args.motif, args.times, args.size, ref_seq, mmi_ref, args.output, i))
-			p1.start()
-			p2.start()
-			p1.join()
-			p2.join()
-			CompareTables(args.output,i)
+				manager = Manager()
 
-		else:
+				repetitions_h1 = manager.list()
+				repetitions_h2 = manager.list()
 
-			continue
+				se_coo_h1=manager.list()
+				se_coo_h2=manager.list()
 
-		#except:
+				p1=Process(target=Haplo1_Repeats, args=(os.path.abspath(args.bam1), chromosome, start, end, args.motif, args.times, args.size, ref_seq, mmi_ref, args.output, i,repetitions_h1, se_coo_h1))
+				p2=Process(target=Haplo2_Repeats, args=(os.path.abspath(args.bam2), chromosome, start, end, args.motif, args.times, args.size, ref_seq, mmi_ref, args.output, i,repetitions_h2, se_coo_h2))
 
-		#with open (os.path.abspath(args.output + '/Log.txt'),'a') as logout:
+				p1.start()
+				p2.start()
 
-			#logout.write('Something wrong in region ' + str(start) + '-' + str(end) + '\n')
+				p1.join()
+				p2.join()
+			
+
+				#CompareTables(args.output,i)
+
+			else:
+
+				logging.info('Skipped ambiguous region ' + chromosome + ':' str(start) + '-'+str(end))
+				continue
+
+		except:
+
+			logging.exception('Something wrong for ' + chromosome + ':' str(start) + '-'+str(end))
+
 
 	CleanResults(args.output, os.path.abspath(args.bam1), os.path.abspath(args.bam2))
-
 
 	end_t=timeit.default_timer()
 	elapsed=end_t-start_t
 
-	print('Done in', elapsed, 'seconds')
+	logging.info('Analysis completed in ' + str(elapsed) + 'seconds')
 
 
 
@@ -256,14 +277,14 @@ class EmptyTable():
 
 			with open(self.tablepath, 'w') as refout:
 
-				Empty=pd.DataFrame(columns=['Chromosome','Repetition Motif', 'Start', 'End', 'Repetitions Number'])
+				Empty=pd.DataFrame(columns=['Chromosome', 'Start', 'End', 'Repeated Motif','Repetitions Number'])
 				Empty.to_csv(refout, index=False, sep='\t')
 
 
 
-def isNaN(value):
+#def isNaN(value):
 
-	return value != value
+	#return value != value
 
 
 def isEmpty(list_obj): #recursive function to check for empty list
@@ -286,35 +307,20 @@ def Concat_Tables(list_of_paths):
 		Tab=pd.read_csv(tab, sep='\t')
 		List_of_tables.append(Tab)
 
-	By_Row=pd.concat(List_of_tables, axis=0,ignore_index=True)
+	By_Row=pd.concat(List_of_tables, axis=0, ignore_index=True)
 
 	return By_Row
 
-
-def ResultsWriter_FromRef(chromosome,repetitions,realstart,out, iteration):
-
-	seq=[el[0] for el in repetitions]
-	start=[realstart+el[1] for el in repetitions]
-	end=[realstart+el[2] for el in repetitions]
-	rep=[el[3] for el in repetitions]
-	chrom=[chromosome]*len(start)
-	Table=pd.DataFrame({'Chromosome':chrom,'Repetition Motif':seq, 'Start':start,'End':end, 'Repetitions Number':rep},columns=['Chromosome','Repetition Motif', 'Start', 'End', 'Repetitions Number'])
-
-	with open(os.path.abspath(out + '/' + str(iteration +1) + '_RepetitionsTable.tsv'), 'w') as refout:
-
-		Table.to_csv(refout ,sep='\t',index=False)
 	
 
-
-def ResultsWriter_FromCons(chromosome,repetitions_with_coord, out, iteration): 
+def TableWriter(chromosome,repetitions_with_coord, out, iteration): #Table is in .bed (chromosome, start, end) format with header
 
 	seq=[el[0] for el in repetitions_with_coord]
 	start=[el[1] for el in repetitions_with_coord]
 	end=[el[2] for el in repetitions_with_coord]
 	rep=[el[3] for el in repetitions_with_coord]
 	chrom=[chromosome]*len(start)
-	Table=pd.DataFrame({'Chromosome':chrom,'Repetition Motif':seq, 'Start':start,'End':end, 'Repetitions Number':rep},columns=['Chromosome','Repetition Motif', 'Start', 'End', 'Repetitions Number'])
-
+	Table=pd.DataFrame({'Chromosome':chrom, 'Start':start,'End':end, 'Repeated Motif':seq,'Repetitions Number':rep},columns=['Chromosome', 'Start', 'End', 'Repeated Motif', 'Repetitions Number'])
 	
 	if os.path.exists(os.path.abspath(out + '/' + str(iteration+1) + '_RepetitionsTable.tsv')):
 
@@ -327,6 +333,112 @@ def ResultsWriter_FromCons(chromosome,repetitions_with_coord, out, iteration):
 		with open(os.path.abspath(out + '/' + str(iteration +1) + '_RepetitionsTable.tsv'), 'a') as refout:
 
 			Table.to_csv(refout ,sep='\t',index=False)
+
+
+
+def VCF_headerwriter(original_bam, out, samplename):
+
+	#Header built following instructions at 'https://samtools.github.io/hts-specs/VCFv4.2.pdf'
+
+	bamfile=pysam.AlignmentFile(original_bam,'rb')
+	header=bamfile.header
+	chromosomes_info=list(header.items())[1][1]
+	classic_chrs = ['chr{}'.format(x) for x in list(range(1,23)) + ['X', 'Y']]
+	chromosomes=[]
+	sizes=[]
+
+	for infos in chromosomes_info:
+
+		if infos['SN'] in classic_chrs:
+
+			chromosomes.append(infos['SN'])
+			sizes.append(infos['LN'])
+
+	vcf_format='##fileformat=VCFv4.2'
+
+	#INFO field appear after CONTIG field
+
+	END='##INFO=<ID=END,Number=1,Type=Integer,Description="Repetition end">'
+	RRM='##INFO=<ID=RRM,Number=1,Type=String,Description="Reference Repeated Motif">'
+	RRN='##INFO=<ID=RRN,Number=1,Type=Integer,Description="Reference Repetitions Number">'
+	ARM='##INFO=<ID=ARM,Number=1,Type=String,Description="Alternative-allele Repeated Motif">'
+	ARN='##INFO=<ID=ARN,Number=1,Type=Integer,Description="Alternative-allele Repetitions Number">'
+
+	#FORMAT field appear after INFO field
+
+	FORMAT='##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">'
+
+	classic_header='#CHROM' + '\t' + 'POS' '\t' + 'ID' + '\t' + 'REF' + '\t' + 'ALT' + '\t' + 'QUAL' + '\t' + 'FILTER' + '\t' + 'INFO' + '\t' + 'FORMAT' + '\t' + samplename.upper()
+
+	with open(os.path.abspath(out + '/TRiCoLOR.vcf'), 'a') as vcfout:
+
+		vcfout.write(vcf_format + '\n' + '##filedate=' + str(datetime.date.today()) +  '\n' + '##source=TRiCoLOR' + '\n') #filedate and source are not strictly required, but looks nice ! Add command line to source can be also helpful
+
+		for a,b in zip(chromosomes,sizes):
+
+			vcfout.write('##contig=<ID='+str(a)+',length='+str(b)+'>'+'\n')
+
+
+		vcfout.write(END + '\n' + RRM + '\n' + RRN + '\n' + ARM + '\n' + ARN + '\n')
+		vcfout.write(FORMAT + '\n')
+		vcfout.write('##SAMPLE=<ID=' + samplename +'>' + '\n' + classic_header + '\n')
+
+
+
+
+def Reference_Filter(reference_reps,wanted,size,start): #re-check reference repetitions as it is done with haplotypes, but avoid correction this time
+
+	most_likely=[]
+
+	for reps in list(set(el[0] for el in reference_reps)):
+	
+		self_=list(look_for_self(reps,wanted))
+
+		ranges=[]
+
+		for i in range(len(self_)-1):
+
+			if self_[i+1][1]-self_[i][1] == len(reps):
+
+				ranges.append((self_[i][1],self_[i+1][1]))
+
+		collapsed_ranges= defaultdict(list)
+		
+		for x, y in ranges:
+
+			collapsed_ranges[x].append(y)
+			collapsed_ranges[y].append(x)
+
+		result = defaultdict(list)
+		visited = set()
+		
+		for vertex in collapsed_ranges:
+
+			if vertex not in visited:
+
+				dfs(collapsed_ranges, visited, vertex, result, vertex)
+
+		if len(result) !=0:
+
+			new_reps=[(reps,start+val[0], start+val[-1]+len(reps)-1, len(val)) for val in list(result.values())]
+			most_likely.extend(new_reps)
+
+
+	s_l_=sorted(most_likely, key=itemgetter(1))
+
+	#filter out overlapping repetitions, considering only longer ones
+
+	intervals=[(b,c) for (a,b,c,d) in s_l_]
+	#ov=Overlap()
+
+	#for i in intervals:
+
+		#ov.put(i)
+
+	purified=sorted(GetLargestFromNested(intervals), key=itemgetter(0))
+
+
+	return [(a,b,c,d) for (a,b,c,d) in s_l_ if (b,c) in purified and len(a)*d >= size]
 
 
 
@@ -352,24 +464,24 @@ def Ref_Repeats(reference_seq, chromosome, start, end, kmer, times, size, out, i
 
 		repetitions=list(RepeatsFinder(wanted,kmer,times))
 
-		filtered=[rep for rep in repetitions if len(rep[0])*rep[3] >= size]
+		filtered=Filter(repetitions,wanted,size,start)
 
-		if isEmpty(repetitions):
+		if isEmpty(filtered):
 
 			Table=EmptyTable(os.path.abspath(out_ + '/' + str(iteration +1) + '_RepetitionsTable.tsv'))
 			Table.write()
 
-			return True
+			return
 
 		else:
 
-			ResultsWriter_FromRef(chromosome,filtered,start,out_, iteration)
+			TableWriter(chromosome,filtered,out_, iteration)
 
-			return True
+			return filtered
 
 
 
-def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq, mmi_ref, out, iteration):
+def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq, mmi_ref, out, iteration,repetitions_h1, se_coo_h1):
 
 	out_=os.path.abspath(out+'/haplotype1')
 
@@ -422,7 +534,11 @@ def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq,
 				else:
 
 					cor_coord_reps=corrector(ref_seq, seq, repetitions, coords, size, allowed=1) #probably an exception here is needed
-					ResultsWriter_FromCons(chromosome, cor_coord_reps,out_,iteration)
+					TableWriter(chromosome, cor_coord_reps,out_,iteration)
+					repetitions_h1.extend(cor_coord_reps)
+					se_coo_h1.extend((seq,coords))
+
+		#merge and clean
 
 		if len(consensus_bams) == 1:
 
@@ -447,7 +563,8 @@ def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq,
 
 
 
-def Haplo2_Repeats(bamfile2, chromosome, start, end, kmer, times, size, ref_seq, mmi_ref, out, iteration):
+def Haplo2_Repeats(bamfile2, chromosome, start, end, kmer, times, size, ref_seq, mmi_ref, out, iteration,repetitions_h2,se_coo_h2):
+
 
 	out_=os.path.abspath(out+'/haplotype2')
 
@@ -500,7 +617,12 @@ def Haplo2_Repeats(bamfile2, chromosome, start, end, kmer, times, size, ref_seq,
 				else:
 
 					cor_coord_reps=corrector(ref_seq, seq, repetitions, coords, size, allowed=1) #probably an exception here is needed
-					ResultsWriter_FromCons(chromosome, cor_coord_reps,out_,iteration)
+					TableWriter(chromosome, cor_coord_reps,out_,iteration)
+					repetitions_h2.extend(cor_coord_reps)
+					se_coo_h2.extend((seq,coords))
+
+		#merge and clean
+
 
 		if len(consensus_bams) == 1:
 
@@ -524,103 +646,105 @@ def Haplo2_Repeats(bamfile2, chromosome, start, end, kmer, times, size, ref_seq,
 				os.remove(bams.replace('.bam', '.bam.bai'))
 
 
-def CompareTables(out, iteration):
 
-	out=os.path.abspath(out)
-	out_=[os.path.abspath(out+j) for j in ['/reference', '/haplotype1', '/haplotype2']]
 
-	Reference_Tsv=os.path.abspath(out_[0] + '/' + str(iteration +1) + '_RepetitionsTable.tsv')
-	Haplo_One_Tsv=os.path.abspath(out_[1] + '/' + str(iteration +1) + '_RepetitionsTable.tsv')
-	Haplo_Two_Tsv=os.path.abspath(out_[2] + '/' + str(iteration +1) + '_RepetitionsTable.tsv')
+#def CompareTables(out, iteration):
 
-	Reference_Tab=pd.read_csv(Reference_Tsv, sep='\t')
-	Haplo_One_Tab=pd.read_csv(Haplo_One_Tsv, sep='\t')
-	Haplo_Two_Tab=pd.read_csv(Haplo_Two_Tsv, sep='\t')
+	#out=os.path.abspath(out)
+	#out_=[os.path.abspath(out+j) for j in ['/reference', '/haplotype1', '/haplotype2']]
+
+	#Reference_Tsv=os.path.abspath(out_[0] + '/' + str(iteration +1) + '_RepetitionsTable.tsv')
+	#Haplo_One_Tsv=os.path.abspath(out_[1] + '/' + str(iteration +1) + '_RepetitionsTable.tsv')
+	#Haplo_Two_Tsv=os.path.abspath(out_[2] + '/' + str(iteration +1) + '_RepetitionsTable.tsv')
+
+	#Reference_Tab=pd.read_csv(Reference_Tsv, sep='\t')
+	#Haplo_One_Tab=pd.read_csv(Haplo_One_Tsv, sep='\t')
+	#Haplo_Two_Tab=pd.read_csv(Haplo_Two_Tsv, sep='\t')
 
 	#Compare repetitions found in the reference and in the 2 haplotype-resolved .bam files for the region
 
-	try:
+	#try:
 
-		MergedHaploTab=Haplo_One_Tab.merge(Haplo_Two_Tab, how='outer', indicator=True)
-		MergedHaploTab.sort_values(by=['Chromosome','Start'], inplace=True) #don't know if it's needed
-		MergedHaploTab.replace(to_replace={'_merge':{'left_only':'H1', 'right_only':'H2'}}, inplace=True)
-		MergedHaploTab.rename({'_merge': 'haplo_differences'}, axis='columns', inplace=True) #rename to avoid problem with the next indicator
-		MergedRefHaplo=MergedHaploTab=Reference_Tab.merge(MergedHaploTab, how='outer', indicator=True)
-		MergedRefHaplo.sort_values(by=['Chromosome','Start'], inplace=True) #don't know if it's needed
-		MergedRefHaplo.reset_index(inplace=True)
+		#MergedHaploTab=Haplo_One_Tab.merge(Haplo_Two_Tab, how='outer', indicator=True)
+		#MergedHaploTab.sort_values(by=['Chromosome','Start'], inplace=True) #don't know if it's needed
+		#MergedHaploTab.replace(to_replace={'_merge':{'left_only':'H1', 'right_only':'H2'}}, inplace=True)
+		#MergedHaploTab.rename({'_merge': 'haplo_differences'}, axis='columns', inplace=True) #rename to avoid problem with the next indicator
+		#MergedRefHaplo=MergedHaploTab=Reference_Tab.merge(MergedHaploTab, how='outer', indicator=True)
+		#MergedRefHaplo.sort_values(by=['Chromosome','Start'], inplace=True) #don't know if it's needed
+		#MergedRefHaplo.reset_index(inplace=True)
 
-	except: #the previous way of comparing tables fails when a table is empty and the other one has just one line
+	#except: #the previous way of comparing tables fails when a table is empty and the other one has just one line, don't know why
 
-		if Haplo_One_Tab.empty:
+		#if Haplo_One_Tab.empty:
 
-			MergedHaploTab=Haplo_Two_Tab
-			MergedHaploTab['haplo_differences']='H2'
-			MergedRefHaplo=MergedHaploTab=Reference_Tab.merge(MergedHaploTab, how='outer', indicator=True)
-			MergedRefHaplo.sort_values(by=['Chromosome','Start'], inplace=True) #don't know if it's needed
-			MergedRefHaplo.reset_index(inplace=True)
+			#MergedHaploTab=Haplo_Two_Tab
+			#MergedHaploTab['haplo_differences']='H2'
+			#MergedRefHaplo=MergedHaploTab=Reference_Tab.merge(MergedHaploTab, how='outer', indicator=True)
+			#MergedRefHaplo.sort_values(by=['Chromosome','Start'], inplace=True) #don't know if it's needed
+			#MergedRefHaplo.reset_index(inplace=True)
 
-		else:
+		#else:
 
-			MergedHaploTab=Haplo_One_Tab
-			MergedHaploTab['haplo_differences']='H2'
-			MergedRefHaplo=MergedHaploTab=Reference_Tab.merge(MergedHaploTab, how='outer', indicator=True)
-			MergedRefHaplo.sort_values(by=['Chromosome','Start'], inplace=True) #don't know if it's needed
-			MergedRefHaplo.reset_index(inplace=True)
-
-
-	FinalCol=[]
+			#MergedHaploTab=Haplo_One_Tab
+			#MergedHaploTab['haplo_differences']='H2'
+			#MergedRefHaplo=MergedHaploTab=Reference_Tab.merge(MergedHaploTab, how='outer', indicator=True)
+			#MergedRefHaplo.sort_values(by=['Chromosome','Start'], inplace=True) #don't know if it's needed
+			#MergedRefHaplo.reset_index(inplace=True)
 
 
-	if not '_merge' in MergedRefHaplo.columns:
+	#FinalCol=[]
 
-		MergedRefHaplo.to_csv(os.path.abspath(out+'/Comparison_RepetitionsTable.tsv'),sep='\t',index=False)
 
-	else:
+	#if not '_merge' in MergedRefHaplo.columns:
 
-		for i in range(len(MergedRefHaplo['_merge'])):
+		#MergedRefHaplo.to_csv(os.path.abspath(out+'/Comparison_RepetitionsTable.tsv'),sep='\t',index=False)
 
-			if not isNaN(MergedRefHaplo['haplo_differences'][i]):
+	#else:
 
-				if MergedRefHaplo['haplo_differences'][i] == 'both' and  MergedRefHaplo['_merge'][i] == 'both':
+		#for i in range(len(MergedRefHaplo['_merge'])):
 
-					FinalCol.append('A')
+			#if not isNaN(MergedRefHaplo['haplo_differences'][i]):
 
-				elif MergedRefHaplo['haplo_differences'][i] != 'both' and  MergedRefHaplo['_merge'][i] == 'both':
+				#if MergedRefHaplo['haplo_differences'][i] == 'both' and  MergedRefHaplo['_merge'][i] == 'both':
 
-					FinalCol.append('R + '+str(MergedRefHaplo['haplo_differences'][i]))
+					#FinalCol.append('A')
 
-				elif MergedRefHaplo['haplo_differences'][i] != 'both' and  MergedRefHaplo['_merge'][i] != 'both':
+				#elif MergedRefHaplo['haplo_differences'][i] != 'both' and  MergedRefHaplo['_merge'][i] == 'both':
 
-					if  MergedRefHaplo['_merge'][i] == 'left_only':
+					#FinalCol.append('R + '+str(MergedRefHaplo['haplo_differences'][i]))
 
-						FinalCol.append('R')
+				#elif MergedRefHaplo['haplo_differences'][i] != 'both' and  MergedRefHaplo['_merge'][i] != 'both':
 
-					else:
+					#if  MergedRefHaplo['_merge'][i] == 'left_only':
 
-						FinalCol.append(str(MergedRefHaplo['haplo_differences'][i]))
+						#FinalCol.append('R')
 
-				elif MergedRefHaplo['haplo_differences'][i] == 'both' and  MergedRefHaplo['_merge'][i] != 'both':
+					#else:
 
-					FinalCol.append('H1 + H2')
+						#FinalCol.append(str(MergedRefHaplo['haplo_differences'][i]))
 
-			else:
+				#elif MergedRefHaplo['haplo_differences'][i] == 'both' and  MergedRefHaplo['_merge'][i] != 'both':
 
-				FinalCol.append('R')
+					#FinalCol.append('H1 + H2')
 
-	MergedRefHaplo.drop(columns=['index','_merge','haplo_differences'], inplace=True)
-	MergedRefHaplo['Where']=FinalCol
+			#else:
 
-	if os.path.exists(os.path.abspath(out+'/Comparison_RepetitionsTable.tsv')):
+				#FinalCol.append('R')
 
-		with open(os.path.abspath(out+'/Comparison_RepetitionsTable.tsv'), 'a') as compareout:
+	#MergedRefHaplo.drop(columns=['index','_merge','haplo_differences'], inplace=True)
+	#MergedRefHaplo['Where']=FinalCol
 
-			MergedRefHaplo.to_csv(compareout, sep='\t',index=False, header=False)
+	#if os.path.exists(os.path.abspath(out+'/Comparison_RepetitionsTable.tsv')):
 
-	else:
+		#with open(os.path.abspath(out+'/Comparison_RepetitionsTable.tsv'), 'a') as compareout:
 
-		with open(os.path.abspath(out+'/Comparison_RepetitionsTable.tsv'), 'a') as compareout:
+			#MergedRefHaplo.to_csv(compareout, sep='\t',index=False, header=False)
 
-			MergedRefHaplo.to_csv(compareout,sep='\t',index=False)
+	#else:
+
+		#with open(os.path.abspath(out+'/Comparison_RepetitionsTable.tsv'), 'a') as compareout:
+
+			#MergedRefHaplo.to_csv(compareout,sep='\t',index=False)
 
 
 
