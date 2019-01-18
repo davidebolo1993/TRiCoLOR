@@ -1,3 +1,5 @@
+#!/usr/bin/python env
+
 import re
 import itertools
 import bisect
