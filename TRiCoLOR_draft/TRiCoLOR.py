@@ -1,3 +1,5 @@
+#!/usr/bin/python env
+
 import sys
 import os
 import re
