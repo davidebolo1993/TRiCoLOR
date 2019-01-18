@@ -1,5 +1,6 @@
 #!/usr/bin/python env
 
+
 import sys
 import os
 import re
@@ -55,7 +56,7 @@ def main():
 
 	else:
 
-		VCF_writer(args.bam1, args.bam2, args.samplename, command_string, os.path.abspath(args.output + '/TRiCoLOR.vcf'))
+		VCF_headerwriter(args.bam1, args.bam2, args.samplename, command_string, os.path.abspath(args.output + '/TRiCoLOR.vcf'))
 
 
 	start_t=timeit.default_timer()
