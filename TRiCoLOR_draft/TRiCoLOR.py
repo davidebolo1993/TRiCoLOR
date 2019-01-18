@@ -22,6 +22,7 @@ from VCFwriter import *
 import argparse
 import logging
 import datetime
+import timeit
 
 
 
@@ -42,6 +43,8 @@ def main():
 
 	args = parser.parse_args()
 
+	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+
 	command_dict= vars(args)
 	command_string=",".join(("{}={}".format(*i) for i in command_dict.items())) 
 
@@ -54,15 +57,13 @@ def main():
 
 		VCF_writer(args.bam1, args.bam2, args.samplename, command_string, os.path.abspath(args.output + '/TRiCoLOR.vcf'))
 
-	#check the presence of needed external tools
-
-	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-
-	import timeit
 
 	start_t=timeit.default_timer()
 
 	logging.info('Analysis starts now')
+
+
+	#check the presence of needed external tools
 
 	external_tools=['samtools', 'minimap2', 'htsbox']
 
