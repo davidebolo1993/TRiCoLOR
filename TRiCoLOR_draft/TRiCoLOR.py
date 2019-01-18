@@ -18,8 +18,11 @@ import plotly.graph_objs as go
 from plotly.offline import plot
 from RepFinder import *
 from BamParser import *
+from VCFwriter import *
 import argparse
 import logging
+import datetime
+
 
 
 
@@ -35,8 +38,22 @@ def main():
 	parser.add_argument('-s', '--size', type=int, help='what size repetitions - even fuzzy ones - must have at least to be called',metavar='',required=True)	
 	parser.add_argument('-mmi', '--mmiref', default=None, help='path to minimap2 .mmi chromosome-resolved references folder',metavar='')
 	parser.add_argument('-o', '--output', help='path to where results will be saved',metavar='',required=True)
+	parser.add_argument('-sn', '--samplename', help='sample name to use in .vcf header',metavar='',default='Sample')
+
 	args = parser.parse_args()
 
+
+    command_dict= vars(args)
+    command_string=",".join(("{}={}".format(*i) for i in command_dict.items())) 
+
+	if not os.path.exists(os.path.abspath(args.output + '/TRiCoLOR.vcf')):
+
+		logging.error('Specified output folder already contains TRiCoLOR results. Clean that folder and run TRiCoLOR again or specify a different folder')
+		sys.exit(1)
+
+	else:
+
+		VCF_writer(args.bam1, args.bam2, args.samplename, command_string, os.path.abspath(args.output + '/TRiCoLOR.vcf'))
 
 	#check the presence of needed external tools
 
@@ -60,18 +77,17 @@ def main():
 
 	#check inputs validity
 
-
 	#check if the genome file exists, is readable and is in .fasta format
 
 	try:
 
 		with open(os.path.abspath(args.genome),'r') as file:
 
-			assert(file.readline().split('>')[0] == '')
+			assert(file.readline().startswith('>'))
 
 	except:
 
-		logging.exception('The reference file does not exist, is not readable or is not in valid .fasta format.')
+		logging.error('Reference file does not exist, is not readable or is not a valid .fasta file')
 		sys.exit(1)
 
 
@@ -84,7 +100,7 @@ def main():
 
 	except:
 
-		logging.exception('The .bam1 file does not exist, is not readable or is not a valid .bam file')
+		logging.error('.bam file 1 does not exist, is not readable or is not a valid .bam file')
 		sys.exit(1)
 
 
@@ -94,15 +110,15 @@ def main():
 		
 	except:
 
-		logging.exception('The .bam2 file does not exist, is not readable or is not a valid .bam file')
+		logging.error('.bam file 2 does not exist, is not readable or is not a valid .bam file')
 		sys.exit(1)
 
 	
-	#look for the index of the .bam files
+	#look for the index of the  two .bam files
 
 	if not os.path.exists(os.path.abspath(args.bam1 + '.bai')):
 
-		logging.info('Creating index for bam1, as no index was found in folder...')
+		logging.info('Creating index for .bam file 1, as it was not found in folder...')
 
 		try:
 
@@ -110,13 +126,13 @@ def main():
 
 		except:
 
-			logging.exception('The .bam1 file cannot be indexed')
+			logging.error('.bam1 file could not be indexed')
 			sys.exit(1)
 
 
 	if not os.path.exists(os.path.abspath(args.bam2 + '.bai')):
 
-		logging.info('Creating index for bam2, as no index was found in folder...')
+		logging.info('Creating index for .bam file 2, as it was not found in folder...')
 
 		try:
 
@@ -124,14 +140,14 @@ def main():
 
 		except:
 
-			logging.exception('The .bam2 file cannot be indexed')
+			logging.error('.bam2 file could not be indexed')
 			sys.exit(1)
 
 	#check write permissions on needed folders
 
 	if not os.access(os.path.dirname(os.path.abspath(args.output)),os.W_OK):
 
-		logging.error('You do not have write permissions on the directory in which the directory result will be created: you must specify a folder for which you have write permissions')
+		logging.error('You do not have write permissions on the directory in which results will be stored: you must specify a folder for which you have write permissions')
 		sys.exit(1)
 
 	if args.mmiref is not None:
@@ -153,9 +169,13 @@ def main():
 
 		if chromosome not in chromosomes_seen:
 
-			chrom=ref[chromosome]
-			ref_seq=chrom[:len(chrom)].seq
-			chromosomes_seen.add(chromosome)
+			if chromosomes_seen: #set is not empty
+
+				CleanResults(list(chromosomes_seen)[-1], args.output, os.path.abspath(args.bam1), os.path.abspath(args.bam2)) #clean results for previous chromosome
+				chrom=ref[chromosome]
+				ref_seq=chrom[:len(chrom)].seq
+				chromosomes_seen.add(chromosome)
+
 
 			#check if the .mmi reference exists, otherwise create it for the wanted chromosome
 
@@ -165,10 +185,10 @@ def main():
 
 				if not os.access(mmi_abspath, os.W_OK):
 
-					logging.error('You do not have write permissions on the reference folder: create a new folder with a copy of the reference and use that folder or change permissions')
+					logging.error('You do not have write permissions on the reference folder: create a new folder with a copy of the reference and use that folder - or change permissions -')
 					sys.exit(1)
 
-				logging.info('Creating a .mmi index for ' + chromosome + '...')
+				logging.info('Creating a .mmi index for ' + chromosome)
 
 				try:
 
@@ -176,12 +196,17 @@ def main():
 
 				except:
 
-					logging.exception('Something went wrong with the creation of the .mmi chromosome index, most likely your genome is in .fasta format but does not contain the information for ' + chromosome)
+					logging.error('Something went wrong with the creation of the .mmi chromosome index. Most likely your genome is in .fasta format but does not contain the information for ' + chromosome)
 					sys.exit(1)
 
 				subprocess.call(['minimap2','-d', os.path.abspath(mmi_abspath + '/' + chromosome + '.mmi'),os.path.abspath(mmi_abspath + '/' + chromosome + '.fa')]) #must work if the previous step was done correctly
 
 			mmi_ref=os.path.abspath(mmi_abspath + '/' + chromosome + '.mmi')
+
+		
+		else:
+
+			pass
 
 		try:
 
@@ -189,17 +214,16 @@ def main():
 
 			if further:
 
-
 				manager = Manager()
 
 				repetitions_h1 = manager.list()
 				repetitions_h2 = manager.list()
 
-				se_coo_h1=manager.list()
-				se_coo_h2=manager.list()
+				seqh1_coordh1=manager.list()
+				seqh2_coordh2=manager.list()
 
-				p1=Process(target=Haplo1_Repeats, args=(os.path.abspath(args.bam1), chromosome, start, end, args.motif, args.times, args.size, ref_seq, mmi_ref, args.output, i,repetitions_h1, se_coo_h1))
-				p2=Process(target=Haplo2_Repeats, args=(os.path.abspath(args.bam2), chromosome, start, end, args.motif, args.times, args.size, ref_seq, mmi_ref, args.output, i,repetitions_h2, se_coo_h2))
+				p1=Process(target=Haplo1_Repeats, args=(os.path.abspath(args.bam1), chromosome, start, end, args.motif, args.times, args.size, ref_seq, mmi_ref, args.output, i,repetitions_h1, seqh1_coordh1))
+				p2=Process(target=Haplo2_Repeats, args=(os.path.abspath(args.bam2), chromosome, start, end, args.motif, args.times, args.size, ref_seq, mmi_ref, args.output, i,repetitions_h2, seqh2_coordh2))
 
 				p1.start()
 				p2.start()
@@ -207,9 +231,9 @@ def main():
 				p1.join()
 				p2.join()
 			
-
-				#CompareTables(args.output,i)
-
+				
+				VariantWriter(chromosome, further, ref_seq, repetitions_h1, seqh1_coordh1, repetitions_h2, seqh2_coordh2, os.path.abspath(args.output + '/TRiCoLOR.vcf'))
+				
 			else:
 
 				logging.info('Skipped ambiguous region ' + chromosome + ':' str(start) + '-'+str(end))
@@ -217,15 +241,15 @@ def main():
 
 		except:
 
-			logging.exception('Something wrong for ' + chromosome + ':' str(start) + '-'+str(end))
+			logging.exception('Something went wrong for ' + chromosome + ':' str(start) + '-'+str(end))
 
 
-	CleanResults(args.output, os.path.abspath(args.bam1), os.path.abspath(args.bam2))
+	CleanResults(list(chromosomes_seen)[-1], args.output, os.path.abspath(args.bam1), os.path.abspath(args.bam2)) #clean results at the end of the process
 
 	end_t=timeit.default_timer()
 	elapsed=end_t-start_t
 
-	logging.info('Analysis completed in ' + str(elapsed) + 'seconds')
+	logging.info('Analysis completed in ' + str(elapsed) + ' seconds')
 
 
 
@@ -243,13 +267,14 @@ class Bed_Reader():
 
 				if not line[0].startswith('#') and line !=[]: 
 
-					if len(line) != 3:
+					if len(line) < 3:
 
-						raise TypeError('Input must be a .bed file with 3 fields: chromosome, start and end')
+						logging.error('.bed input must be a .bed file with at least 3 fields: chromosome, start and end')
+						sys.exit(1)
 
 					else:
 
-						yield (line[0], int(line[1]), int(line[2]))
+						yield (line[0], int(line[1]), int(line[2])) # exclude other fields
 
 	def length(self):
 
@@ -322,66 +347,18 @@ def TableWriter(chromosome,repetitions_with_coord, out, iteration): #Table is in
 	chrom=[chromosome]*len(start)
 	Table=pd.DataFrame({'Chromosome':chrom, 'Start':start,'End':end, 'Repeated Motif':seq,'Repetitions Number':rep},columns=['Chromosome', 'Start', 'End', 'Repeated Motif', 'Repetitions Number'])
 	
-	if os.path.exists(os.path.abspath(out + '/' + str(iteration+1) + '_RepetitionsTable.tsv')):
+	if os.path.exists(os.path.abspath(out + '/' + str(iteration+1) + '.repetitions.tsv')):
 
-		with open(os.path.abspath(out + '/' + str(iteration+1) + '_RepetitionsTable.tsv'), 'a') as refout:
+		with open(os.path.abspath(out + '/' + str(iteration+1) + '.repetitions.tsv'), 'a') as refout:
 
 			Table.to_csv(refout ,sep='\t',index=False, header=False)
 
 	else:
 
-		with open(os.path.abspath(out + '/' + str(iteration +1) + '_RepetitionsTable.tsv'), 'a') as refout:
+		with open(os.path.abspath(out + '/' + str(iteration +1) + '.repetitions.tsv'), 'a') as refout:
 
 			Table.to_csv(refout ,sep='\t',index=False)
 
-
-
-def VCF_headerwriter(original_bam, out, samplename):
-
-	#Header built following instructions at 'https://samtools.github.io/hts-specs/VCFv4.2.pdf'
-
-	bamfile=pysam.AlignmentFile(original_bam,'rb')
-	header=bamfile.header
-	chromosomes_info=list(header.items())[1][1]
-	classic_chrs = ['chr{}'.format(x) for x in list(range(1,23)) + ['X', 'Y']]
-	chromosomes=[]
-	sizes=[]
-
-	for infos in chromosomes_info:
-
-		if infos['SN'] in classic_chrs:
-
-			chromosomes.append(infos['SN'])
-			sizes.append(infos['LN'])
-
-	vcf_format='##fileformat=VCFv4.2'
-
-	#INFO field appear after CONTIG field
-
-	END='##INFO=<ID=END,Number=1,Type=Integer,Description="Repetition end">'
-	RRM='##INFO=<ID=RRM,Number=1,Type=String,Description="Reference Repeated Motif">'
-	RRN='##INFO=<ID=RRN,Number=1,Type=Integer,Description="Reference Repetitions Number">'
-	ARM='##INFO=<ID=ARM,Number=1,Type=String,Description="Alternative-allele Repeated Motif">'
-	ARN='##INFO=<ID=ARN,Number=1,Type=Integer,Description="Alternative-allele Repetitions Number">'
-
-	#FORMAT field appear after INFO field
-
-	FORMAT='##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">'
-
-	classic_header='#CHROM' + '\t' + 'POS' '\t' + 'ID' + '\t' + 'REF' + '\t' + 'ALT' + '\t' + 'QUAL' + '\t' + 'FILTER' + '\t' + 'INFO' + '\t' + 'FORMAT' + '\t' + samplename.upper()
-
-	with open(os.path.abspath(out + '/TRiCoLOR.vcf'), 'a') as vcfout:
-
-		vcfout.write(vcf_format + '\n' + '##filedate=' + str(datetime.date.today()) +  '\n' + '##source=TRiCoLOR' + '\n') #filedate and source are not strictly required, but looks nice ! Add command line to source can be also helpful
-
-		for a,b in zip(chromosomes,sizes):
-
-			vcfout.write('##contig=<ID='+str(a)+',length='+str(b)+'>'+'\n')
-
-
-		vcfout.write(END + '\n' + RRM + '\n' + RRN + '\n' + ARM + '\n' + ARN + '\n')
-		vcfout.write(FORMAT + '\n')
-		vcfout.write('##SAMPLE=<ID=' + samplename +'>' + '\n' + classic_header + '\n')
 
 
 
@@ -429,11 +406,6 @@ def Reference_Filter(reference_reps,wanted,size,start): #re-check reference repe
 	#filter out overlapping repetitions, considering only longer ones
 
 	intervals=[(b,c) for (a,b,c,d) in s_l_]
-	#ov=Overlap()
-
-	#for i in intervals:
-
-		#ov.put(i)
 
 	purified=sorted(GetLargestFromNested(intervals), key=itemgetter(0))
 
@@ -455,7 +427,7 @@ def Ref_Repeats(reference_seq, chromosome, start, end, kmer, times, size, out, i
 
 	if 'N' in wanted: #region with ambiguous bases
 
-		Table=EmptyTable(os.path.abspath(out_ + '/' + str(iteration +1) + '_RepetitionsTable.tsv'))
+		Table=EmptyTable(os.path.abspath(out_ + '/' + str(iteration +1) + '.repetitions.tsv'))
 		Table.write()
 
 		return False
@@ -464,11 +436,11 @@ def Ref_Repeats(reference_seq, chromosome, start, end, kmer, times, size, out, i
 
 		repetitions=list(RepeatsFinder(wanted,kmer,times))
 
-		filtered=Filter(repetitions,wanted,size,start)
+		filtered=Reference_Filter(repetitions,wanted,size,start)
 
 		if isEmpty(filtered):
 
-			Table=EmptyTable(os.path.abspath(out_ + '/' + str(iteration +1) + '_RepetitionsTable.tsv'))
+			Table=EmptyTable(os.path.abspath(out_ + '/' + str(iteration +1) + '.repetitions.tsv'))
 			Table.write()
 
 		else:
@@ -480,7 +452,7 @@ def Ref_Repeats(reference_seq, chromosome, start, end, kmer, times, size, out, i
 
 
 
-def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq, mmi_ref, out, iteration,repetitions_h1, se_coo_h1):
+def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq, mmi_ref, out, iteration,repetitions_h1, seqh1_coordh1):
 
 	out_=os.path.abspath(out+'/haplotype1')
 
@@ -493,7 +465,7 @@ def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq,
 
 	if isEmpty(filseq): #no informations for that region in this haplotype
 
-		Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '_RepetitionsTable.tsv'))
+		Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '.repetitions.tsv'))
 		Table.write()
 
 		return
@@ -510,7 +482,7 @@ def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq,
 
 			if isEmpty(seq):
 
-				Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '_RepetitionsTable.tsv'))
+				Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '.repetitions.tsv'))
 				Table.write()
 
 				continue
@@ -527,7 +499,7 @@ def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq,
 
 					else:
 
-						Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '_RepetitionsTable.tsv'))
+						Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '.repetitions.tsv'))
 						Table.write()
 
 				else:
@@ -535,7 +507,7 @@ def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq,
 					cor_coord_reps=corrector(ref_seq, seq, repetitions, coords, size, allowed=1) #probably an exception here is needed
 					TableWriter(chromosome, cor_coord_reps,out_,iteration)
 					repetitions_h1.extend(cor_coord_reps)
-					se_coo_h1.extend((seq,coords))
+					seqh1_coordh1.extend((seq,coords))
 
 		#merge and clean
 
@@ -562,7 +534,7 @@ def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq,
 
 
 
-def Haplo2_Repeats(bamfile2, chromosome, start, end, kmer, times, size, ref_seq, mmi_ref, out, iteration,repetitions_h2,se_coo_h2):
+def Haplo2_Repeats(bamfile2, chromosome, start, end, kmer, times, size, ref_seq, mmi_ref, out, iteration,repetitions_h2,seqh2_coordh2):
 
 
 	out_=os.path.abspath(out+'/haplotype2')
@@ -576,7 +548,7 @@ def Haplo2_Repeats(bamfile2, chromosome, start, end, kmer, times, size, ref_seq,
 
 	if isEmpty(filseq): #no informations for that region in this haplotype
 
-		Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '_RepetitionsTable.tsv'))
+		Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '.repetitions.tsv'))
 		Table.write()
 
 		return
@@ -593,7 +565,7 @@ def Haplo2_Repeats(bamfile2, chromosome, start, end, kmer, times, size, ref_seq,
 
 			if isEmpty(seq):
 
-				Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '_RepetitionsTable.tsv'))
+				Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '.repetitions.tsv'))
 				Table.write()
 
 				continue
@@ -610,7 +582,7 @@ def Haplo2_Repeats(bamfile2, chromosome, start, end, kmer, times, size, ref_seq,
 
 					else:
 
-						Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '_RepetitionsTable.tsv'))
+						Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '.repetitions.tsv'))
 						Table.write()
 
 				else:
@@ -618,7 +590,7 @@ def Haplo2_Repeats(bamfile2, chromosome, start, end, kmer, times, size, ref_seq,
 					cor_coord_reps=corrector(ref_seq, seq, repetitions, coords, size, allowed=1) #probably an exception here is needed
 					TableWriter(chromosome, cor_coord_reps,out_,iteration)
 					repetitions_h2.extend(cor_coord_reps)
-					se_coo_h2.extend((seq,coords))
+					seqh2_coordh2.extend((seq,coords))
 
 		#merge and clean
 
@@ -652,9 +624,9 @@ def Haplo2_Repeats(bamfile2, chromosome, start, end, kmer, times, size, ref_seq,
 	#out=os.path.abspath(out)
 	#out_=[os.path.abspath(out+j) for j in ['/reference', '/haplotype1', '/haplotype2']]
 
-	#Reference_Tsv=os.path.abspath(out_[0] + '/' + str(iteration +1) + '_RepetitionsTable.tsv')
-	#Haplo_One_Tsv=os.path.abspath(out_[1] + '/' + str(iteration +1) + '_RepetitionsTable.tsv')
-	#Haplo_Two_Tsv=os.path.abspath(out_[2] + '/' + str(iteration +1) + '_RepetitionsTable.tsv')
+	#Reference_Tsv=os.path.abspath(out_[0] + '/' + str(iteration +1) + '.repetitions.tsv')
+	#Haplo_One_Tsv=os.path.abspath(out_[1] + '/' + str(iteration +1) + '.repetitions.tsv')
+	#Haplo_Two_Tsv=os.path.abspath(out_[2] + '/' + str(iteration +1) + '.repetitions.tsv')
 
 	#Reference_Tab=pd.read_csv(Reference_Tsv, sep='\t')
 	#Haplo_One_Tab=pd.read_csv(Haplo_One_Tsv, sep='\t')
@@ -747,70 +719,66 @@ def Haplo2_Repeats(bamfile2, chromosome, start, end, kmer, times, size, ref_seq,
 
 
 
-def CleanResults(out, bam1, bam2):
+def CleanResults(chromosome, out, bam1, bam2):
 
 	#merge all the .srt.bam files for the two haplotypes
 
 	out_=[os.path.abspath(out+j) for j in ['/reference', '/haplotype1', '/haplotype2']]
 
-	Hap1_Bams=glob.glob(os.path.abspath(out_[1])+'/*.srt.bam')
 
-	if isEmpty(Hap1_Bams):
+	if not os.listdir(out_[1]): #directory is empty
 
-		pass
+		return
 
 	else:
 
 
 		try:
 
-			subprocess.check_call(['sh', '/home/bolognin/TRiCoLOR_py/Merging.sh', bam1, os.path.abspath(out_[1]),os.path.abspath(out_[1]+'/Haplotype1.merged')],stderr=open(os.devnull, 'wb'))
+			subprocess.check_call(['sh', '/home/bolognin/TRiCoLOR_py/Merging.sh', bam1, os.path.abspath(out_[1]),chromosome],stderr=open(os.devnull, 'wb'))
 
 		except:
 
-			print('Something wrong in final merging for haplotype 1. Aborted last step')
-
-			return
-
-
-	Hap2_Bams=glob.glob(os.path.abspath(out_[2])+'/*.srt.bam')
+			logging.exception('Something wrong in merging for haplotype 1, ' + chromosome)
+			sys.exit(1)
 
 
-	if isEmpty(Hap2_Bams):
+	if if not os.listdir(out_[2]): #directory is empty
 
-		pass
+		return
 
 	else:
 
 		try:
 
-			subprocess.check_call(['sh', '/home/bolognin/TRiCoLOR_py/Merging.sh', bam2, os.path.abspath(out_[2]),os.path.abspath(out_[2]+'/Haplotype2.merged')],stderr=open(os.devnull, 'wb'))
+			subprocess.check_call(['sh', '/home/bolognin/TRiCoLOR_py/Merging.sh', bam2, os.path.abspath(out_[2]),chromosome],stderr=open(os.devnull, 'wb'))
 
 		except:
 
-			print('Something wrong in final merging for haplotype 2. Aborted last step')
+			logging.exception('Something wrong in merging for haplotype 2, ' + chromosome)
+			sys.exit(2)
 
-			return
 
 
-	RefTables=glob.glob(os.path.abspath(out_[0])+'/*.tsv')
-	Hap1_Tables=glob.glob(os.path.abspath(out_[1])+'/*.tsv')
-	Hap2_Tables=glob.glob(os.path.abspath(out_[2])+'/*.tsv')
+
+	RefTables=glob.glob(os.path.abspath(out_[0])+'/[!chr]*.tsv') #exclude already-merged tables
+	Hap1_Tables=glob.glob(os.path.abspath(out_[1])+'/[!chr]*.tsv') #exclude already-merged tables
+	Hap2_Tables=glob.glob(os.path.abspath(out_[2])+'/[!chr]*.tsv') #exclude already-merged tables
 
 	Table0=Concat_Tables(RefTables)
 	Table1=Concat_Tables(Hap1_Tables)
 	Table2=Concat_Tables(Hap2_Tables)
 
 
-	with open(os.path.abspath(out_[0] + '/RepetitionsTable.tsv'), 'w') as refout:
+	with open(os.path.abspath(out_[0] + '/' + chromosome + '.repetitions.tsv'), 'w') as refout:
 
 		Table0.to_csv(refout, sep='\t', index=False)
 
-	with open(os.path.abspath(out_[1] + '/RepetitionsTable.tsv'), 'w') as hap1out:
+	with open(os.path.abspath(out_[1] + '/' + chromosome + '.repetitions.tsv'), 'w') as hap1out:
 
 		Table1.to_csv(hap1out, sep='\t',index=False)
 
-	with open(os.path.abspath(out_[2] + '/RepetitionsTable.tsv'), 'w') as hap2out:
+	with open(os.path.abspath(out_[2] + '/' + chromosome + '.repetitions.tsv'), 'w') as hap2out:
 
 		Table2.to_csv(hap2out, sep='\t',index=False)
 
