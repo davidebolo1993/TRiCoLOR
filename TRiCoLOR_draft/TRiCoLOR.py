@@ -42,9 +42,8 @@ def main():
 
 	args = parser.parse_args()
 
-
-    command_dict= vars(args)
-    command_string=",".join(("{}={}".format(*i) for i in command_dict.items())) 
+	command_dict= vars(args)
+	command_string=",".join(("{}={}".format(*i) for i in command_dict.items())) 
 
 	if not os.path.exists(os.path.abspath(args.output + '/TRiCoLOR.vcf')):
 
