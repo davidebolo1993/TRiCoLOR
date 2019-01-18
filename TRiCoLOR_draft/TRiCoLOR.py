@@ -14,8 +14,6 @@ from operator import itemgetter
 from multiprocessing import Process,Manager
 from shutil import which
 import pandas as pd
-import plotly.graph_objs as go
-from plotly.offline import plot
 from RepFinder import *
 from BamParser import *
 from VCFwriter import *
