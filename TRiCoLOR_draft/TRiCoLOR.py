@@ -1,6 +1,5 @@
 #!/usr/bin/python env
 
-
 import sys
 import os
 import re
@@ -49,7 +48,7 @@ def main():
 	command_dict= vars(args)
 	command_string=",".join(("{}={}".format(*i) for i in command_dict.items())) 
 
-	if not os.path.exists(os.path.abspath(args.output + '/TRiCoLOR.vcf')):
+	if os.path.exists(os.path.abspath(args.output + '/TRiCoLOR.vcf')):
 
 		logging.error('Specified output folder already contains TRiCoLOR results. Clean that folder and run TRiCoLOR again or specify a different folder')
 		sys.exit(1)
