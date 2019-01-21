@@ -234,7 +234,7 @@ def main():
 				p2.join()
 			
 				
-				VCF_writer(chromosome, further, ref_seq, repetitions_h1, seqh1_coordh1, repetitions_h2, seqh2_coordh2, os.path.abspath(args.output + '/TRiCoLOR.vcf'))
+				VCF_writer(chromosome, further, ref_seq, repetitions_h1, seqh1_coordh1, repetitions_h2, seqh2_coordh2, os.path.abspath(args.output))
 				
 			else:
 
