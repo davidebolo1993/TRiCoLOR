@@ -173,7 +173,6 @@ def main():
 
 				CleanResults(list(chromosomes_seen)[-1], args.output, os.path.abspath(args.bam1), os.path.abspath(args.bam2)) #clean results for previous chromosome
 				
-
 			chrom=ref[chromosome]
 			ref_seq=chrom[:len(chrom)].seq
 			chromosomes_seen.add(chromosome)
@@ -511,7 +510,7 @@ def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq,
 		if len(consensus_bams) == 1:
 
 			os.rename(consensus_bams[0], consensus_bams[0].replace('.'.join(consensus_bams[0].split('.',2)[:2]),os.path.abspath(out_+"/" +str(iteration+1))))
-			#os.remove(consensus_bams[0].replace('.bam', '.bam.bai'))
+			os.remove(consensus_bams[0].replace('.bam', '.bam.bai'))
 
 		else:
 
@@ -527,7 +526,7 @@ def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq,
 			for bams in consensus_bams:
 
 				os.remove(bams)
-				#os.remove(bams.replace('.bam', '.bam.bai'))
+				os.remove(bams.replace('.bam', '.bam.bai'))
 
 
 
@@ -752,9 +751,7 @@ def CleanResults(chromosome, out, bam1, bam2):
 		except:
 
 			logging.exception('Something wrong in merging for haplotype 2, ' + chromosome)
-			sys.exit(2)
-
-
+			sys.exit(1)
 
 
 	RefTables=glob.glob(os.path.abspath(out_[0])+'/[!chr]*.tsv') #exclude already-merged tables
