@@ -1,3 +1,5 @@
+#!/usr/bin/python env
+
 import sys
 import os
 import glob
@@ -212,11 +214,11 @@ def Fasta_Generator(filtered_seq,filtered_coord,out):
 			fasta_in_window='>'+filtered_seq[i][j][0]+'\n'+filtered_seq[i][j][1][filtered_coord[i][j][1]:filtered_coord[i][j][2]+1]+'\n' #get sequence from start to end (end included)
 			f.write(fasta_in_window)
 
-		f.close() #save many .fasta file in Directory
+		f.close() 
 
 
 
-def MA(out,mmi_ref): #MSA function that use Alfred consensus as it is much faster than an MSA python implementation. Probably will be susbtituted by a wrapper in the end
+def MA(out,mmi_ref): #MSA function that use Alfred consensus as it is much faster than a MSA python implementation.
 
 
 	fafile=glob.glob(os.path.abspath(out)+'/*.unaligned.fa')
