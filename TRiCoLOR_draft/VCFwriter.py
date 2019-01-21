@@ -5,6 +5,7 @@ import datetime
 import os
 from collections import defaultdict
 from operator import itemgetter
+import subprocess
 
 def VCF_headerwriter(bamfile1, bamfile2, samplename, commandline, out):
 
@@ -163,6 +164,23 @@ def Modifier(list_of_coord,seq):
 	return coords_purified,NewSeq
 
 
+def Get_Seq_Pos(bamfilein,chromosome, start,end): #as the consensus sequence is supposed to generate just one sequence aligned to the reference, secondary alignments are removed
+	
+
+	bamfile=pysam.AlignmentFile(bamfilein,'rb')
+
+	for read in bamfile.fetch(chromosome, start, end):
+
+		if not read.is_unmapped and not read.is_secondary: 
+
+			coords = read.get_reference_positions(full_length=True)
+			seq=read.seq
+
+	bamfile.close()
+
+	return seq,coords
+
+
 def GetIndex(start, end, coordinates):
 
 	si=[i for i,e in enumerate(coordinates) if e==start]
@@ -172,15 +190,16 @@ def GetIndex(start, end, coordinates):
 
 
 
-def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1_repetitions, sequence_coordinates_haplotype1, haplotype2_repetitions, sequence_coordinates_haplotype2, out):
+def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1_repetitions, bamfile1, haplotype2_repetitions, bamfile2, out):
 
+
+	subprocess.call(['samtools', 'index', os.path.abspath(bamfile1)])
+	subprocess.call(['samtools', 'index', os.path.abspath(bamfile2)])
 
 	repref=reference_repetitions
 	repsh1=list(haplotype1_repetitions)
 	repsh2=list(haplotype2_repetitions)
 
-	coord_h1,seq_h1=Modifier(sequence_coordinates_haplotype1[1],sequence_coordinates_haplotype1[0])
-	coord_h2,seq_h2=Modifier(sequence_coordinates_haplotype2[1],sequence_coordinates_haplotype2[0])
 
 	intersection=list(set(repref+ repsh1 + repsh2)) # get unique repetitions between the three lists
 	sorted_intersection=sorted(intersection, key=itemgetter(1)) #sort repetitions
@@ -196,6 +215,8 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 			pos=reps[1]
 			ref=reference_sequence[(reps[1]-1):reps[2]]
+			seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[1], reps[2])
+			coord_h2,seq_h2=Modifier(coord_h2,seq_h2) #overwrite previous variables
 			si,ei=GetIndex(reps[1],reps[2],coord_h2)
 			alt=seq_h2[si:(ei+1)].replace('-','')
 
@@ -224,6 +245,8 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 			pos=reps[1]
 			ref=reference_sequence[(reps[1]-1):reps[2]]
+			seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[1], reps[2])
+			coord_h1,seq_h1=Modifier(coord_h1,seq_h1) #overwrite previous variables
 			si,ei=GetIndex(reps[1],reps[2],coord_h1)
 			alt=seq_h1[si:(ei+1)].replace('-','')
 			
@@ -250,8 +273,16 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 			pos=reps[1]
 			ref=reference_sequence[(reps[1]-1):reps[2]]
+
+			seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[1], reps[2])
+			coord_h1,seq_h1=Modifier(coord_h1,seq_h1) #overwrite previous variables
+
+			seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[1], reps[2])
+			coord_h2,seq_h2=Modifier(coord_h2,seq_h2) #overwrite previous variables
+
 			si_1,ei_1=GetIndex(reps[1],reps[2],coord_h1)
 			si_2,ei_2=GetIndex(reps[1],reps[2],coord_h2)
+			
 			alt=seq_h1[si_1:(ei_1+1)].replace('-','') + ',' + seq_h2[si_2:(ei_2+1)].replace('-','')
 			
 
@@ -317,6 +348,8 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 			pos=reps[1]
 			ref=reference_sequence[(reps[1]-1):reps[2]]
+			seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[1], reps[2])
+			coord_h1,seq_h1=Modifier(coord_h1,seq_h1) #overwrite previous variables
 			si,ei=GetIndex(reps[1],reps[2],coord_h1)
 			alt=seq_h1[si:(ei+1)].replace('-','')
 
@@ -345,6 +378,8 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 			pos=reps[1]
 			ref=reference_sequence[(reps[1]-1):reps[2]]
+			seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[1], reps[2])
+			coord_h2,seq_h2=Modifier(coord_h2,seq_h2) #overwrite previous variables
 			si,ei=GetIndex(reps[1],reps[2],coord_h2)
 			alt=seq_h2[si:(ei+1)].replace('-','')
 
@@ -371,8 +406,16 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 			pos=reps[1]
 			ref=reference_sequence[(reps[1]-1):reps[2]]
+
+			seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[1], reps[2])
+			coord_h1,seq_h1=Modifier(coord_h1,seq_h1) #overwrite previous variables
+
+			seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[1], reps[2])
+			coord_h2,seq_h2=Modifier(coord_h2,seq_h2) #overwrite previous variables
+
 			si_1,ei_1=GetIndex(reps[1],reps[2],coord_h1)
 			si_2,ei_2=GetIndex(reps[1],reps[2],coord_h2)
+
 			alt=seq_h1[si_1:(ei_1+1)].replace('-','') + ',' + seq_h2[si_2:(ei_2+1)].replace('-','')
 			info=dict()
 
@@ -427,4 +470,5 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 
 
-
+				os.remove(os.path.abspath(bamfile1 + '.bai'))
+				os.remove(os.path.abspath(bamfile2 + '.bai'))
