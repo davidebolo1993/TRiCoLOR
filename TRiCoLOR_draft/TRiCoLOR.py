@@ -55,7 +55,7 @@ def main():
 
 	else:
 
-		VCF_headerwriter(args.bam1, args.bam2, args.samplename, command_string, os.path.abspath(args.output + '/TRiCoLOR.vcf'))
+		VCF_headerwriter(args.bam1, args.bam2, args.samplename, command_string, os.path.abspath(args.output))
 
 
 	start_t=timeit.default_timer()
@@ -69,7 +69,7 @@ def main():
 
 	for tools in external_tools:
 
-		if which(tools) is not None:
+		if which(tools) is None:
 
 			logging.error(tools + ' was not found as an executable command. Install ' + tools + ' and re-run TRiCoLOR')
 			sys.exit(1)
@@ -172,9 +172,11 @@ def main():
 			if chromosomes_seen: #set is not empty
 
 				CleanResults(list(chromosomes_seen)[-1], args.output, os.path.abspath(args.bam1), os.path.abspath(args.bam2)) #clean results for previous chromosome
-				chrom=ref[chromosome]
-				ref_seq=chrom[:len(chrom)].seq
-				chromosomes_seen.add(chromosome)
+				
+
+			chrom=ref[chromosome]
+			ref_seq=chrom[:len(chrom)].seq
+			chromosomes_seen.add(chromosome)
 
 
 			#check if the .mmi reference exists, otherwise create it for the wanted chromosome
@@ -232,16 +234,16 @@ def main():
 				p2.join()
 			
 				
-				VariantWriter(chromosome, further, ref_seq, repetitions_h1, seqh1_coordh1, repetitions_h2, seqh2_coordh2, os.path.abspath(args.output + '/TRiCoLOR.vcf'))
+				VCF_writer(chromosome, further, ref_seq, repetitions_h1, seqh1_coordh1, repetitions_h2, seqh2_coordh2, os.path.abspath(args.output + '/TRiCoLOR.vcf'))
 				
 			else:
 
-				logging.info('Skipped ambiguous region ' + chromosome + ':' str(start) + '-'+str(end))
+				logging.info('Skipped ambiguous region ' + chromosome + ':' + str(start) + '-' + str(end))
 				continue
 
 		except:
 
-			logging.exception('Something went wrong for ' + chromosome + ':' str(start) + '-'+str(end))
+			logging.exception('Something went wrong for ' + chromosome + ':' + str(start) + '-' +str(end))
 
 
 	CleanResults(list(chromosomes_seen)[-1], args.output, os.path.abspath(args.bam1), os.path.abspath(args.bam2)) #clean results at the end of the process
@@ -743,7 +745,7 @@ def CleanResults(chromosome, out, bam1, bam2):
 			sys.exit(1)
 
 
-	if if not os.listdir(out_[2]): #directory is empty
+	if not os.listdir(out_[2]): #directory is empty
 
 		return
 
