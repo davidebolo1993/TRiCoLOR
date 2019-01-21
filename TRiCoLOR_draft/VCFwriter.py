@@ -1,3 +1,5 @@
+#!/usr/bin/python env
+
 import pysam
 import datetime
 import os
