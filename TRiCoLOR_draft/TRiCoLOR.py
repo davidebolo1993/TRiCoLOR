@@ -221,20 +221,16 @@ def main():
 				repetitions_h1 = manager.list()
 				repetitions_h2 = manager.list()
 
-				seqh1_coordh1=manager.list()
-				seqh2_coordh2=manager.list()
-
-				p1=Process(target=Haplo1_Repeats, args=(os.path.abspath(args.bam1), chromosome, start, end, args.motif, args.times, args.size, ref_seq, mmi_ref, args.output, i,repetitions_h1, seqh1_coordh1))
-				p2=Process(target=Haplo2_Repeats, args=(os.path.abspath(args.bam2), chromosome, start, end, args.motif, args.times, args.size, ref_seq, mmi_ref, args.output, i,repetitions_h2, seqh2_coordh2))
+				p1=Process(target=Haplo1_Repeats, args=(os.path.abspath(args.bam1), chromosome, start, end, args.motif, args.times, args.size, ref_seq, mmi_ref, args.output, i,repetitions_h1))
+				p2=Process(target=Haplo2_Repeats, args=(os.path.abspath(args.bam2), chromosome, start, end, args.motif, args.times, args.size, ref_seq, mmi_ref, args.output, i,repetitions_h2))
 
 				p1.start()
 				p2.start()
 
 				p1.join()
 				p2.join()
-			
-				
-				VCF_writer(chromosome, further, ref_seq, repetitions_h1, seqh1_coordh1, repetitions_h2, seqh2_coordh2, os.path.abspath(args.output))
+
+				VCF_writer(chromosome, further, ref_seq, repetitions_h1, os.path.abspath(args.output + '/haplotype1/' + str(i+1) + '.srt.bam'), repetitions_h2, os.path.abspath(args.output + '/haplotype2/' + str(i+1) + '.srt.bam'), os.path.abspath(args.output))
 				
 			else:
 
@@ -454,7 +450,7 @@ def Ref_Repeats(reference_seq, chromosome, start, end, kmer, times, size, out, i
 
 
 
-def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq, mmi_ref, out, iteration,repetitions_h1, seqh1_coordh1):
+def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq, mmi_ref, out, iteration,repetitions_h1):
 
 	out_=os.path.abspath(out+'/haplotype1')
 
@@ -509,14 +505,13 @@ def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq,
 					cor_coord_reps=corrector(ref_seq, seq, repetitions, coords, size, allowed=1) #probably an exception here is needed
 					TableWriter(chromosome, cor_coord_reps,out_,iteration)
 					repetitions_h1.extend(cor_coord_reps)
-					seqh1_coordh1.extend((seq,coords))
 
 		#merge and clean
 
 		if len(consensus_bams) == 1:
 
 			os.rename(consensus_bams[0], consensus_bams[0].replace('.'.join(consensus_bams[0].split('.',2)[:2]),os.path.abspath(out_+"/" +str(iteration+1))))
-			os.remove(consensus_bams[0].replace('.bam', '.bam.bai'))
+			#os.remove(consensus_bams[0].replace('.bam', '.bam.bai'))
 
 		else:
 
@@ -532,11 +527,11 @@ def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq,
 			for bams in consensus_bams:
 
 				os.remove(bams)
-				os.remove(bams.replace('.bam', '.bam.bai'))
+				#os.remove(bams.replace('.bam', '.bam.bai'))
 
 
 
-def Haplo2_Repeats(bamfile2, chromosome, start, end, kmer, times, size, ref_seq, mmi_ref, out, iteration,repetitions_h2,seqh2_coordh2):
+def Haplo2_Repeats(bamfile2, chromosome, start, end, kmer, times, size, ref_seq, mmi_ref, out, iteration,repetitions_h2):
 
 
 	out_=os.path.abspath(out+'/haplotype2')
@@ -592,7 +587,6 @@ def Haplo2_Repeats(bamfile2, chromosome, start, end, kmer, times, size, ref_seq,
 					cor_coord_reps=corrector(ref_seq, seq, repetitions, coords, size, allowed=1) #probably an exception here is needed
 					TableWriter(chromosome, cor_coord_reps,out_,iteration)
 					repetitions_h2.extend(cor_coord_reps)
-					seqh2_coordh2.extend((seq,coords))
 
 		#merge and clean
 
