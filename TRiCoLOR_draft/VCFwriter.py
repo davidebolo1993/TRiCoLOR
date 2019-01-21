@@ -169,11 +169,6 @@ def GetIndex(start, end, coordinates):
 	return si[0],ei[-1]
 
 
-
-
-
-
-
 def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1_repetitions, sequence_coordinates_haplotype1, haplotype2_repetitions, sequence_coordinates_haplotype2, out):
 
 
