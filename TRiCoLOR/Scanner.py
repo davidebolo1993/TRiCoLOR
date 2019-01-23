@@ -12,7 +12,8 @@ import argparse
 from multiprocessing import Process
 from shutil import which
 import subprocess
-
+import timeit
+import logging
 
 
 def main():
@@ -20,47 +21,153 @@ def main():
 	parser = argparse.ArgumentParser(prog='TRiCoLOR', description='''Shannon entropy-based scanner to identify putative repetitions in whole bam files''', epilog='''This program was developed by Davide Bolognini and Tobias Rausch at the European Molecular Biology Laboratory/European Bioinformatic Institute (EMBL/EBI)''')
 	parser.add_argument('-b1', '--bam1', help='haplotype-resolved .bam 1 file to be scanned.', metavar='',required=True)
 	parser.add_argument('-b2', '--bam2', help='haplotype-resolved .bam 2 file to be scanned.', metavar='',required=True)
-	parser.add_argument('-s', '--scansize', help='scansize to use when scanning .bam files. Lower the scansize, higher the resolution,more it takes to scan', metavar='',default=20)
-	parser.add_argument('-et', '--entropytreshold', help='entropy treshold to call for repetition. Must be trained before changing', metavar='',default=1.3)
-	parser.add_argument('-ct', '--calltreshold', help='number of entropy drop needed to call for interval in .bed', metavar='',default=5)
-	parser.add_argument('-l', '--label', help='label to identify the outputted .bed files', metavar='',required=True)	
-	parser.add_argument('-o', '--output', help='path to where the resulting bed files will be saved', metavar='',required=True)
+	parser.add_argument('-s', '--scansize', type=int, help='scansize to use when scanning .bam files. Lower the scansize, higher the resolution,more it takes to scan', metavar='',default=20)
+	parser.add_argument('-et', '--entropytreshold', type=int, help='entropy treshold to call for repetition. Must be trained before changing', metavar='',default=1.3)
+	parser.add_argument('-ct', '--calltreshold', type=float, help='number of entropy drop needed to call for interval in .bed', metavar='',default=5)
+	parser.add_argument('-l', '--label', type=str, help='label to identify the outputted .bed files', metavar='',required=True)	
+	parser.add_argument('-o', '--output', help='path to where the resulting .bed files will be saved', metavar='',required=True)
 	parser.add_argument('-rt', '--reftype', help='Are you using Hg38 or Hg19?', metavar='',default='Hg38')	
 	args = parser.parse_args()
 
-	import timeit
-
 	start=timeit.default_timer()
 
-	runInParallel(BScanner, (args.bam1, os.path.abspath(args.output + '/' + args.label + '_hap1.bed'), args.scansize, args.entropytreshold, args.calltreshold),(args.bam2, os.path.abspath(args.output + '/' + args.label + '_hap2.bed'), args.scansize, args.entropytreshold, args.calltreshold))
+	if not os.path.exists(os.path.abspath(args.output)):
 
-	end=timeit.default_timer()
-	elapsed=(end-start)/60
+		try:
 
-	print('Bam files scanned in', elapsed, 'minutes')
+			os.makedirs(os.path.abspath(args.output))
+
+		except:
+
+			print('It was not possible to create the results folder. Specify a path for which you have write permission')
+			sys.exit(1)
+
+
+	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR_scanner.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+
+
+	logging.info('Analysis starts now')
+
+	external_tools=['samtools', 'bedops']
+
+	for tools in external_tools:
+
+		if which(tools) is None:
+
+			logging.error(tools + ' was not found as an executable command. Install ' + tools + ' and re-run TRiCoLOR')
+			sys.exit(1)
+
+	#check inputs validity
 
 	try:
 
-		assert(which('bedops') is not None)
+		subprocess.check_call(['samtools','quickcheck',os.path.abspath(args.bam1)],stderr=open(os.devnull, 'wb'))
 
-		with open(os.path.abspath(args.output + '/' + args.label + '.bed'), 'w') as bedout:
+	except:
 
-			subprocess.call(['bedops', '--header', '-m', os.path.abspath(args.output + '/' + args.label + '_hap1.bed'), os.path.abspath(args.output + '/' + args.label + '_hap2.bed')], stdout=bedout)
+		logging.error('.bam file 1 does not exist, is not readable or is not a valid .bam file')
+		sys.exit(1)
+
+
+	try:
+
+		subprocess.check_call(['samtools','quickcheck',os.path.abspath(args.bam2)],stderr=open(os.devnull, 'wb'))
+		
+
+	except:
+
+		logging.error('.bam file 2 does not exist, is not readable or is not a valid .bam file')
+		sys.exit(1)
+
+
+	if not os.path.exists(os.path.abspath(args.bam1 + '.bai')):
+
+		logging.info('Creating index for .bam file 1, as it was not found in folder...')
+
+		try:
+
+			subprocess.check_call(['samtools', 'index', os.path.abspath(args.bam1)])
+
+		except:
+
+			logging.error('.bam1 file could not be indexed')
+			sys.exit(1)
+
+
+	if not os.path.exists(os.path.abspath(args.bam2 + '.bai')):
+
+		logging.info('Creating index for .bam file 2, as it was not found in folder...')
+
+		try:
+
+			subprocess.check_call(['samtools', 'index', os.path.abspath(args.bam2)])
+
+		except:
+
+			logging.error('.bam2 file could not be indexed')
+			sys.exit(1)
+
+
+	#check permissions on output folder
+
+	if not os.access(os.path.dirname(os.path.abspath(args.output)),os.W_OK):
+
+		logging.error('You do not have write permissions on the directory in which results will be stored: you must specify a folder for which you have write permissions')
+		sys.exit(1)
+
+	try:
+
+		runInParallel(BScanner, (args.bam1, os.path.abspath(args.output + '/' + args.label + '_hap1.bed'), args.scansize, args.entropytreshold, args.calltreshold),(args.bam2, os.path.abspath(args.output + '/' + args.label + '_hap2.bed'), args.scansize, args.entropytreshold, args.calltreshold))
+
+	except:
+
+		logging.exception('Something went wrong during the scanning process.')
+		sys.exit(1)
+
+
+	end=timeit.default_timer()
+	elapsed=end-start
+
+	logging.info('.bam files scanned in', elapsed, 'seconds')
+
+
+	with open(os.path.abspath(args.output + '/' + args.label + '_hap1.srt.bed'), 'w') as srtbed1:
+	
+		subprocess.call(['sort-bed', os.path.abspath(args.output + '/' + args.label + '_hap1.bed')],stdout=srtbed1)
+
+	with open(os.path.abspath(args.output + '/' + args.label + '_hap2.srt.bed'), 'w') as srtbed2:
+	
+		subprocess.call(['sort-bed', os.path.abspath(args.output + '/' + args.label + '_hap2.bed')],stdout=srtbed2)
+
+
+	os.remove(os.path.abspath(args.output + '/' + args.label + '_hap1.bed')) #remove unsorted
+	os.remove(os.path.abspath(args.output + '/' + args.label + '_hap2.bed')) #remove unsorted
+
+
+	with open(os.path.abspath(args.output + '/' + args.label + '.merged.bed'), 'w') as bedout:
+
+		subprocess.call(['bedops', '-m', os.path.abspath(args.output + '/' + args.label + '_hap1.srt.bed'), os.path.abspath(args.output + '/' + args.label + '_hap2.srt.bed')], stdout=bedout)
+
+
+	if args.reftype != 'Hg38' and args.reftype != 'Hg19':
+
+		logging.warning('You are not using Hg38 or Hg19 as reference genomes. Merged .bed file is ready but centromeres and teleomeres regions were not filtered out.')
+		sys.exit(1)
+
+
+	else:
 
 		with open(os.path.abspath(args.output + '/' + args.label + '.filtered.tmp.bed'), 'w') as bedout:
 
 			subprocess.call(['bedops', '-d', os.path.abspath(args.output + '/' + args.label + '.bed'), os.path.abspath('/home/bolognin/TRiCoLOR_py/Data/'+ args.reftype + 'Telomeres.sorted.bed')], stdout=bedout)
 
-		with open(os.path.abspath(args.output + '/' + args.label + '.filtered.bed'), 'w') as bedout:
+		with open(os.path.abspath(args.output + '/' + args.label + '.filtered.merged.bed'), 'w') as bedout:
 
 			subprocess.call(['bedops', '-d', os.path.abspath(args.output + '/' + args.label + '.tmp.bed'), os.path.abspath('/home/bolognin/TRiCoLOR_py/Data/'+ args.reftype + 'Centromeres.sorted.bed')], stdout=bedout)
 
 		os.remove(os.path.abspath(args.output + '/' + args.label + '.filtered.tmp.bed'))
 
-
-	except:
-
-		sys.exit('bedops was not found as an executable command. Install ' + tools + ' and run, on the two .bed files, bedops --header -m/--merge. Also centromeres and teleomeres can be excluded by running bedops, with the -d option, on the resulting .bed and the two .bed files in the Data folder. The resulting .bed file can be given, as input, to TRiCoLOR')
+		logging.info('Merged and filtered .bed file ready. Done.')
 
 
 
