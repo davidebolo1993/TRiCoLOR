@@ -24,9 +24,9 @@ def main():
 	parser.add_argument('-s', '--scansize', type=int, help='scansize to use when scanning .bam files. Lower the scansize, higher the resolution,more it takes to scan', metavar='',default=20)
 	parser.add_argument('-et', '--entropytreshold', type=int, help='entropy treshold to call for repetition. Must be trained before changing', metavar='',default=1.3)
 	parser.add_argument('-ct', '--calltreshold', type=float, help='number of entropy drop needed to call for interval in .bed', metavar='',default=5)
-	parser.add_argument('-l', '--label', type=str, help='label to identify the outputted .bed files', metavar='',required=True)	
+	parser.add_argument('-l', '--label', type=str, help='label to identify the outputted .bed files', metavar='',required=True) 
 	parser.add_argument('-o', '--output', help='path to where the resulting .bed files will be saved', metavar='',required=True)
-	parser.add_argument('-rt', '--reftype', help='Are you using Hg38 or Hg19?', metavar='',default='Hg38')	
+	parser.add_argument('-rt', '--reftype', help='Are you using Hg38 or Hg19?', metavar='',default='Hg38')  
 	args = parser.parse_args()
 
 	start=timeit.default_timer()
@@ -131,9 +131,11 @@ def main():
 	logging.info('.bam files scanned in', elapsed, 'seconds')
 
 
+
 	with open(os.path.abspath(args.output + '/' + args.label + '_hap1.srt.bed'), 'w') as srtbed1:
 	
 		subprocess.call(['sort-bed', os.path.abspath(args.output + '/' + args.label + '_hap1.bed')],stdout=srtbed1)
+
 
 	with open(os.path.abspath(args.output + '/' + args.label + '_hap2.srt.bed'), 'w') as srtbed2:
 	
@@ -172,18 +174,18 @@ def main():
 
 
 def runInParallel(function, *arguments):
-  
-  proc = []
-  
-  for args in arguments:
-   
-    p = Process(target=function, args=args)
-    p.start()
-    proc.append(p)
+	
+	proc = []
 
-  for p in proc:
+	for args in arguments:
 
-    p.join()
+		p = Process(target=function, args=args)
+		p.start()
+		proc.append(p)
+
+	for p in proc:
+
+		p.join()
 
 
 
