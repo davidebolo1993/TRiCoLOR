@@ -343,8 +343,10 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 	else:
 
-		sorted_intersection=sorted(intersection, key=itemgetter(1)) #sort repetitions
+		sorted_intersection=sorted(intersection, key=itemgetter(1,2)) #sort repetitions by start and then by end
+		print(sorted_intersection)
 		sorted_ranges,ref_dict_number,ref_dict_motif,hap1_dict_number,hap1_dict_motif,hap2_dict_number,hap2_dict_motif=Merger(sorted_intersection, repref, repsh1, repsh2)
+		print(sorted_ranges)
 
 		for reps in sorted_ranges:
 
@@ -1564,7 +1566,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						info['H1M'] = '.'
 						info['H1N'] = '.'
 						info['H2M'] = hap2_dict_motif[reps]
-						info['H2N'] = hap2_dict_motif[reps]
+						info['H2N'] = hap2_dict_number[reps]
 									
 						form='.|0' #second allele is not a variant. The sequence of the first one is not known
 
@@ -1592,7 +1594,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info['H1M'] = '.'
 							info['H1N'] = '.'
 							info['H2M'] = hap2_dict_motif[reps]
-							info['H2N'] = hap2_dict_motif[reps]
+							info['H2N'] = hap2_dict_number[reps]
 									
 							form='1|0' #second allele is not a variant. The sequence of the first one is not known
 
@@ -1612,7 +1614,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						info['H1M'] = '.'
 						info['H1N'] = '.'
 						info['H2M'] = hap2_dict_motif[reps]
-						info['H2N'] = hap2_dict_motif[reps]
+						info['H2N'] = hap2_dict_number[reps]
 									
 						form='.|1' 
 
@@ -1636,7 +1638,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info['H1M'] = '.'
 							info['H1N'] = '.'
 							info['H2M'] = hap2_dict_motif[reps]
-							info['H2N'] = hap2_dict_motif[reps]
+							info['H2N'] = hap2_dict_number[reps]
 								
 							form='0|1' 
 
@@ -1655,7 +1657,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								info['H1M'] = '.'
 								info['H1N'] = '.'
 								info['H2M'] = hap2_dict_motif[reps]
-								info['H2N'] = hap2_dict_motif[reps]
+								info['H2N'] = hap2_dict_number[reps]
 									
 								form='1|1' 
 
@@ -1670,7 +1672,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								info['H1M'] = '.'
 								info['H1N'] = '.'
 								info['H2M'] = hap2_dict_motif[reps]
-								info['H2N'] = hap2_dict_motif[reps]
+								info['H2N'] = hap2_dict_number[reps]
 									
 								form='1|1' 
 							
