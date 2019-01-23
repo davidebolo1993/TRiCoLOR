@@ -131,7 +131,6 @@ def main():
 	logging.info('.bam files scanned in', elapsed, 'seconds')
 
 
-
 	with open(os.path.abspath(args.output + '/' + args.label + '_hap1.srt.bed'), 'w') as srtbed1:
 	
 		subprocess.call(['sort-bed', os.path.abspath(args.output + '/' + args.label + '_hap1.bed')],stdout=srtbed1)
@@ -159,15 +158,15 @@ def main():
 
 	else:
 
-		with open(os.path.abspath(args.output + '/' + args.label + '.filtered.tmp.bed'), 'w') as bedout:
+		with open(os.path.abspath(args.output + '/' + args.label + '.filtered.merged.tmp.bed'), 'w') as bedout:
 
-			subprocess.call(['bedops', '-d', os.path.abspath(args.output + '/' + args.label + '.bed'), os.path.abspath('/home/bolognin/TRiCoLOR_py/Data/'+ args.reftype + 'Telomeres.sorted.bed')], stdout=bedout)
+			subprocess.call(['bedops', '-d', os.path.abspath(args.output + '/' + args.label + '.merged.bed'), os.path.abspath('/home/bolognin/TRiCoLOR_py/Data/'+ args.reftype + 'Telomeres.sorted.bed')], stdout=bedout)
 
 		with open(os.path.abspath(args.output + '/' + args.label + '.filtered.merged.bed'), 'w') as bedout:
 
-			subprocess.call(['bedops', '-d', os.path.abspath(args.output + '/' + args.label + '.tmp.bed'), os.path.abspath('/home/bolognin/TRiCoLOR_py/Data/'+ args.reftype + 'Centromeres.sorted.bed')], stdout=bedout)
+			subprocess.call(['bedops', '-d', os.path.abspath(args.output + '/' + args.label + '.filtered.merged.tmp.bed'), os.path.abspath('/home/bolognin/TRiCoLOR_py/Data/'+ args.reftype + 'Centromeres.sorted.bed')], stdout=bedout)
 
-		os.remove(os.path.abspath(args.output + '/' + args.label + '.filtered.tmp.bed'))
+		os.remove(os.path.abspath(args.output + '/' + args.label + '.filtered.merged.tmp.bed'))
 
 		logging.info('Merged and filtered .bed file ready. Done.')
 
