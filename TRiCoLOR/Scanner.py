@@ -174,7 +174,7 @@ def main():
 
 
 def runInParallel(function, *arguments):
-	
+
 	proc = []
 
 	for args in arguments:
@@ -191,10 +191,10 @@ def runInParallel(function, *arguments):
 
 def entropy(string): #Shannon Entropy
 
-		prob = [float(string.count(c)) / len(string) for c in dict.fromkeys(list(string))]
-		entropy = - sum([p * math.log(p) / math.log(2.0) for p in prob])
+	prob = [float(string.count(c)) / len(string) for c in dict.fromkeys(list(string))]
+	entropy = - sum([p * math.log(p) / math.log(2.0) for p in prob])
 
-		return entropy
+	return entropy
 
 
 def modifier(coordinates): #fast way to remove None and substitute with closest number in list
