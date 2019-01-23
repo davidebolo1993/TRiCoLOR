@@ -1,5 +1,6 @@
 #!/usr/bin/python env
 
+
 import os
 import math
 import sys
@@ -59,7 +60,7 @@ def main():
 
 	except:
 
-		sys.exit('bedops was not found as an executable command. Install ' + tools + ' and run, on the two .bed files, bedops --header -m/--merge. The resulting .bed file can be given, as input, to TRiCoLOR')
+		sys.exit('bedops was not found as an executable command. Install ' + tools + ' and run, on the two .bed files, bedops --header -m/--merge. Also centromeres and teleomeres can be excluded by running bedops, with the -d option, on the resulting .bed and the two .bed files in the Data folder. The resulting .bed file can be given, as input, to TRiCoLOR')
 
 
 
