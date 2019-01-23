@@ -99,7 +99,7 @@ def VCF_variantwriter(chrom, pos, ref, alt, info, form, out):
 
 		INFO_H2M = ','.join(str(x) for x in INFO_H2M) 
 
-	INFO_H2N=str(info['H2N'])
+	INFO_H2N=info['H2N']
 
 	if type(INFO_H2N) == list:
 
