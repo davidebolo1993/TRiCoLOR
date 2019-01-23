@@ -673,24 +673,24 @@ def CleanResults(chromosome, out, bam1, bam2):
 			sys.exit(1)
 
 
-	RefTables=glob.glob(os.path.abspath(out_[0])+'/[!chr]*.tsv') #exclude already-merged tables
-	Hap1_Tables=glob.glob(os.path.abspath(out_[1])+'/[!chr]*.tsv') #exclude already-merged tables
-	Hap2_Tables=glob.glob(os.path.abspath(out_[2])+'/[!chr]*.tsv') #exclude already-merged tables
+	RefTables=glob.glob(os.path.abspath(out_[0])+'/*.tsv') #exclude already-merged tables
+	Hap1_Tables=glob.glob(os.path.abspath(out_[1])+'/*.tsv') #exclude already-merged tables
+	Hap2_Tables=glob.glob(os.path.abspath(out_[2])+'/*.tsv') #exclude already-merged tables
 
 	Table0=Concat_Tables(RefTables)
 	Table1=Concat_Tables(Hap1_Tables)
 	Table2=Concat_Tables(Hap2_Tables)
 
 
-	with open(os.path.abspath(out_[0] + '/' + chromosome + '.repetitions.tsv'), 'w') as refout:
+	with open(os.path.abspath(out_[0] + '/' + chromosome + '.repetitions.bed'), 'w') as refout:
 
 		Table0.to_csv(refout, sep='\t', index=False)
 
-	with open(os.path.abspath(out_[1] + '/' + chromosome + '.repetitions.tsv'), 'w') as hap1out:
+	with open(os.path.abspath(out_[1] + '/' + chromosome + '.repetitions.bed'), 'w') as hap1out:
 
 		Table1.to_csv(hap1out, sep='\t',index=False)
 
-	with open(os.path.abspath(out_[2] + '/' + chromosome + '.repetitions.tsv'), 'w') as hap2out:
+	with open(os.path.abspath(out_[2] + '/' + chromosome + '.repetitions.bed'), 'w') as hap2out:
 
 		Table2.to_csv(hap2out, sep='\t',index=False)
 
