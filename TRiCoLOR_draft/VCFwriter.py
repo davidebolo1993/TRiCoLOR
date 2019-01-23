@@ -38,10 +38,10 @@ def VCF_headerwriter(bamfile1, bamfile2, samplename, commandline, out):
 	#INFO field appear after CONTIG field
 
 	END='##INFO=<ID=END,Number=1,Type=Integer,Description="Repetition end">'
-	H1M='##INFO=<ID=H1M,Number=.,Type=String,Description="Haplotype1 Repeated Motif">' #it is possible to have multiple motifs for the same region, if they were splitted
-	H1N='##INFO=<ID=H1N,Number=.,Type=String,Description="Haplotype1 Repetitions Number">' #it is possible to have multiple motifs for the same region, if they were splitted
-	H2M='##INFO=<ID=H2M,Number=.,Type=String,Description="Haplotype2 Repeated Motif">' #it is possible to have multiple motifs for the same region, if they were splitted
-	H2N='##INFO=<ID=H2N,Number=.,Type=String,Description="Haplotype2 Repetitions Number">' #it is possible to have multiple motifs for the same region, if they were splitted
+	H1M='##INFO=<ID=H1M,Number=.,Type=String,Description="Haplotype1 Repeated Motif">' #it is possible to have multiple repetition motifs for the same region, if they were splitted
+	H1N='##INFO=<ID=H1N,Number=.,Type=String,Description="Haplotype1 Repetitions Number">' #it is possible to have multiple repetition numbers for the same region, if they were splitted
+	H2M='##INFO=<ID=H2M,Number=.,Type=String,Description="Haplotype2 Repeated Motif">' #it is possible to have multiple repetition motifs for the same region, if they were splitted
+	H2N='##INFO=<ID=H2N,Number=.,Type=String,Description="Haplotype2 Repetitions Number">' #it is possible to have multiple repetition numbers for the same region, if they were splitted
 
 	#FORMAT field appear after INFO field
 
