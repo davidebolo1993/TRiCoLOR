@@ -218,7 +218,7 @@ def Fasta_Generator(filtered_seq,filtered_coord,out):
 
 
 
-def MA(out,mmi_ref): #MSA function that use Alfred consensus as it is much faster than a MSA python implementation.
+def MA(out,mmi_ref): #MSA function that uses Alfred consensus as it is much faster than a MSA python implementation.
 
 
 	fafile=glob.glob(os.path.abspath(out)+'/*.unaligned.fa')
