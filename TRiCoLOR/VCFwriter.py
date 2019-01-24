@@ -186,9 +186,6 @@ def GetIndex(start, end, coordinates):
 	si=[i for i,e in enumerate(coordinates) if e==start]
 	ei=[i for i,e in enumerate(coordinates) if e==end]
 
-	print(si)
-	print(ei)
-
 	return si[0],ei[-1]
 
 
@@ -319,8 +316,6 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 		sorted_intersection=sorted(intersection, key=itemgetter(1,2)) #sort repetitions by start and then by end
 		sorted_ranges,ref_dict_number,ref_dict_motif,hap1_dict_number,hap1_dict_motif,hap2_dict_number,hap2_dict_motif=Merger(sorted_intersection, repref, repsh1, repsh2)
-
-		print(sorted_ranges)
 
 		for reps in sorted_ranges:
 
@@ -711,10 +706,6 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 					coord_h1,seq_h1=Modifier(coord_h1,seq_h1) #overwrite previous variables
 					coord_h2,seq_h2=Modifier(coord_h2,seq_h2) #overwrite previous variables
-
-
-					print(coord_h1)
-					print(coord_h2)
 
 					si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
 					si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
