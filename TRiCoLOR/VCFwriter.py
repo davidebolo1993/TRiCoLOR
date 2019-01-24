@@ -133,40 +133,11 @@ def modifier(coordinates): #fast way to remove None and substitute with closest 
 	return coordinates
 
 
-def list_duplicates(list_of_seq):
-
-	a_=defaultdict(list)
-
-	for i,item in enumerate(list_of_seq):
-
-		a_[item].append(i)
-
-	return ((key,locs) for key,locs in a_.items() if len(locs) > 1)
-
 
 def Modifier(list_of_coord,seq):
 
 
 	coords_without_insertions=modifier(list_of_coord)
-
-	where_dup=[]
-
-	for dup in list_duplicates(coords_without_insertions):
-
-		where_dup.append(dup)
-
-	mod_dup=[]
-
-	for dups in where_dup:
-
-		dup_num=dups[0]
-		to_add=1/(len(dups[1]))
-		new_=[dup_num+(i*to_add) for i in range(len(dups[1]))]
-		mod_dup.append((dup_num,new_))
-
-	for i in range(len(mod_dup)):
-
-		coords_without_insertions[min(where_dup[i][1]):max(where_dup[i][1])+1]=mod_dup[i][1]
 
 	#Modify deletions
 	
@@ -196,7 +167,7 @@ def Get_Seq_Pos(bamfilein,chromosome, start,end): #as the consensus sequence is 
 	seq=[]
 	coords=[]
 	
-	bamfile=pysam.AlignmentFile(bamfilein,'rb')
+	bamfile=pysam.AlignmentFile(bamfilein,'rb', check_sq=False) #sometimes we may have to try to open empty files
 
 	for read in bamfile.fetch(chromosome, start, end):
 
