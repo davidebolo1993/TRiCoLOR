@@ -241,7 +241,7 @@ def get_rep_num(reps,interval,sequence): #get the most-likely corrected number o
 
 
 
-def KeepMostLikelyFromSame(significant1): #if two intervals are exactly the same they escape the overlapping check. Keep the one with the longest motif
+def KeepMostLikelyFromSame(significant1): #if two intervals are exactly the same (it happens only for soft-clipped bases) they escape the overlapping check. Keep the one with the longest motif
 
 
 	d1=dict()
