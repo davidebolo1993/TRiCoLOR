@@ -128,7 +128,7 @@ def main():
 	end=timeit.default_timer()
 	elapsed=end-start
 
-	logging.info('.bam files scanned in', elapsed, 'seconds')
+	logging.info('.bam files scanned in ' + str(elapsed) + ' seconds')
 
 
 	with open(os.path.abspath(args.output + '/' + args.label + '_hap1.srt.bed'), 'w') as srtbed1:
