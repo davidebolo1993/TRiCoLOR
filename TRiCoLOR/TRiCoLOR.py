@@ -242,10 +242,23 @@ def main():
 				p2.join()
 
 				VCF_writer(chromosome, further, ref_seq, repetitions_h1, os.path.abspath(args.output + '/haplotype1/' + str(i+1) + '.srt.bam'), repetitions_h2, os.path.abspath(args.output + '/haplotype2/' + str(i+1) + '.srt.bam'), os.path.abspath(args.output))
-				
+
+				if os.stat(os.path.abspath(args.output + '/haplotype1/' + str(i+1) + '.srt.bam')).st_size == 0:
+
+					os.remove(os.path.abspath(args.output + '/haplotype1/' + str(i+1) + '.srt.bam'))
+					os.remove(os.path.abspath(args.output + '/haplotype1/' + str(i+1) + '.srt.bam.bai'))
+
+
+				if os.stat(os.path.abspath(args.output + '/haplotype2/' + str(i+1) + '.srt.bam')).st_size == 0:
+
+					os.remove(os.path.abspath(args.output + '/haplotype2/' + str(i+1) + '.srt.bam'))
+					os.remove(os.path.abspath(args.output + '/haplotype2/' + str(i+1) + '.srt.bam.bai'))
+
+									
 			else:
 
 				logging.info('Skipped ambiguous region ' + chromosome + ':' + str(start) + '-' + str(end))
+				
 				continue
 
 		except:
@@ -376,9 +389,6 @@ def TableWriter(chromosome,repetitions_with_coord, out, iteration): #Table is in
 			Table.to_csv(refout ,sep='\t',index=False)
 
 
-
-
-
 def Reference_Filter(reference_reps,wanted,size,start): #re-check reference repetitions as it is done with haplotypes, but avoid correction this time
 
 	most_likely=[]
@@ -484,6 +494,9 @@ def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq,
 		Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '.repetitions.tsv'))
 		Table.write()
 
+		open(os.path.abspath(out_ +'/' + str(iteration +1) + '.srt.bam')).close() #create empty
+		open(os.path.abspath(out_ +'/' + str(iteration +1) + '.srt.bam.bai')).close() #create empty
+
 		return
 
 	else:
@@ -565,6 +578,10 @@ def Haplo2_Repeats(bamfile2, chromosome, start, end, kmer, times, size, ref_seq,
 
 		Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '.repetitions.tsv'))
 		Table.write()
+
+		open(os.path.abspath(out_ +'/' + str(iteration +1) + '.srt.bam')).close() #create empty
+		open(os.path.abspath(out_ +'/' + str(iteration +1) + '.srt.bam.bai')).close() #create empty
+
 
 		return
 
