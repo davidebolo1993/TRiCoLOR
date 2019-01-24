@@ -10,35 +10,7 @@ from collections import defaultdict
 from operator import itemgetter
 
 
-#gives problems if the smallest interval starts before the largest and overlaps
-
-#class Overlap(): #fast binary search for getting the largest between nested intervals
-
-	#def __init__(self):
-
-		#self._intervals = []
-
-	#def intervals(self):
-
-		#return self._intervals
-
-	#def put(self, interval):
-
-		#istart, iend = interval
-		#i = bisect.bisect_right(self._intervals, (iend, sys.maxsize))
-
-		#for start, end in self._intervals[:i]:
-
-			#if end > istart:
-
-				#return False
-
-		#bisect.insort(self._intervals, interval)
-		
-		#return True
-
-
-def GetLargestFromNested(intervals): #probably slower but more accurate than Overlap class
+def GetLargestFromNested(intervals): 
 
 	i=0
 
@@ -143,83 +115,30 @@ def Get_Alignment_Positions(bamfilein): #as the consensus sequence is supposed t
 	return coords,seq
 
 
+def modifier(coordinates): #fast way to remove None and substitute with closest number in list
+
+	
+	coordinates=[el+1 if el is not None else el for el in coordinates] #get true coordinates
+	start = next(ele for ele in coordinates if ele is not None)
+
+	for ind, ele in enumerate(coordinates):
+		
+		if ele is None:
+
+			coordinates[ind] = start
+		
+		else:
+
+			start = ele
+
+	return coordinates
+
+
 def Get_Alignment_Coordinates(coord_list,repetitions): 
 
-    ref_start=[]
-    ref_end=[]
+	rep_coord_list=[(a,b,c,d) for a,b,c,d in zip([repetition[0] for repetition in repetitions],[coord_list[repetition[1]] for repetition in repetitions],[coord_list[repetition[2]] for repetition in repetitions],[repetition[3] for repetition in repetitions])]
 
-    for i in range(len(repetitions)):
-
-        start=repetitions[i][1]
-        end=repetitions[i][2]
-
-        if coord_list[start] is not None:
-
-            ref_start.append(coord_list[start]+1)
-
-        else:
-
-            l=start
-
-            while coord_list[l] is None:
-
-                if l == 0:
-
-                    break
-
-                else:
-
-                    l-=1
-
-            if l != 0:
-
-                ref_start.append(coord_list[l]+1)
-
-            else:
-
-                l=start
-
-                while coord_list[l] is None:
-
-                    l+=1
-
-                ref_start.append(coord_list[l]) #don't add 1 as we are taking into account the next coordinate
-
-        if coord_list[end] is not None:
-
-            ref_end.append(coord_list[end]+1)
-
-        else:
-
-            l=end
-
-            while coord_list[l] is None:
-
-                if l == 0:
-
-                    break
-
-                else:
-
-                    l-=1
-
-            if l != 0:
-
-                ref_end.append(coord_list[l]+1)
-
-            else:
-
-                l=end
-
-                while coord_list[l] is None:
-
-                    l+=1
-
-                ref_end.append(coord_list[l]) #don't add 1 as we are taking into account the next coordinate
-
-        rep_coord_list=[(a,b,c,d) for a,b,c,d in zip([repetition[0] for repetition in repetitions],ref_start,ref_end,[repetition[3] for repetition in repetitions])]
-
-    return rep_coord_list
+	return rep_coord_list
 
 
 def look_for_self(rep,sequence): #build another regular expression, looking for the core of the repetition
@@ -241,25 +160,25 @@ def dfs(adj_list, visited, vertex, result, key):
 			dfs(adj_list, visited, neighbor, result, key)
 
 
-def neighbors(pattern, d): # faster then the previous for long patterns
+def neighbors(pattern, d): # works even with very long patterns
 
-    assert(d <= len(pattern))
+	assert(d <= len(pattern))
 
-    chars='ATCG'
+	chars='ATCG'
 
-    if d == 0:
+	if d == 0:
 
-        return [pattern]
+		return [pattern]
 
-    r2 = neighbors(pattern[1:], d-1)
-    r = [c + r3 for r3 in r2 for c in chars if c != pattern[0]]
+	r2 = neighbors(pattern[1:], d-1)
+	r = [c + r3 for r3 in r2 for c in chars if c != pattern[0]]
 
-    if (d < len(pattern)):
+	if (d < len(pattern)):
 
-        r2 = neighbors(pattern[1:], d)
-        r += [pattern[0] + r3 for r3 in r2]
+		r2 = neighbors(pattern[1:], d)
+		r += [pattern[0] + r3 for r3 in r2]
 
-    return r
+	return r
 
 
 def d_neighbors(pattern,d=1):
@@ -321,14 +240,84 @@ def get_rep_num(reps,interval,sequence): #get the most-likely corrected number o
 	return count
 
 
-def corrector(ref_seq, sequence, repetitions, coords, size, allowed=1): # correct for one-nucleotide insertions, substitutions and deletions between a repetition already started if this alterations are not in the reference sequence
+
+def KeepMostLikelyFromSame(significant1): #if two intervals are exactly the same they escape the overlapping check. Keep the one with the longest motif
+
+
+	d1=dict()
+	d2=dict()
+
+	for reps in significant1:
+
+		inter=(reps[1],reps[2])
+
+		if inter not in d1:
+
+			d1[inter]=reps[0] #motif
+			d2[inter]=reps[3] #number
+
+		else:
+
+			if len(reps[0]) > len(d1[inter]):
+
+				d1[inter]=reps[0]
+				d2[inter]=reps[3]
+
+	to_keep=[]
+
+
+	for el in significant1:
+
+		if (el[1],el[2]) not in d1:
+
+			to_keep.append(el)
+
+
+	for keys in d1.keys():
+
+		to_keep.append((d1[keys], keys[0], keys[1],d2[keys]))
+
+
+	return sorted(to_keep, key=itemgetter(1,2))
+
+
+
+def RemoveFromSoftclipped(significant2, coordinates, coords):
+
+
+	to_keep=[]
+	left_clipped=[]
+	right_clipped=[]
+
+	for reps in significant2:
+
+		if reps[1] == coords[0] and reps[2] == coords[0] and coordinates[0] is None: 
+
+			left.clipped.append(reps)
+
+
+		elif reps[1] == coords[-1] and reps[2] == coords[-1] and coordinates[-1] is None:
+
+			right_clipped.append(reps)
+
+		else:
+
+			to_keep.append(reps)
+
+	return sorted(to_keep, key=itemgetter(1))
+
+
+
+def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # correct for one-nucleotide insertions, substitutions and deletions between a repetition already started if this alterations are not in the reference sequence
 
 	corrected=[]
+
+	coords=modifier(coordinates)
 
 	for reps in list(set(el[0] for el in repetitions)):
 
 		self_=list(look_for_self(reps,sequence))
-		self__=Get_Alignment_Coordinates(coords,self_)
+		self__= Get_Alignment_Coordinates(coords,self_)
 		self_=[el[1] for el in self_]
 
 		ranges=[]
@@ -343,11 +332,15 @@ def corrector(ref_seq, sequence, repetitions, coords, size, allowed=1): # correc
 				
 				ranges.append((self_[i],self_[i+1]))
 
+				ranges.append((self_[i],self_[i+1]))
+
 			elif self__[i+1][1]-self__[i][1] == len(reps)+(len(reps)-1)+allowed and sequence[self_[i+1]-len(reps):self_[i+1]] in d_neighbors(reps) and check_ref(ref_seq[self__[i][1]-1: self__[i+1][1]],sequence[self_[i]: self_[i+1]+1]): #allows a mono-nucleotide substitution that broke the previous RegEx
+
 
 				ranges.append((self_[i],self_[i+1]))
 
 			elif self__[i+1][1]-self__[i][1] == len(reps)+(len(reps)-2)+allowed and sequence[self_[i+1]-(len(reps)-1):self_[i+1]] in one_deletion_neighbors(reps) and check_ref(ref_seq[self__[i][1]-1: self__[i+1][1]],sequence[self_[i]: self_[i+1]+1]): #allows a mono-nucleotide deletion that broke the previous RegEx
+
 
 				ranges.append((self_[i],self_[i+1]))
 
@@ -363,13 +356,14 @@ def corrector(ref_seq, sequence, repetitions, coords, size, allowed=1): # correc
 		
 		for vertex in collapsed_ranges:
 
-			 if vertex not in visited:
+			if vertex not in visited:
 
-			 	dfs(collapsed_ranges, visited, vertex, result, vertex)
+				dfs(collapsed_ranges, visited, vertex, result, vertex)
 
 		if len(result) != 0:
 
-			new_reps=Get_Alignment_Coordinates(coords,[(reps, i[0], i[-1]+(len(reps)-1), get_rep_num(reps,i,sequence)) for i in result.values()])  
+			new_reps=Get_Alignment_Coordinates(coords,[(reps, i[0], i[-1]+(len(reps)-1), get_rep_num(reps,i,sequence)) for i in result.values()])
+
 			corrected.extend(new_reps)
 
 		else:
@@ -378,18 +372,19 @@ def corrector(ref_seq, sequence, repetitions, coords, size, allowed=1): # correc
 	
 	#sort repetitions using each start
 
-	s_c_=sorted(corrected, key=itemgetter(1))
+	s_c_=sorted(corrected, key=itemgetter(1,2))
 
 	#filter out overlapping repetitions, considering only longer ones
 
 	intervals=[(b,c) for (a,b,c,d) in s_c_]
-	#ov=Overlap()
 
-	#for i in intervals:
+	purified=sorted(GetLargestFromNested(intervals), key=itemgetter(0,1))
 
-		#ov.put(i)
+	significant1 = [(a,b,c,d) for (a,b,c,d) in s_c_ if (b,c) in purified and len(a)*d >= size]
 
-	purified=sorted(GetLargestFromNested(intervals), key=itemgetter(0))
+	significant2=KeepMostLikelyFromSame(significant1)
+
+	out=RemoveFromSoftclipped(significant2, coordinates, coords)
 
 
-	return [(a,b,c,d) for (a,b,c,d) in s_c_ if (b,c) in purified and len(a)*d >= size]
+	return out
