@@ -169,7 +169,7 @@ def Get_Seq_Pos(bamfilein,chromosome, start,end): #as the consensus sequence is 
 	
 	bamfile=pysam.AlignmentFile(bamfilein,'rb', check_sq=False) #sometimes we may have to try to open empty files
 
-	for read in bamfile.fetch(chromosome, start, end):
+	for read in bamfile.fetch():
 
 		if not read.is_unmapped and not read.is_secondary: 
 
