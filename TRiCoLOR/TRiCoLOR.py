@@ -8,7 +8,6 @@ import pysam
 import glob
 import subprocess
 import itertools
-#import bisect
 import csv
 import math
 from collections import defaultdict
@@ -52,7 +51,7 @@ def main():
 
 		except:
 
-			print('It was not possible to create the Result folder. Specify a path for which you have write permission')
+			print('It was not possible to create the results folder. Specify a path for which you have write permission')
 			sys.exit(1)
 
 	
@@ -263,7 +262,7 @@ def main():
 
 		subprocess.check_call(['bgzip', os.path.abspath(args.output + '/TRiCoLOR.vcf')])
 		subprocess.check_call(['tabix', os.path.abspath(args.output + '/TRiCoLOR.vcf.gz')])
-		subprocess.call(['bcftools', 'norm', '-f', os.path.abspath(args.genome), '-o', os.path.abspath(args.output + '/TRiCoLOR.norm.vcf.gz'), '-O', 'z', os.path.abspath(args.output + '/TRiCoLOR.vcf.gz')],stderr=open(os.devnull, 'wb'))
+		subprocess.call(['bcftools', 'norm', '-f', os.path.abspath(args.genome), '-o', os.path.abspath(args.output + '/TRiCoLOR.norm.bcf.gz'), '-O', 'z', os.path.abspath(args.output + '/TRiCoLOR.vcf.gz')],stderr=open(os.devnull, 'wb'))
 
 
 	except:
