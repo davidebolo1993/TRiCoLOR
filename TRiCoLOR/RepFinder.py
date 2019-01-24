@@ -241,13 +241,13 @@ def get_rep_num(reps,interval,sequence): #get the most-likely corrected number o
 
 
 
-def KeepMostLikelyFromSame(significant1): #if two intervals are exactly the same (it happens only for soft-clipped bases) they escape the overlapping check. Keep the one with the longest motif
+def KeepMostLikelyFromSame(significant): #if two intervals are exactly the same (it happens only for soft-clipped bases) they escape the overlapping check. Keep the one with the longest motif
 
 
 	d1=dict()
 	d2=dict()
 
-	for reps in significant1:
+	for reps in significant:
 
 		inter=(reps[1],reps[2])
 
@@ -266,7 +266,7 @@ def KeepMostLikelyFromSame(significant1): #if two intervals are exactly the same
 	to_keep=[]
 
 
-	for el in significant1:
+	for el in significant:
 
 		if (el[1],el[2]) not in d1:
 
@@ -351,7 +351,7 @@ def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # c
 	#filter out overlapping repetitions, considering only larger ones
 	intervals=[(b,c) for (a,b,c,d) in s_c_]
 	purified=sorted(GetLargestFromNested(intervals), key=itemgetter(0,1))
-	significant1=[]
+	significant=[]
 	
 	for (a,b,c,d) in s_c_:
 		
@@ -376,7 +376,7 @@ def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # c
 	
 	#from SAME intervals, retains those ones with larger motif (it happens in soft-clipped regions, as all the bases have the same coordinates)
 	
-	return(KeepMostLikelyFromSame(significant1))
+	return(KeepMostLikelyFromSame(significant))
 	
 	
 	
