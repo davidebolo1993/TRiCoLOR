@@ -1163,7 +1163,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 					info['END'] = reps[1]
 					info['H1M'] = hap1_dict_motif[reps]
 					info['H1N'] = hap1_dict_number[reps]
-					info['H2M'] = re_dict_motif[reps] #cannot change to reference dict, as we have not such information
+					info['H2M'] = hap2_dict_motif[reps] #cannot change to reference dict, as we have not such information
 					info['H2N'] = hap2_dict_number[reps] #cannot change to reference dict, as we have not such information
 									
 					form='1|0' #first allele is a variant. The sequence of the first one is known
