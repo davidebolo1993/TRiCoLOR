@@ -113,7 +113,6 @@ def VCF_variantwriter(chrom, pos, ref, alt, info, form, out):
 		vcfout.write(CHROM + '\t' + POS + '\t' + ID + '\t' + REF + '\t' + ALT + '\t' + QUAL + '\t' + FILTER + '\t' + 'END='+INFO_END + ';'+ 'H1M='+INFO_H1M + ';' + 'H1N='+INFO_H1N + ';' + 'H2M='+INFO_H2M + ';' + 'H2N='+INFO_H2N + '\t' + GEN + '\t' + FORMAT + '\n')
 
 
-
 def modifier(coordinates): #fast way to remove None and substitute with closest number in list
 
 	
@@ -131,7 +130,6 @@ def modifier(coordinates): #fast way to remove None and substitute with closest 
 			start = ele
 
 	return coordinates
-
 
 
 def Modifier(list_of_coord,seq):
@@ -167,7 +165,7 @@ def Get_Seq_Pos(bamfilein,chromosome, start,end): #as the consensus sequence is 
 	seq=[]
 	coords=[]
 	
-	bamfile=pysam.AlignmentFile(bamfilein,'rb', check_sq=False) #sometimes we may have to try to open empty files
+	bamfile=pysam.AlignmentFile(bamfilein,'rb', check_sq=False) #sometimes we may have to try to open empty files in order to discard some results
 
 	for read in bamfile.fetch():
 
@@ -273,20 +271,44 @@ def Merger(sorted_int, refreps, h1reps, h2reps): #return non overlapping-ranges 
 
 			if reps in refreps:
 
-				ref_dict_motif[new_range]= [reps[0]]
-				ref_dict_number[new_range]= [reps[3]]
+				if new_range not in ref_dict_motif:
+
+					ref_dict_motif[new_range]= [reps[0]]
+					ref_dict_number[new_range]= [reps[3]]
+
+				else:
+
+					ref_dict_motif[new_range].append(reps[0])
+					ref_dict_number[new_range].append(reps[3])
 
 			if reps in h1reps:
 
-				hap1_dict_motif[new_range]= [reps[0]]
-				hap1_dict_number[new_range]= [reps[3]]
+				if new_range not in hap1_dict_motif:
+
+					hap1_dict_motif[new_range]= [reps[0]]
+					hap1_dict_number[new_range]= [reps[3]]
+
+				else:
+
+					hap1_dict_motif[new_range].append(reps[0])
+					hap1_dict_number[new_range].append(reps[3])
+
 
 			if reps in h2reps:
 
-				hap2_dict_motif[new_range]= [reps[0]]
-				hap2_dict_number[new_range]= [reps[3]]
+				if new_range not in hap2_dict_motif:
 
-			sorted_ranges.append(new_range)
+					hap2_dict_motif[new_range]= [reps[0]]
+					hap2_dict_number[new_range]= [reps[3]]
+
+				else:
+
+					hap2_dict_motif[new_range].append(reps[0])
+					hap2_dict_number[new_range].append(reps[3])
+
+			if not new_range in sorted_ranges:
+
+				sorted_ranges.append(new_range)
 
 		i += 1
 
