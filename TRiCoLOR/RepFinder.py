@@ -282,32 +282,6 @@ def KeepMostLikelyFromSame(significant1): #if two intervals are exactly the same
 
 
 
-def RemoveFromSoftclipped(significant2, coordinates, coords):
-
-
-	to_keep=[]
-	left_clipped=[]
-	right_clipped=[]
-
-	for reps in significant2:
-
-		if reps[1] == coords[0] and reps[2] == coords[0] and coordinates[0] is None: 
-
-			left.clipped.append(reps)
-
-
-		elif reps[1] == coords[-1] and reps[2] == coords[-1] and coordinates[-1] is None:
-
-			right_clipped.append(reps)
-
-		else:
-
-			to_keep.append(reps)
-
-	return sorted(to_keep, key=itemgetter(1))
-
-
-
 def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # correct for one-nucleotide insertions, substitutions and deletions between a repetition already started if this alterations are not in the reference sequence
 
 	corrected=[]
@@ -374,17 +348,35 @@ def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # c
 
 	s_c_=sorted(corrected, key=itemgetter(1,2))
 
-	#filter out overlapping repetitions, considering only longer ones
-
+	#filter out overlapping repetitions, considering only larger ones
 	intervals=[(b,c) for (a,b,c,d) in s_c_]
-
 	purified=sorted(GetLargestFromNested(intervals), key=itemgetter(0,1))
+	significant1=[]
+	
+	for (a,b,c,d) in s_c_:
+		
+		if (b,c) in purified and len(a)*d >= size:
 
-	significant1 = [(a,b,c,d) for (a,b,c,d) in s_c_ if (b,c) in purified and len(a)*d >= size]
+			if b == coords[0] and c == coords[0] and coordinates[0] is None:
 
-	significant2=KeepMostLikelyFromSame(significant1)
+				continue
+				
+			elif b == coords[-1] and c == coords[-1] and coordinates[-1] is None:
+				
+				continue
+				
+			else:
 
-	out=RemoveFromSoftclipped(significant2, coordinates, coords)
+				significant1.append((a,b,c,d))
+				
+		else:
 
-
-	return out
+			continue
+			
+	
+	#from SAME intervals, retains those ones with larger motif (it happens in soft-clipped regions, as all the bases have the same coordinates)
+	
+	return(KeepMostLikelyFromSame(significant1))
+	
+	
+	
