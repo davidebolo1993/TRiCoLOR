@@ -367,7 +367,7 @@ def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # c
 				
 			else:
 
-				significant1.append((a,b,c,d))
+				significant.append((a,b,c,d))
 				
 		else:
 
