@@ -306,8 +306,6 @@ def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # c
 				
 				ranges.append((self_[i],self_[i+1]))
 
-				ranges.append((self_[i],self_[i+1]))
-
 			elif self__[i+1][1]-self__[i][1] == len(reps)+(len(reps)-1)+allowed and sequence[self_[i+1]-len(reps):self_[i+1]] in d_neighbors(reps) and check_ref(ref_seq[self__[i][1]-1: self__[i+1][1]],sequence[self_[i]: self_[i+1]+1]): #allows a mono-nucleotide substitution that broke the previous RegEx
 
 
