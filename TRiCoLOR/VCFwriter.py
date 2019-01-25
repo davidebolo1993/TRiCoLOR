@@ -157,7 +157,7 @@ def Modifier(list_of_coord,seq,reps):
 			NewSeq+=seq[i]
 
 
-	if not reps[0] >= coords_purified[0]: #add fake regions that will be removed if interval is greater than .bam extension
+	if not reps[0] >= coords_purified[0]: #add fake positions that will be removed 
 
 
 		number=reps[0]
@@ -166,7 +166,7 @@ def Modifier(list_of_coord,seq,reps):
 		NewSeq= '-'* how_many + NewSeq
 
 
-	if not reps[1] <= coords_purified[-1]: #add fake regions that will be removed if interval is greater than .bam extension
+	if not reps[1] <= coords_purified[-1]: #add fake positions that will be removed
 
 		number=reps[1]
 		how_many=reps[1] - coords_purified[-1]
@@ -394,7 +394,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						ref=reference_sequence[(reps[0]-1):reps[1]]
 
 						seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2) #overwrite previous variables
+						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 						alt2=seq_h2[si_2:(ei_2+1)].replace('-','') #sequece where is supposed to be alteration
 
@@ -424,7 +424,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						ref=reference_sequence[(reps[0]-1):reps[1]]
 
 						seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1])
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1) #overwrite previous variables
+						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
 						alt1=seq_h1[si_1:(ei_1+1)].replace('-','') #sequece where is supposed to be alteration
 
@@ -456,8 +456,8 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
 						seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) 
 
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1) #overwrite previous variables
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2) #overwrite previous variables
+						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
+						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
 
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
@@ -538,7 +538,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						ref=reference_sequence[(reps[0]-1):reps[1]]
 
 						seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2) #overwrite previous variables
+						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 						alt2=seq_h2[si_2:(ei_2+1)].replace('-','') #sequece where is supposed to be alteration
 
@@ -569,8 +569,8 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
 						seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) 
 
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1) #overwrite previous variables
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2) #overwrite previous variables
+						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
+						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
 
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
@@ -651,7 +651,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						ref=reference_sequence[(reps[0]-1):reps[1]]
 
 						seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1])
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1) #overwrite previous variables
+						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
 						alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
 
@@ -682,8 +682,8 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
 						seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) 
 
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1) #overwrite previous variables
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2) #overwrite previous variables
+						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
+						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
 
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
@@ -764,8 +764,8 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 					seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])
 
 
-					coord_h1,seq_h1=Modifier(coord_h1,seq_h1) #overwrite previous variables
-					coord_h2,seq_h2=Modifier(coord_h2,seq_h2) #overwrite previous variables
+					coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
+					coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
 
 					si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
 					si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
@@ -862,7 +862,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 					else: #we have coverage
 
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2) #overwrite previous variables
+						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 
 
@@ -910,7 +910,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 					ref=reference_sequence[(reps[0]-1):reps[1]]
 
 					seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) #must exist
-					coord_h1,seq_h1=Modifier(coord_h1,seq_h1) #overwrite previous variables
+					coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
 					si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 					alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
 					
@@ -934,7 +934,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 						else: #we have coverage
 
-							coord_h2,seq_h2=Modifier(coord_h2,seq_h2) #overwrite previous variables
+							coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
 							si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 
 
@@ -995,7 +995,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 						else: #we have coverage
 
-							coord_h2,seq_h2=Modifier(coord_h2,seq_h2) #overwrite previous variables
+							coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
 							si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 
 
@@ -1090,7 +1090,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 					else: #we have coverage
 
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1) #overwrite previous variables
+						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 
 
@@ -1137,7 +1137,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 					ref=reference_sequence[(reps[0]-1):reps[1]]
 
 					seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])
-					coord_h2,seq_h2=Modifier(coord_h2,seq_h2) #overwrite previous variables
+					coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
 					si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 					alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
 					
@@ -1163,7 +1163,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 						else: #we have coverage
 
-							coord_h1,seq_h1=Modifier(coord_h1,seq_h1) #overwrite previous variables
+							coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
 							si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 
 
@@ -1227,7 +1227,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						
 						else: #we have coverage
 
-							coord_h1,seq_h1=Modifier(coord_h1,seq_h1) #overwrite previous variables
+							coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
 							si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 
 
@@ -1305,12 +1305,12 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 				ref=reference_sequence[(reps[0]-1):reps[1]]
 
 				seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) #this coordinates may not exist
-				coord_h1,seq_h1=Modifier(coord_h1,seq_h1) #overwrite previous variables
+				coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
 				si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 				alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
 
 				seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) #this coordinates may not exist
-				coord_h2,seq_h2=Modifier(coord_h2,seq_h2) #overwrite previous variables
+				coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
 				si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 				alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
 
@@ -1402,7 +1402,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 				elif len(seq_h1) != 0 and len(seq_h2) == 0: #we don't have coverage for hap2
 
-					coord_h1,seq_h1=Modifier(coord_h1,seq_h1) #overwrite previous variables
+					coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
 					si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 
 					if si_1 ==[] or ei_1 ==[]: #range outside haplotype
@@ -1447,7 +1447,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 				
 				elif len(seq_h1) == 0 and len(seq_h2) != 0: #we don't have coverage for hap1
 
-					coord_h2,seq_h2=Modifier(coord_h2,seq_h2) #overwrite previous variables
+					coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
 					si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 
 					if si_2 == [] or ei_2 == []: #range outside haplotype
@@ -1492,11 +1492,11 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 					
 				elif len(seq_h1) != 0 and len(seq_h2) != 0: #coverage for both
 
-					coord_h1,seq_h1=Modifier(coord_h1,seq_h1) #overwrite previous variables
+					coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
 					si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 
 
-					coord_h2,seq_h2=Modifier(coord_h2,seq_h2) #overwrite previous variables
+					coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
 					si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 
 					if si_1==[] or ei_1==[]:
@@ -1645,7 +1645,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 				ref=reference_sequence[(reps[0]-1):reps[1]]
 
 				seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) #this coordinates must exist
-				coord_h1,seq_h1=Modifier(coord_h1,seq_h1) #overwrite previous variables
+				coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
 				
 				si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 
@@ -1675,7 +1675,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 					else:
 
 
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2) #overwrite previous variables
+						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 
 						if si_2 ==[] or ei_2 ==[]:
@@ -1741,7 +1741,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 					else:
 
 
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2) #overwrite previous variables
+						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 
 
@@ -1826,7 +1826,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 				ref=reference_sequence[(reps[0]-1):reps[1]]
 
 				seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) #this coordinates must exist
-				coord_h2,seq_h2=Modifier(coord_h2,seq_h2) #overwrite previous variables
+				coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
 				si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 				alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
 
@@ -1854,7 +1854,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 					else:
 
 
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1) #overwrite previous variables
+						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 
 						if si_1 ==[] or ei_1 ==[]:
@@ -1921,7 +1921,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 					else:
 
 
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1) #overwrite previous variables
+						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 
 						if si_1 ==[] or ei_1 ==[]:
