@@ -330,9 +330,7 @@ def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # c
 
 			continue
 			
-	
-	#from SAME intervals, retains those ones with larger motif (it happens in soft-clipped regions, as all the bases have the same coordinates)
-	
+		
 	return significant
 	
 	
