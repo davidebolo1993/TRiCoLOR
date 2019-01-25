@@ -378,8 +378,6 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 		sorted_intersection=sorted(intersection, key=itemgetter(1,2)) #sort repetitions by start and then by end
 		sorted_ranges,ref_dict_number,ref_dict_motif,hap1_dict_number,hap1_dict_motif,hap2_dict_number,hap2_dict_motif=Merger(sorted_intersection, repref, repsh1, repsh2)
 
-		print(sorted_intersection, sorted_ranges)
-
 		for reps in sorted_ranges:
 
 			if reps in ref_dict_number.keys() and reps in hap1_dict_number.keys() and reps in hap2_dict_number.keys(): #range always present
