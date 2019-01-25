@@ -132,7 +132,7 @@ def modifier(coordinates): #fast way to remove None and substitute with closest 
 	return coordinates
 
 
-def Modifier(list_of_coord,seq):
+def Modifier(list_of_coord,seq,reps):
 
 
 	coords_without_insertions=modifier(list_of_coord)
@@ -156,6 +156,24 @@ def Modifier(list_of_coord,seq):
 			coords_purified.append(coords_without_insertions[i])
 			NewSeq+=seq[i]
 
+
+	if not reps[0] >= coords_purified[0]: #add fake regions that will be removed if interval is greater than .bam extension
+
+
+		number=reps[0]
+		how_many=coords_purified[0]-reps[0]
+		coords_purified = [number]*how_many + coords_purified
+		NewSeq= '-'* how_many + NewSeq
+
+
+	if not reps[1] <= coords_purified[-1]: #add fake regions that will be removed if interval is greater than .bam extension
+
+		number=reps[1]
+		how_many=reps[1] - coords_purified[-1]
+		coords_purified = coords_purified + [number]*how_many 
+		NewSeq= NewSeq + '-'* how_many
+
+
 	return coords_purified,NewSeq
 
 
@@ -166,6 +184,10 @@ def Get_Seq_Pos(bamfilein,chromosome, start,end): #as the consensus sequence is 
 
 	seq=[]
 	coords=[]
+
+	if start==end:
+
+		end=start+1
 	
 	bamfile=pysam.AlignmentFile(bamfilein,'rb', check_sq=False) #sometimes we may have to try to open empty files in order to discard some results
 
@@ -238,7 +260,7 @@ def Merger(sorted_int, refreps, h1reps, h2reps): #return non overlapping-ranges 
 
 			list_.append(reps)
 
-			new_=(max(list_, key=itemgetter(1)), min(list_,key=itemgetter(2))) #get inner interval, to be sure not to be outside the range in .bam files
+			new_=(min(list_, key=itemgetter(1)), max(list_,key=itemgetter(2))) #get inner interval, to be sure not to be outside the range in .bam files
 			new_range=(new_[0][1], new_[-1][2])
 
 			for el_ in list_:
@@ -344,6 +366,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 	repsh1=list(haplotype1_repetitions)
 	repsh2=list(haplotype2_repetitions)
 
+
 	intersection=list(set(repref+ repsh1 + repsh2)) # get unique repetitions between the three lists
 
 	if len(intersection) == 0:
@@ -354,6 +377,8 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 		sorted_intersection=sorted(intersection, key=itemgetter(1,2)) #sort repetitions by start and then by end
 		sorted_ranges,ref_dict_number,ref_dict_motif,hap1_dict_number,hap1_dict_motif,hap2_dict_number,hap2_dict_motif=Merger(sorted_intersection, repref, repsh1, repsh2)
+
+		print(sorted_intersection, sorted_ranges)
 
 		for reps in sorted_ranges:
 
@@ -370,7 +395,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						pos=reps[0]
 						ref=reference_sequence[(reps[0]-1):reps[1]]
 
-						seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) 
+						seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])
 						coord_h2,seq_h2=Modifier(coord_h2,seq_h2) #overwrite previous variables
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 						alt2=seq_h2[si_2:(ei_2+1)].replace('-','') #sequece where is supposed to be alteration
@@ -432,7 +457,6 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 						seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
 						seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) 
-
 
 						coord_h1,seq_h1=Modifier(coord_h1,seq_h1) #overwrite previous variables
 						coord_h2,seq_h2=Modifier(coord_h2,seq_h2) #overwrite previous variables
@@ -1624,7 +1648,10 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 				seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) #this coordinates must exist
 				coord_h1,seq_h1=Modifier(coord_h1,seq_h1) #overwrite previous variables
+				
 				si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
+
+
 				alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
 
 				seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) #this coordinates may not exist
