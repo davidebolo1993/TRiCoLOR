@@ -62,7 +62,7 @@ def main():
 
 	if os.path.exists(os.path.abspath(args.output + '/TRiCoLOR.vcf')):
 
-		logging.error('Specified output folder already contains TRiCoLOR results. Clean that folder and run TRiCoLOR again or specify a different folder')
+		print('Specified output folder already contains TRiCoLOR results. Clean that folder and run TRiCoLOR again or specify a different folder')
 		sys.exit(1)
 
 	else:
@@ -175,6 +175,8 @@ def main():
 	chromosomes_seen=set()
 	it_ = iter(b_in)
 
+	skipped=0
+
 	for i in range(b_in.length()):
 
 		chromosome, start, end=next(it_)
@@ -264,6 +266,8 @@ def main():
 		except:
 
 			logging.exception('Something went wrong for ' + chromosome + ':' + str(start) + '-' +str(end))
+			skipped +=1
+
 
 
 	CleanResults(list(chromosomes_seen)[-1], args.output, os.path.abspath(args.bam1), os.path.abspath(args.bam2)) #clean results at the end of the process
@@ -286,6 +290,8 @@ def main():
 	elapsed=end_t-start_t
 
 	logging.info('Analysis completed in ' + str(elapsed) + ' seconds')
+	logging.info('Number of regions: ' + str(b_in.length()))
+	logging.info('Regions skipped: ' + str(skipped))
 
 
 class Bed_Reader():
@@ -427,16 +433,14 @@ def Reference_Filter(reference_reps,wanted,size,start): #re-check reference repe
 			most_likely.extend(new_reps)
 
 
-	s_l_=sorted(most_likely, key=itemgetter(1))
+	s_l_=sorted(most_likely, key=itemgetter(1,2))
 
 	#filter out overlapping repetitions, considering only longer ones
 
-	intervals=[(b,c) for (a,b,c,d) in s_l_]
-
-	purified=sorted(GetLargestFromNested(intervals), key=itemgetter(0))
+	purified=sorted(GetLargestFromNested(s_l_), key=itemgetter(0))
 
 
-	return [(a,b,c,d) for (a,b,c,d) in s_l_ if (b,c) in purified and len(a)*d >= size]
+	return [(a,b,c,d) for (a,b,c,d) in s_l_ if (a,b,c,d) in purified and len(a)*d >= size]
 
 
 
