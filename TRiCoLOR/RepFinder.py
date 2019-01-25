@@ -21,9 +21,9 @@ def GetLargestFromNested(intervals):
 
 		if i==0:
 
-			if intervals[i][1] > intervals[i+1][0]: #the two intervals overlap
+			if intervals[i][2] > intervals[i+1][1]: #the two intervals overlap
 
-				if (intervals[i+1][1] - intervals[i+1][0]) > (intervals[i][1] - intervals[i][0]):
+				if intervals[i+1][3]*len(intervals[i+1][0]) > intervals[i][3]*len(intervals[i][0]):
 
 					purified.append(intervals[i+1])
 					i+=2
@@ -41,9 +41,9 @@ def GetLargestFromNested(intervals):
 
 		else:
 
-			if intervals[i][0] < purified[-1][1]:
+			if intervals[i][1] < purified[-1][2]:
 
-				if (intervals[i][1] - intervals[i][0]) > purified[-1][1] - purified[-1][0]:
+				if intervals[i][3]*len(intervals[i][0]) > purified[-1][3]*len(purified[-1][0]):
 
 					purified.remove(purified[-1])
 					purified.append(intervals[i])
@@ -61,8 +61,6 @@ def GetLargestFromNested(intervals):
 
 
 	return list(purified)
-
-
 
 
 
@@ -241,46 +239,6 @@ def get_rep_num(reps,interval,sequence): #get the most-likely corrected number o
 
 
 
-def KeepMostLikelyFromSame(significant): #if two intervals are exactly the same (it happens only for soft-clipped bases) they escape the overlapping check. Keep the one with the longest motif
-
-
-	d1=dict()
-	d2=dict()
-
-	for reps in significant:
-
-		inter=(reps[1],reps[2])
-
-		if inter not in d1:
-
-			d1[inter]=reps[0] #motif
-			d2[inter]=reps[3] #number
-
-		else:
-
-			if len(reps[0]) > len(d1[inter]):
-
-				d1[inter]=reps[0]
-				d2[inter]=reps[3]
-
-	to_keep=[]
-
-
-	for el in significant:
-
-		if (el[1],el[2]) not in d1:
-
-			to_keep.append(el)
-
-
-	for keys in d1.keys():
-
-		to_keep.append((d1[keys], keys[0], keys[1],d2[keys]))
-
-
-	return sorted(to_keep, key=itemgetter(1,2))
-
-
 
 def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # correct for one-nucleotide insertions, substitutions and deletions between a repetition already started if this alterations are not in the reference sequence
 
@@ -300,7 +258,9 @@ def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # c
 
 			if self__[i+1][1]-self__[i][1] <= len(reps): #allows repetitions that have same coordinates 'cause are 'insertions'
 
-				ranges.append((self_[i],self_[i+1]))
+				if self_[i+1] - self_[i] == len(reps) or self_[i+1] - self_[i] == len(reps) + allowed:
+
+					ranges.append((self_[i],self_[i+1]))
 
 			elif self__[i+1][1]-self__[i][1] == len(reps)+allowed and sequence[self_[i+1]-(len(reps)-1):self_[i+1]] not in one_deletion_neighbors(reps) and check_ref(ref_seq[self__[i][1]-1: self__[i+1][1]],sequence[self_[i]: self_[i+1]+1]): #allows a mono-nucleotide insertion that broke the previous RegEx; for dinucleotide repetitions, can't discriminate between mono-nucleotide insertion or deletion if they are edit distance 1 neighbors and in that case are considered deletions
 				
@@ -308,11 +268,9 @@ def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # c
 
 			elif self__[i+1][1]-self__[i][1] == len(reps)+(len(reps)-1)+allowed and sequence[self_[i+1]-len(reps):self_[i+1]] in d_neighbors(reps) and check_ref(ref_seq[self__[i][1]-1: self__[i+1][1]],sequence[self_[i]: self_[i+1]+1]): #allows a mono-nucleotide substitution that broke the previous RegEx
 
-
 				ranges.append((self_[i],self_[i+1]))
 
 			elif self__[i+1][1]-self__[i][1] == len(reps)+(len(reps)-2)+allowed and sequence[self_[i+1]-(len(reps)-1):self_[i+1]] in one_deletion_neighbors(reps) and check_ref(ref_seq[self__[i][1]-1: self__[i+1][1]],sequence[self_[i]: self_[i+1]+1]): #allows a mono-nucleotide deletion that broke the previous RegEx
-
 
 				ranges.append((self_[i],self_[i+1]))
 
@@ -347,19 +305,20 @@ def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # c
 	s_c_=sorted(corrected, key=itemgetter(1,2))
 
 	#filter out overlapping repetitions, considering only larger ones
-	intervals=[(b,c) for (a,b,c,d) in s_c_]
-	purified=sorted(GetLargestFromNested(intervals), key=itemgetter(0,1))
+
+	purified=sorted(GetLargestFromNested(s_c_), key=itemgetter(1,2))
+	
 	significant=[]
 	
-	for (a,b,c,d) in s_c_:
+	for (a,b,c,d) in s_c_: #discard reps that falls entirely in soft-clipped intervals, as we cannot be sure of their number
 		
-		if (b,c) in purified and len(a)*d >= size:
+		if (a,b,c,d) in purified and len(a)*d >= size:
 
-			if b == coords[0] and c == coords[0] and coordinates[0] is None:
+			if b == coords[0] and c == coords[0] and coordinates[0] is None: #exclude intervals that fall entirely in left soft-clipped regions, as coordinates-correction method may fail
 
 				continue
-				
-			elif b == coords[-1] and c == coords[-1] and coordinates[-1] is None:
+
+			elif b == coords[-1] and c == coords[-1] and coordinates[-1] is None: #exclude intervals that fall entirely in right soft-clipped regions as coordinates-correction method may fail
 				
 				continue
 				
@@ -374,7 +333,7 @@ def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # c
 	
 	#from SAME intervals, retains those ones with larger motif (it happens in soft-clipped regions, as all the bases have the same coordinates)
 	
-	return(KeepMostLikelyFromSame(significant))
+	return significant
 	
 	
 	
