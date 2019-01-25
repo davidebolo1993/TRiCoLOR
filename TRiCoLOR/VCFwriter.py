@@ -159,6 +159,8 @@ def Modifier(list_of_coord,seq):
 	return coords_purified,NewSeq
 
 
+
+
 def Get_Seq_Pos(bamfilein,chromosome, start,end): #as the consensus sequence is supposed to generate just one sequence aligned to the reference, secondary alignments are removed
 	
 
@@ -167,16 +169,30 @@ def Get_Seq_Pos(bamfilein,chromosome, start,end): #as the consensus sequence is 
 	
 	bamfile=pysam.AlignmentFile(bamfilein,'rb', check_sq=False) #sometimes we may have to try to open empty files in order to discard some results
 
-	for read in bamfile.fetch():
+	for read in bamfile.fetch(chromosome, start, end):
 
 		if not read.is_unmapped and not read.is_secondary: 
 
 			coords = read.get_reference_positions(full_length=True)
 			seq=read.seq
 
-	bamfile.close()
 
-	return seq,coords
+	if len(seq) != 0:
+
+		return seq,coords
+
+	else:
+
+		for read in bamfile.fetch():
+
+			if not read.is_unmapped and not read.is_secondary: 
+
+				coords = read.get_reference_positions(full_length=True)
+				seq=read.seq
+
+		return seq,coords
+
+	bamfile.close()
 
 
 def GetIndex(start, end, coordinates):
