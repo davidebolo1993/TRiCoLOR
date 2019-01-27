@@ -228,7 +228,7 @@ def entropy_finder(sequence,coordinates,scansize,entropy_treshold): # get coordi
 
 			if entropy(sequence[ind_start:ind_end]) < entropy_treshold:
 
-				hit.append((coordinates[ind_start]+1,coordinates[ind_end]+1)) 
+				hit.append((coordinates[ind_start],coordinates[ind_end])) #use 0-based coordinates
 
 				ind_start+=scansize
 				ind_end+=scansize
@@ -244,7 +244,7 @@ def entropy_finder(sequence,coordinates,scansize,entropy_treshold): # get coordi
 
 				if entropy(sequence[ind_start:len(sequence)]) < entropy_treshold:
 
-					hit.append((coordinates[ind_start]+1, coordinates[-1]+1))
+					hit.append((coordinates[ind_start], coordinates[-1]))  #use 0-based coordinates
 
 					break #reached the end
 
@@ -311,7 +311,7 @@ def BScanner(bamfilein,bedfileout,scansize,entropy_treshold,call_treshold): #ent
 
 	for chromosome in chrom_dict.keys():
 
-		chr_array=np.zeros(chrom_dict[chromosome])
+		chr_array=np.zeros(chrom_dict[chromosome]) #0-based coordinates
 
 		for reads in bamfile.fetch(chromosome):
 
