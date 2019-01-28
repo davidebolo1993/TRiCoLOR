@@ -185,36 +185,29 @@ def Get_Seq_Pos(bamfilein,chromosome, start,end): #as the consensus sequence is 
 	seq=[]
 	coords=[]
 
-	if start==end:
-
-		end=start+1
 	
-	bamfile=pysam.AlignmentFile(bamfilein,'rb', check_sq=False) #sometimes we may have to try to open empty files in order to discard some results
-
-	for read in bamfile.fetch(chromosome, start, end):
-
-		if not read.is_unmapped and not read.is_secondary: 
-
-			coords = read.get_reference_positions(full_length=True)
-			seq=read.seq
-
-
-	if len(seq) != 0:
+	if os.stat(os.path.abspath(bamfilein)).st_size == 0: #if is empty, return empty seqs
 
 		return seq,coords
 
 	else:
 
-		for read in bamfile.fetch():
+		if start==end:
+
+			end=start+1
+
+		bamfile=pysam.AlignmentFile(bamfilein,'rb')
+
+		for read in bamfile.fetch(chromosome, start-1, end-1): #fetch on zero-based ??????????
 
 			if not read.is_unmapped and not read.is_secondary: 
 
 				coords = read.get_reference_positions(full_length=True)
 				seq=read.seq
 
-		return seq,coords
 
-	bamfile.close()
+	return seq,coords
+
 
 
 def GetIndex(start, end, coordinates):
@@ -260,7 +253,7 @@ def Merger(sorted_int, refreps, h1reps, h2reps): #return non overlapping-ranges 
 
 			list_.append(reps)
 
-			new_=(min(list_, key=itemgetter(1)), max(list_,key=itemgetter(2))) #get inner interval, to be sure not to be outside the range in .bam files
+			new_=(min(list_, key=itemgetter(1)), max(list_,key=itemgetter(2))) #get extended range
 			new_range=(new_[0][1], new_[-1][2])
 
 			for el_ in list_:
@@ -358,8 +351,14 @@ def Merger(sorted_int, refreps, h1reps, h2reps): #return non overlapping-ranges 
 def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1_repetitions, bamfile1, haplotype2_repetitions, bamfile2, out):
 
 
-	subprocess.call(['samtools', 'index', os.path.abspath(bamfile1)])
-	subprocess.call(['samtools', 'index', os.path.abspath(bamfile2)])
+	if not os.path.exists(os.path.abspath(bamfile1 + '.bai')):
+
+		subprocess.call(['samtools', 'index', os.path.abspath(bamfile1)])
+	
+
+	if not os.path.exists(os.path.abspath(bamfile2 + '.bai')):
+
+		subprocess.call(['samtools', 'index', os.path.abspath(bamfile2)])
 
 
 	repref=reference_repetitions
@@ -991,7 +990,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							form='1|.' #first allele is variant. The sequence of the second one is not known
 
 
-							VCF_variantwriter(chromosome, pos, ref, alt1 + ',.', info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
 
 						else: #we have coverage
 
@@ -1012,7 +1011,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								form='1|.' #first allele is variant. The sequence of the second one is not known
 
 
-								VCF_variantwriter(chromosome, pos, ref, alt1 + ',.', info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
 
 							else:
 
@@ -1222,7 +1221,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							form='.|1' #second allele is variant. The sequence of the first one is not known
 
 
-							VCF_variantwriter(chromosome, pos, ref, '.,' + alt2, info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
 
 						
 						else: #we have coverage
@@ -1245,7 +1244,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								form='.|1' #second allele is variant. The sequence of the first one is not known
 
 
-								VCF_variantwriter(chromosome, pos, ref, '.,' + alt2, info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
 
 							else:
 
@@ -1442,7 +1441,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							form='1|.' #first allele is a variant. The sequence of the first one is known
 
 
-							VCF_variantwriter(chromosome, pos, ref, alt1 + ',.', info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
 
 				
 				elif len(seq_h1) == 0 and len(seq_h2) != 0: #we don't have coverage for hap1
@@ -1487,7 +1486,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							form='.|1' #first allele is a variant. The sequence of the first one is known
 
 
-							VCF_variantwriter(chromosome, pos, ref, '.,' + alt2, info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
 
 					
 				elif len(seq_h1) != 0 and len(seq_h2) != 0: #coverage for both
@@ -1534,7 +1533,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 			
 								form='.|1' #first allele not known
 
-								VCF_variantwriter(chromosome, pos, ref, '.,' + alt2, info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
 
 					else:
 
@@ -1735,7 +1734,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						form='1|.' #first allele is not a variant. The sequence of the second one is not known
 
 
-						VCF_variantwriter(chromosome, pos, ref, alt1 + ',.', info, form, out)
+						VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
 
 
 					else:
@@ -1762,7 +1761,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							form='1|.' #first allele is not a variant. The sequence of the second one is not known
 
 
-							VCF_variantwriter(chromosome, pos, ref, alt1 + ',.', info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
 
 
 						else:
@@ -1822,11 +1821,16 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 			else: #range present just in haplotype 2
 
+				print(reps)
+				print(sorted_intersection)
+
+
 				pos=reps[0]
 				ref=reference_sequence[(reps[0]-1):reps[1]]
 
-				seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) #this coordinates must exist
+				seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])#this coordinates must exist
 				coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
+
 				si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 				alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
 
@@ -1915,13 +1919,14 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						form='.|1' 
 
 
-						VCF_variantwriter(chromosome, pos, ref, '.,' + alt2, info, form, out)
+						VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
 
 
 					else:
 
 
 						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
+
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 
 						if si_1 ==[] or ei_1 ==[]:
@@ -1937,7 +1942,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							form='.|1' 
 
 
-							VCF_variantwriter(chromosome, pos, ref, '.,' + alt2, info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
 
 
 						else:
