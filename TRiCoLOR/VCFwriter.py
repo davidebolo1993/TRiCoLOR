@@ -1821,10 +1821,6 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 			else: #range present just in haplotype 2
 
-				print(reps)
-				print(sorted_intersection)
-
-
 				pos=reps[0]
 				ref=reference_sequence[(reps[0]-1):reps[1]]
 
