@@ -43,7 +43,7 @@ def main():
 			sys.exit(1)
 
 
-	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR_scanner.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR_scanner.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
 
 	logging.info('Analysis starts now')
@@ -244,7 +244,7 @@ def entropy_finder(sequence,coordinates,scansize,entropy_treshold): # get coordi
 
 				if entropy(sequence[ind_start:len(sequence)]) < entropy_treshold:
 
-					hit.append((coordinates[ind_start], coordinates[-1]))  #use 0-based coordinates
+					hit.append((coordinates[ind_start], coordinates[-1])) #use 0-based coordinates
 
 					break #reached the end
 
@@ -311,7 +311,7 @@ def BScanner(bamfilein,bedfileout,scansize,entropy_treshold,call_treshold): #ent
 
 	for chromosome in chrom_dict.keys():
 
-		chr_array=np.zeros(chrom_dict[chromosome]) #0-based coordinates
+		chr_array=np.zeros(chrom_dict[chromosome])
 
 		for reads in bamfile.fetch(chromosome):
 
