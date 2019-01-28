@@ -90,12 +90,6 @@ def SizeChecker(start, end, treshold=2): #adjust size of interval so that we don
 
 		return start, end, end-start
 
-	#elif treshold*1000 < end-start <= (treshold*2)*1000:
-
-		#size, len_=split_equal(end-start, int(treshold/2))
-
-		#return start, start+(size*len_), size 
-
 	else:
 
 		size, len_=split_equal(end-start, math.ceil((end-start)/(treshold*1000)))
