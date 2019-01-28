@@ -55,7 +55,7 @@ def main():
 			sys.exit(1)
 
 	
-	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
 	command_dict= vars(args)
 	command_string=",".join(("{}={}".format(*i) for i in command_dict.items())) 
@@ -176,6 +176,7 @@ def main():
 	it_ = iter(b_in)
 
 	skipped=0
+	ambiguous=0
 
 	for i in range(b_in.length()):
 
@@ -260,6 +261,7 @@ def main():
 			else:
 
 				logging.info('Skipped ambiguous region ' + chromosome + ':' + str(start) + '-' + str(end))
+				ambiguous +=1
 				
 				continue
 
@@ -284,14 +286,15 @@ def main():
 
 	except:
 
-		logging.exception('Something went wrong during .vcf processing')
+		logging.exception('Something went wrong during .vcf processing. Log is below:')
 
 	end_t=timeit.default_timer()
 	elapsed=end_t-start_t
 
 	logging.info('Analysis completed in ' + str(elapsed) + ' seconds')
 	logging.info('Number of regions: ' + str(b_in.length()))
-	logging.info('Regions skipped: ' + str(skipped))
+	logging.info('Ambiguous regions: ' + str(ambiguous))
+	logging.info('Other regions skipped: ' + str(skipped))
 
 
 class Bed_Reader():
@@ -498,8 +501,8 @@ def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq,
 		Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '.repetitions.tsv'))
 		Table.write()
 
-		open(os.path.abspath(out_ +'/' + str(iteration +1) + '.srt.bam')).close() #create empty
-		open(os.path.abspath(out_ +'/' + str(iteration +1) + '.srt.bam.bai')).close() #create empty
+		open(os.path.abspath(out_ +'/' + str(iteration +1) + '.srt.bam'), 'w').close() #create empty
+		open(os.path.abspath(out_ +'/' + str(iteration +1) + '.srt.bam.bai'), 'w').close() #create empty
 
 		return
 
@@ -583,8 +586,8 @@ def Haplo2_Repeats(bamfile2, chromosome, start, end, kmer, times, size, ref_seq,
 		Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '.repetitions.tsv'))
 		Table.write()
 
-		open(os.path.abspath(out_ +'/' + str(iteration +1) + '.srt.bam')).close() #create empty
-		open(os.path.abspath(out_ +'/' + str(iteration +1) + '.srt.bam.bai')).close() #create empty
+		open(os.path.abspath(out_ +'/' + str(iteration +1) + '.srt.bam'), 'w').close() #create empty
+		open(os.path.abspath(out_ +'/' + str(iteration +1) + '.srt.bam.bai'), 'w').close() #create empty
 
 
 		return
