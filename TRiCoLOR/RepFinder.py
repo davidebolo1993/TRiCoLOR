@@ -2,7 +2,6 @@
 
 import re
 import itertools
-import bisect
 import sys
 import pyfaidx
 import pysam
@@ -23,10 +22,25 @@ def GetLargestFromNested(intervals):
 
 			if intervals[i][2] > intervals[i+1][1]: #the two intervals overlap
 
-				if intervals[i+1][3]*len(intervals[i+1][0]) > intervals[i][3]*len(intervals[i][0]):
+
+				if intervals[i+1][2] - intervals[i+1][1] > intervals[i][2] - intervals[i][1]:
 
 					purified.append(intervals[i+1])
 					i+=2
+
+
+				elif intervals[i+1][2] - intervals[i+1][1] == intervals[i][2] - intervals[i][1]:
+
+
+					if intervals[i+1][3]*len(intervals[i+1][0]) > intervals[i][3]*len(intervals[i][0]):
+
+						purified.append(intervals[i+1])
+						i+=2
+
+					else:
+
+						purified.append(intervals[i])
+						i+=2
 
 				else: 
 
@@ -43,11 +57,25 @@ def GetLargestFromNested(intervals):
 
 			if intervals[i][1] < purified[-1][2]:
 
-				if intervals[i][3]*len(intervals[i][0]) > purified[-1][3]*len(purified[-1][0]):
+
+				if intervals[i][2] - intervals[i][1] > purified[-1][2] - purified[-1][1]:
 
 					purified.remove(purified[-1])
 					purified.append(intervals[i])
 					i+=1
+
+				elif intervals[i][2] - intervals[i][1] == purified[-1][2] - purified[-1][1]:
+
+
+					if intervals[i][3]*len(intervals[i][0]) > purified[-1][3]*len(purified[-1][0]):
+
+						purified.remove(purified[-1])
+						purified.append(intervals[i])
+						i+=1
+
+					else:
+
+						i+=1
 
 				else:
 
@@ -192,6 +220,24 @@ def one_deletion_neighbors(word):
 	return deletes
 
 
+
+
+def possible_rotations(word):
+
+	rotations=[]
+
+	for i in range(len(word)):
+
+		rotation = word[i:]+word[:i]
+		
+		rotations.append(rotation)
+
+
+	return rotations
+
+
+
+
 def check_ref(ref_seq, test_seq): #pyfaidx way to get start/end in fasta is valid, as coordinates are adjusted one-based
 
 	return ref_seq != test_seq
@@ -307,31 +353,57 @@ def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # c
 	#filter out overlapping repetitions, considering only larger ones
 
 	purified=sorted(GetLargestFromNested(s_c_), key=itemgetter(1,2))
+
+
+	clipped_intervals=dict()
 	
 	significant=[]
 	
 	for (a,b,c,d) in s_c_: #discard reps that falls entirely in soft-clipped intervals, as we cannot be sure of their number
 		
-		if (a,b,c,d) in purified and len(a)*d >= size:
+		if (a,b,c,d) in purified:
 
-			if b == coords[0] and c == coords[0] and coordinates[0] is None: #exclude intervals that fall entirely in left soft-clipped regions, as coordinates-correction method may fail
+			if b == c: #if the two coordinates are the same, we are in a clipped or inserted region that may contain that repetition. Create nested dictionaries to evaluate
 
-				continue
+				if (b,c) not in clipped_intervals:
 
-			elif b == coords[-1] and c == coords[-1] and coordinates[-1] is None: #exclude intervals that fall entirely in right soft-clipped regions as coordinates-correction method may fail
-				
-				continue
+					clipped_intervals[(b,c)] = {a:d}
+
+				else:
+
+					if a in clipped_intervals[(b,c)]:
+
+						clipped_intervals[(b,c)][a] += d
+
+					else:
+
+						clipped_intervals[(b,c)][a] = d
+
 				
 			else:
 
-				significant.append((a,b,c,d))
+				if len(a)*d >= size:
+
+					significant.append((a,b,c,d))				 
 				
 		else:
 
 			continue
-			
-		
-	return significant
+	
+	#from SAME intervals, get those ones with larger motif (they are more likely to be real for the correction method we have)
+
+	for key1 in clipped_intervals.keys():
+
+		to_keep={k: v for k, v in clipped_intervals[key1].items() if len(k)*v >= size}
+
+		if len(to_keep) != 0:
+
+			ratings=sorted(to_keep.items(),key=lambda x: (len(x[0]),x[1]),reverse=True) #sort by reps len and then by number of repetitions
+
+			significant.append((ratings[0][0], key1[0], key1[1], ratings[0][1]))
+
+	
+	return sorted(significant, key=itemgetter(1,2))
 	
 	
 	
