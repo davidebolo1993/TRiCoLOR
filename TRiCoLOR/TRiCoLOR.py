@@ -226,7 +226,7 @@ def main():
 
 		try:
 
-			further = Ref_Repeats(ref_seq, chromosome, start, end, args.motif, args.times, args.size, args.output,i)
+			further = Ref_Repeats(ref_seq, chromosome, start, end, args.motif, args.times, args.size, args.output)
 
 			if further:
 
@@ -361,22 +361,8 @@ def isEmpty(list_obj): #recursive function to check for empty list
         return all((isinstance(sli, list) and isEmpty(sli)) for sli in list_obj)
 
 
-def Concat_Tables(list_of_paths):
-
-	List_of_tables=[]
-
-	for tab in list_of_paths:
-
-		Tab=pd.read_csv(tab, sep='\t')
-		List_of_tables.append(Tab)
-
-	By_Row=pd.concat(List_of_tables, axis=0, ignore_index=True)
-
-	return By_Row
-
 	
-
-def TableWriter(chromosome,repetitions_with_coord, out, iteration): #Table is in .bed (chromosome, start, end) format with header
+def TableWriter(chromosome,repetitions_with_coord, out): #Table is in .bed (chromosome, start, end) format with header. Append to the existing table, so that we don't have to merge after
 
 	seq=[el[0] for el in repetitions_with_coord]
 	start=[el[1] for el in repetitions_with_coord]
@@ -385,15 +371,15 @@ def TableWriter(chromosome,repetitions_with_coord, out, iteration): #Table is in
 	chrom=[chromosome]*len(start)
 	Table=pd.DataFrame({'Chromosome':chrom, 'Start':start,'End':end, 'Repeated Motif':seq,'Repetitions Number':rep},columns=['Chromosome', 'Start', 'End', 'Repeated Motif', 'Repetitions Number'])
 	
-	if os.path.exists(os.path.abspath(out + '/' + str(iteration+1) + '.repetitions.tsv')):
+	if os.path.exists(os.path.abspath(out + '/' + chromosome + '.repetitions.bed')):
 
-		with open(os.path.abspath(out + '/' + str(iteration+1) + '.repetitions.tsv'), 'a') as refout:
+		with open(os.path.abspath(out + '/' + chromosome + '.repetitions.bed'), 'a') as refout:
 
 			Table.to_csv(refout ,sep='\t',index=False, header=False)
 
 	else:
 
-		with open(os.path.abspath(out + '/' + str(iteration +1) + '.repetitions.tsv'), 'a') as refout:
+		with open(os.path.abspath(out + '/' + chromosome + '.repetitions.bed'), 'a') as refout:
 
 			Table.to_csv(refout ,sep='\t',index=False)
 
@@ -447,7 +433,7 @@ def Reference_Filter(reference_reps,wanted,size,start): #re-check reference repe
 
 
 
-def Ref_Repeats(reference_seq, chromosome, start, end, kmer, times, size, out, iteration):
+def Ref_Repeats(reference_seq, chromosome, start, end, kmer, times, size, out):
 
 	out_=os.path.abspath(out+'/reference')
 
@@ -460,7 +446,7 @@ def Ref_Repeats(reference_seq, chromosome, start, end, kmer, times, size, out, i
 
 	if 'N' in wanted: #region with ambiguous bases
 
-		Table=EmptyTable(os.path.abspath(out_ + '/' + str(iteration +1) + '.repetitions.tsv'))
+		Table=EmptyTable(os.path.abspath(out_ + '/' + chromosome + '.repetitions.bed'))
 		Table.write()
 
 		return False
@@ -473,7 +459,7 @@ def Ref_Repeats(reference_seq, chromosome, start, end, kmer, times, size, out, i
 
 		if isEmpty(filtered):
 
-			Table=EmptyTable(os.path.abspath(out_ + '/' + str(iteration +1) + '.repetitions.tsv'))
+			Table=EmptyTable(os.path.abspath(out_ + '/' + chromosome + '.repetitions.bed'))
 			Table.write()
 
 		else:
@@ -498,7 +484,7 @@ def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq,
 
 	if isEmpty(filseq): #no informations for that region in this haplotype
 
-		Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '.repetitions.tsv'))
+		Table=EmptyTable(os.path.abspath(out_ +'/' + chromosome + '.repetitions.bed'))
 		Table.write()
 
 		open(os.path.abspath(out_ +'/' + str(iteration +1) + '.srt.bam'), 'w').close() #create empty
@@ -518,7 +504,7 @@ def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq,
 
 			if isEmpty(seq):
 
-				Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '.repetitions.tsv'))
+				Table=EmptyTable(os.path.abspath(out_ +'/' + chromosome + '.repetitions.bed'))
 				Table.write()
 
 				continue
@@ -535,13 +521,13 @@ def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq,
 
 					else:
 
-						Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '.repetitions.tsv'))
+						Table=EmptyTable(os.path.abspath(out_ +'/' + chromosome + '.repetitions.bed'))
 						Table.write()
 
 				else:
 
 					cor_coord_reps=corrector(ref_seq, seq, repetitions, coords, size, allowed=1) #probably an exception here is needed
-					TableWriter(chromosome, cor_coord_reps,out_,iteration)
+					TableWriter(chromosome, cor_coord_reps,out_)
 					repetitions_h1.extend(cor_coord_reps)
 
 		#merge and clean
@@ -583,7 +569,7 @@ def Haplo2_Repeats(bamfile2, chromosome, start, end, kmer, times, size, ref_seq,
 
 	if isEmpty(filseq): #no informations for that region in this haplotype
 
-		Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '.repetitions.tsv'))
+		Table=EmptyTable(os.path.abspath(out_ +'/' + chromosome + '.repetitions.bed'))
 		Table.write()
 
 		open(os.path.abspath(out_ +'/' + str(iteration +1) + '.srt.bam'), 'w').close() #create empty
@@ -604,7 +590,7 @@ def Haplo2_Repeats(bamfile2, chromosome, start, end, kmer, times, size, ref_seq,
 
 			if isEmpty(seq):
 
-				Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '.repetitions.tsv'))
+				Table=EmptyTable(os.path.abspath(out_ +'/' + chromosome + '.repetitions.bed'))
 				Table.write()
 
 				continue
@@ -621,13 +607,13 @@ def Haplo2_Repeats(bamfile2, chromosome, start, end, kmer, times, size, ref_seq,
 
 					else:
 
-						Table=EmptyTable(os.path.abspath(out_ +'/' + str(iteration +1) + '.repetitions.tsv'))
+						Table=EmptyTable(os.path.abspath(out_ +'/' + chromosome + '.repetitions.bed'))
 						Table.write()
 
 				else:
 
 					cor_coord_reps=corrector(ref_seq, seq, repetitions, coords, size, allowed=1) #probably an exception here is needed
-					TableWriter(chromosome, cor_coord_reps,out_,iteration)
+					TableWriter(chromosome, cor_coord_reps,out_)
 					repetitions_h2.extend(cor_coord_reps)
 
 		#merge and clean
@@ -695,40 +681,6 @@ def CleanResults(chromosome, out, bam1, bam2):
 			logging.exception('Something wrong in merging for haplotype 2, ' + chromosome)
 			sys.exit(1)
 
-
-	RefTables=glob.glob(os.path.abspath(out_[0])+'/*.tsv') #exclude already-merged tables
-	Hap1_Tables=glob.glob(os.path.abspath(out_[1])+'/*.tsv') #exclude already-merged tables
-	Hap2_Tables=glob.glob(os.path.abspath(out_[2])+'/*.tsv') #exclude already-merged tables
-
-	Table0=Concat_Tables(RefTables)
-	Table1=Concat_Tables(Hap1_Tables)
-	Table2=Concat_Tables(Hap2_Tables)
-
-
-	with open(os.path.abspath(out_[0] + '/' + chromosome + '.repetitions.bed'), 'w') as refout:
-
-		Table0.to_csv(refout, sep='\t', index=False)
-
-	with open(os.path.abspath(out_[1] + '/' + chromosome + '.repetitions.bed'), 'w') as hap1out:
-
-		Table1.to_csv(hap1out, sep='\t',index=False)
-
-	with open(os.path.abspath(out_[2] + '/' + chromosome + '.repetitions.bed'), 'w') as hap2out:
-
-		Table2.to_csv(hap2out, sep='\t',index=False)
-
-
-	for tabs in RefTables:
-
-		os.remove(tabs)
-
-	for tabs in Hap1_Tables:
-
-		os.remove(tabs)
-
-	for tabs in Hap2_Tables:
-
-		os.remove(tabs)
 
 
 
