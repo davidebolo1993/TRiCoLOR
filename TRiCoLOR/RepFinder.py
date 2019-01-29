@@ -315,7 +315,6 @@ def CheckForRotations(motif, motifs_seen):
 def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # correct for one-nucleotide insertions, substitutions and deletions between a repetition already started if this alterations are not in the reference sequence
 
 	corrected_with_coords=[]
-	corrected_with_indexes=[]
 
 	coords=modifier(coordinates)
 
