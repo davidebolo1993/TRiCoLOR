@@ -416,7 +416,7 @@ def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # c
 
 			if len(ratings)==1:
 	
-				significant.append(ratings[0][0], key1[0], key1[1], ratings[0][1])
+				significant.append((ratings[0][0], key1[0], key1[1], ratings[0][1]))
 
 				continue
 
@@ -453,7 +453,6 @@ def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # c
 							motifs_seen.add(ratings[i][0])
 							significant.append((ratings[i][0], key1[0], key1[1], ratings[i][1]))
 							i+=1
-
 
 
 	return sorted(significant, key=itemgetter(1,2))
