@@ -448,7 +448,7 @@ def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # c
 
 							i+=1
 
-						elif CheckForRotations(ratings[i][0], motifs_seen) #if the motif is a substring of another already seen or of a rotation of another already seen, skip
+						elif CheckForRotations(ratings[i][0], motifs_seen): #if the motif is a substring of another already seen or of a rotation of another already seen, skip
 
 							i+=1
 
