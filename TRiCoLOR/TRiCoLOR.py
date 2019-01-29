@@ -464,7 +464,7 @@ def Ref_Repeats(reference_seq, chromosome, start, end, kmer, times, size, out):
 
 		else:
 
-			TableWriter(chromosome,filtered,out_, iteration)
+			TableWriter(chromosome,filtered,out_)
 
 		
 		return filtered
