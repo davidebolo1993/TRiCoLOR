@@ -36,6 +36,11 @@ def main():
 
 def Get_Alignment_Positions(bamfile,chromosome,start,end):
 
+	
+
+	coords=[]
+	seq=[]
+
 	BamFile=pysam.AlignmentFile(bamfile,"rb")
 
 	if start==end:
@@ -185,7 +190,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 
 				if ref_rep["Start"][i] >= min_ and ref_rep["End"][i] <= max_:
 
-					cluster_dict=dict(type='ellipse',xref='x',yref='y',x0=ref_rep["Start"][i]-.1,y0=-.15,x1=ref_rep["End"][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep["Start"][i]-.1,y0=-.15,x1=ref_rep["End"][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
 
@@ -257,7 +262,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 
 				if ref_rep["Start"][i] >= min_ and ref_rep["End"][i] <= max_:
 
-					cluster_dict=dict(type='ellipse',xref='x',yref='y',x0=ref_rep["Start"][i]-.1,y0=-.15,x1=ref_rep["End"][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep["Start"][i]-.1,y0=-.15,x1=ref_rep["End"][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
 
@@ -276,7 +281,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 
 				if hap2_rep["Start"][i] >= min_ and hap2_rep["End"][i] <= max_:
 
-					cluster_dict=dict(type='ellipse',xref='x',yref='y',x0=hap2_rep["Start"][i]-.1,y0=-.15,x1=hap2_rep["End"][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap2_rep["Start"][i]-.1,y0=-.15,x1=hap2_rep["End"][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
 			updatemenus = list([dict(type="buttons",buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Haplotype 2 Repetitions',method = 'relayout',args = ['shapes', cluster_hap2])]))])
@@ -293,7 +298,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 
 				if ref_rep["Start"][i] >= min_ and ref_rep["End"][i] <= max_:
 
-					cluster_dict=dict(type='ellipse',xref='x',yref='y',x0=ref_rep["Start"][i]-.1,y0=-.15,x1=ref_rep["End"][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep["Start"][i]-.1,y0=-.15,x1=ref_rep["End"][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
 
@@ -304,7 +309,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 
 				if hap2_rep["Start"][i] >= min_ and hap2_rep["End"][i] <= max_:
 
-					cluster_dict=dict(type='ellipse',xref='x',yref='y',x0=hap2_rep["Start"][i]-.1,y0=-1.15,x1=hap2_rep["End"][i]+.1,y1=-.85, opacity=.25,line=dict(color='#f1c31f'),fillcolor='#f1c31f')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap2_rep["Start"][i]-.1,y0=-1.15,x1=hap2_rep["End"][i]+.1,y1=-.85, opacity=.25,line=dict(color='#f1c31f'),fillcolor='#f1c31f')
 					cluster_hap2.append(cluster_dict)
 
 			updatemenus = list([dict(type="buttons",buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Reference Repetitions',method = 'relayout',args = ['shapes', cluster_ref]),dict(label = 'Haplotype 2 Repetitions',method ='relayout',args = ['shapes', cluster_hap2]),dict(label = 'Both',method = 'relayout',args = ['shapes', cluster_ref+cluster_hap2])]))])
@@ -313,8 +318,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 
 		fig = dict(data=data, layout=layout)
 		plot(fig,filename=os.path.abspath(out)+"/"+label+".html",auto_open=False)
-
-
 
 
 
@@ -376,7 +379,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 
 				if ref_rep["Start"][i] >= min_ and ref_rep["End"][i] <= max_:
 
-					cluster_dict=dict(type='ellipse',xref='x',yref='y',x0=ref_rep["Start"][i]-.1,y0=-.15,x1=ref_rep["End"][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep["Start"][i]-.1,y0=-.15,x1=ref_rep["End"][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
 
@@ -395,7 +398,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 
 				if hap1_rep["Start"][i] >= min_ and hap1_rep["End"][i] <= max_: 
 
-					cluster_dict=dict(type='ellipse',xref='x',yref='y',x0=hap1_rep["Start"][i]-.1,y0=.85,x1=hap1_rep["End"][i]+.1,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap1_rep["Start"][i]-.1,y0=.85,x1=hap1_rep["End"][i]+.1,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
 					cluster_hap1.append(cluster_dict)
 
 			updatemenus = list([dict(type="buttons",buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Haplotype 1 Repetitions',method = 'relayout',args = ['shapes', cluster_hap1])]))])
@@ -413,7 +416,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 
 				if ref_rep["Start"][i] >= min_ and ref_rep["End"][i] <= max_:
 
-					cluster_dict=dict(type='ellipse',xref='x',yref='y',x0=ref_rep["Start"][i]-.1,y0=-.15,x1=ref_rep["End"][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep["Start"][i]-.1,y0=-.15,x1=ref_rep["End"][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
 
@@ -424,7 +427,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 
 				if hap1_rep["Start"][i] >= min_ and hap1_rep["End"][i] <= max_: 
 
-					cluster_dict=dict(type='ellipse',xref='x',yref='y',x0=hap1_rep["Start"][i]-.1,y0=.85,x1=hap1_rep["End"][i]+.1,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap1_rep["Start"][i]-.1,y0=.85,x1=hap1_rep["End"][i]+.1,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
 					cluster_hap1.append(cluster_dict)
 
 
@@ -510,7 +513,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 
 				if ref_rep["Start"][i] >= min_ and ref_rep["End"][i] <= max_:
 
-					cluster_dict=dict(type='ellipse',xref='x',yref='y',x0=ref_rep["Start"][i]-.1,y0=-.15,x1=ref_rep["End"][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep["Start"][i]-.1,y0=-.15,x1=ref_rep["End"][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
 
@@ -528,7 +531,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 
 				if hap1_rep["Start"][i] >= min_ and hap1_rep["End"][i] <= max_: 
 
-					cluster_dict=dict(type='ellipse',xref='x',yref='y',x0=hap1_rep["Start"][i]-.1,y0=.85,x1=hap1_rep["End"][i]+.1,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap1_rep["Start"][i]-.1,y0=.85,x1=hap1_rep["End"][i]+.1,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
 					cluster_hap1.append(cluster_dict)
 
 			updatemenus = list([dict(type="buttons",buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Haplotype 1 Repetitions',method = 'relayout',args = ['shapes', cluster_hap1])]))])
@@ -545,7 +548,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 
 				if hap2_rep["Start"][i] >= min_ and hap2_rep["End"][i] <= max_:
 
-					cluster_dict=dict(type='ellipse',xref='x',yref='y',x0=hap2_rep["Start"][i]-.1,y0=-.15,x1=hap2_rep["End"][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap2_rep["Start"][i]-.1,y0=-.15,x1=hap2_rep["End"][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
 			updatemenus = list([dict(type="buttons",buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Haplotype 2 Repetitions',method = 'relayout',args = ['shapes', cluster_hap2])]))])
@@ -561,7 +564,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 
 				if ref_rep["Start"][i] >= min_ and ref_rep["End"][i] <= max_:
 
-					cluster_dict=dict(type='ellipse',xref='x',yref='y',x0=ref_rep["Start"][i]-.1,y0=-.15,x1=ref_rep["End"][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep["Start"][i]-.1,y0=-.15,x1=ref_rep["End"][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
 
@@ -572,7 +575,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 
 				if hap1_rep["Start"][i] >= min_ and hap1_rep["End"][i] <= max_: 
 
-					cluster_dict=dict(type='ellipse',xref='x',yref='y',x0=hap1_rep["Start"][i]-.1,y0=.85,x1=hap1_rep["End"][i]+.1,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap1_rep["Start"][i]-.1,y0=.85,x1=hap1_rep["End"][i]+.1,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
 					cluster_hap1.append(cluster_dict)
 
 
@@ -589,7 +592,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 
 				if ref_rep["Start"][i] >= min_ and ref_rep["End"][i] <= max_:
 
-					cluster_dict=dict(type='ellipse',xref='x',yref='y',x0=ref_rep["Start"][i]-.1,y0=-.15,x1=ref_rep["End"][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep["Start"][i]-.1,y0=-.15,x1=ref_rep["End"][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
 
@@ -600,7 +603,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 
 				if hap2_rep["Start"][i] >= min_ and hap2_rep["End"][i] <= max_:
 
-					cluster_dict=dict(type='ellipse',xref='x',yref='y',x0=hap2_rep["Start"][i]-.1,y0=-1.15,x1=hap2_rep["End"][i]+.1,y1=-.85, opacity=.25,line=dict(color='#f1c31f'),fillcolor='#f1c31f')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap2_rep["Start"][i]-.1,y0=-1.15,x1=hap2_rep["End"][i]+.1,y1=-.85, opacity=.25,line=dict(color='#f1c31f'),fillcolor='#f1c31f')
 					cluster_hap2.append(cluster_dict)
 
 			updatemenus = list([dict(type="buttons",buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Reference Repetitions',method = 'relayout',args = ['shapes', cluster_ref]),dict(label = 'Haplotype 2 Repetitions',method ='relayout',args = ['shapes', cluster_hap2]),dict(label = 'Both',method = 'relayout',args = ['shapes', cluster_ref+cluster_hap2])]))])
@@ -616,7 +619,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 
 				if hap1_rep["Start"][i] >= min_ and hap1_rep["End"][i] <= max_: 
 
-					cluster_dict=dict(type='ellipse',xref='x',yref='y',x0=hap1_rep["Start"][i]-.1,y0=.85,x1=hap1_rep["End"][i]+.1,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap1_rep["Start"][i]-.1,y0=.85,x1=hap1_rep["End"][i]+.1,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
 					cluster_hap1.append(cluster_dict)
 
 
@@ -627,7 +630,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 
 				if hap2_rep["Start"][i] >= min_ and hap2_rep["End"][i] <= max_:
 
-					cluster_dict=dict(type='ellipse',xref='x',yref='y',x0=hap2_rep["Start"][i]-.1,y0=-1.15,x1=hap2_rep["End"][i]+.1,y1=-.85, opacity=.25,line=dict(color='#f1c31f'),fillcolor='#f1c31f')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap2_rep["Start"][i]-.1,y0=-1.15,x1=hap2_rep["End"][i]+.1,y1=-.85, opacity=.25,line=dict(color='#f1c31f'),fillcolor='#f1c31f')
 					cluster_hap2.append(cluster_dict)
 
 			updatemenus = list([dict(type="buttons",buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Haplotype 1 Repetitions',method = 'relayout',args = ['shapes', cluster_hap1]),dict(label = 'Haplotype 2 Repetitions',method ='relayout',args = ['shapes', cluster_hap2]),dict(label = 'Both',method = 'relayout',args = ['shapes', cluster_ref+cluster_hap2])]))])
@@ -642,7 +645,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 
 				if ref_rep["Start"][i] >= min_ and ref_rep["End"][i] <= max_:
 
-					cluster_dict=dict(type='ellipse',xref='x',yref='y',x0=ref_rep["Start"][i]-.1,y0=-.15,x1=ref_rep["End"][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep["Start"][i]-.1,y0=-.15,x1=ref_rep["End"][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
 			hap1_rep=pd.read_csv(os.path.abspath(hap1_table),sep="\t")
@@ -652,7 +655,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 
 				if hap1_rep["Start"][i] >= min_ and hap1_rep["End"][i] <= max_: 
 
-					cluster_dict=dict(type='ellipse',xref='x',yref='y',x0=hap1_rep["Start"][i]-.1,y0=.85,x1=hap1_rep["End"][i]+.1,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap1_rep["Start"][i]-.1,y0=.85,x1=hap1_rep["End"][i]+.1,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
 					cluster_hap1.append(cluster_dict)
 
 
@@ -663,7 +666,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start
 
 				if hap2_rep["Start"][i] >= min_ and hap2_rep["End"][i] <= max_:
 
-					cluster_dict=dict(type='ellipse',xref='x',yref='y',x0=hap2_rep["Start"][i]-.1,y0=-1.15,x1=hap2_rep["End"][i]+.1,y1=-.85, opacity=.25,line=dict(color='#f1c31f'),fillcolor='#f1c31f')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap2_rep["Start"][i]-.1,y0=-1.15,x1=hap2_rep["End"][i]+.1,y1=-.85, opacity=.25,line=dict(color='#f1c31f'),fillcolor='#f1c31f')
 					cluster_hap2.append(cluster_dict)
 
 			updatemenus = list([dict(type="buttons",buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Reference Repetitions',method = 'relayout',args = ['shapes', cluster_ref]),dict(label = 'Haplotype 1 Repetitions',method ='relayout',args = ['shapes', cluster_hap1]),dict(label = 'Haplotype 2 Repetitions',method ='relayout',args = ['shapes', cluster_hap2]),dict(label = 'All',method = 'relayout',args = ['shapes', cluster_ref+cluster_hap1+cluster_hap2])]))])
