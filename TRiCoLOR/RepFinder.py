@@ -439,7 +439,7 @@ def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # c
 					if i==0:
 
 						motifs_seen.add(ratings[i][0])
-						significant.append((ratings[i][0], key1[i], key1[i], ratings[i][1]))
+						significant.append((ratings[i][0], key1[0], key1[1], ratings[i][1]))
 						i+=1
 					
 					else:
@@ -454,7 +454,7 @@ def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # c
 
 						else:
 
-							significant.append((ratings[i][0], key1[i], key1[i], ratings[i][1]))
+							significant.append((ratings[i][0], key1[0], key1[1], ratings[i][1]))
 							i+=1
 
 
