@@ -220,21 +220,6 @@ def one_deletion_neighbors(word):
 	return deletes
 
 
-
-def possible_rotations(word):
-
-	rotations=[]
-
-	for i in range(len(word)):
-
-		rotation = word[i:]+word[:i]
-		
-		rotations.append(rotation)
-
-
-	return rotations
-
-
 def check_ref(ref_seq, test_seq): #pyfaidx way to get start/end in fasta is valid, as coordinates are adjusted one-based
 
 	return ref_seq != test_seq
