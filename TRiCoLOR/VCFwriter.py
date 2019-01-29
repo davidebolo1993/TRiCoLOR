@@ -668,7 +668,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info['H2M'] = hap2_dict_motif[reps]
 							info['H2N'] = hap2_dict_number[reps]
 			
-							form='0|1' #second allele variant. Sequence is known
+							form='1|0' #first allele is variant
 
 							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
 
