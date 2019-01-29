@@ -186,7 +186,7 @@ def dfs(adj_list, visited, vertex, result, key):
 			dfs(adj_list, visited, neighbor, result, key)
 
 
-def neighbors(pattern, d): # works even with very long patterns
+def neighbors(pattern, d): # works even with very long patterns without problems
 
 	assert(d <= len(pattern))
 
@@ -221,7 +221,6 @@ def one_deletion_neighbors(word):
 
 
 
-
 def possible_rotations(word):
 
 	rotations=[]
@@ -236,8 +235,6 @@ def possible_rotations(word):
 	return rotations
 
 
-
-
 def check_ref(ref_seq, test_seq): #pyfaidx way to get start/end in fasta is valid, as coordinates are adjusted one-based
 
 	return ref_seq != test_seq
@@ -250,6 +247,7 @@ def get_rep_num(reps,interval,sequence): #get the most-likely corrected number o
 
 	test_case.extend(d_neighbors(reps))
 	test_case.extend(one_deletion_neighbors(reps))
+	
 	substr=sequence[interval[0]:interval[-1]+len(reps)]
 	self_=list(look_for_self(reps,substr))
 	where_in_sub=[el[1] for el in self_]
@@ -283,6 +281,33 @@ def get_rep_num(reps,interval,sequence): #get the most-likely corrected number o
 
 	return count
 
+
+
+
+def possible_rotations(word):
+
+	rotations=[]
+
+	for i in range(len(word)):
+
+		rotation = word[i:]+word[:i]
+		
+		rotations.append(rotation)
+
+	return rotations
+
+
+def CheckForRotations(motif, motifs_seen):
+
+	for x in motifs_seen:
+
+		for y in possible_rotations(x):
+
+			if motif in y:
+
+				return True
+
+	return False
 
 
 
@@ -356,10 +381,10 @@ def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # c
 
 
 	clipped_intervals=dict()
-	
+
 	significant=[]
 	
-	for (a,b,c,d) in s_c_: #discard reps that falls entirely in soft-clipped intervals, as we cannot be sure of their number
+	for (a,b,c,d) in s_c_: #deal with reps that falls entirely in clipped regions
 		
 		if (a,b,c,d) in purified:
 
@@ -390,7 +415,7 @@ def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # c
 
 			continue
 	
-	#from SAME intervals, get those ones with larger motif (they are more likely to be real for the correction method we have)
+	#from SAME intervals, get those ones with larger motif first (they are more likely to be real for the correction method we have). For our correction method, we define the number of this repetitions, but it's hard to tell their exact location inside the clipped region
 
 	for key1 in clipped_intervals.keys():
 
@@ -398,12 +423,39 @@ def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # c
 
 		if len(to_keep) != 0:
 
-			ratings=sorted(to_keep.items(),key=lambda x: (len(x[0]),x[1]),reverse=True) #sort by reps len and then by number of repetitions
+			ratings=sorted(to_keep.items(),key=lambda x: (len(x[0]),x[1]),reverse=True) #sort by reps len and then by number of repetitions, reverse so that the rep with highest rate is at the top
 
-			significant.append((ratings[0][0], key1[0], key1[1], ratings[0][1]))
+			if len(ratings)==1:
 
-	
+				significant.append((ratings[0][0], key1[0], key1[1], ratings[0][1]))
+
+			else:
+
+				i=0
+				motifs_seen=set()
+
+				while i <= len(ratings):
+
+					if i==0:
+
+						motifs_seen.add(ratings[i][0])
+						significant.append((ratings[i][0], key1[i], key1[i], ratings[i][1]))
+						i+=1
+					
+					else:
+
+						if any(x in motifs_seen for x in possible_rotations(ratings[i][0])): #if the motif is a rotation of another already seen, skip
+
+							i+=1
+
+						elif CheckForRotations(ratings[i][0], motifs_seen) #if the motif is a substring of another already seen or of a rotation of another already seen, skip
+
+							i+=1
+
+						else:
+
+							significant.append((ratings[i][0], key1[i], key1[i], ratings[i][1]))
+							i+=1
+
+
 	return sorted(significant, key=itemgetter(1,2))
-	
-	
-	
