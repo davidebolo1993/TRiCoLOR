@@ -283,7 +283,6 @@ def get_rep_num(reps,interval,sequence): #get the most-likely corrected number o
 
 
 
-
 def possible_rotations(word):
 
 	rotations=[]
@@ -293,6 +292,8 @@ def possible_rotations(word):
 		rotation = word[i:]+word[:i]
 		
 		rotations.append(rotation)
+
+	rotations.remove(word)
 
 	return rotations
 
@@ -313,7 +314,8 @@ def CheckForRotations(motif, motifs_seen):
 
 def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # correct for one-nucleotide insertions, substitutions and deletions between a repetition already started if this alterations are not in the reference sequence
 
-	corrected=[]
+	corrected_with_coords=[]
+	corrected_with_indexes=[]
 
 	coords=modifier(coordinates)
 
@@ -364,8 +366,7 @@ def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # c
 		if len(result) != 0:
 
 			new_reps=Get_Alignment_Coordinates(coords,[(reps, i[0], i[-1]+(len(reps)-1), get_rep_num(reps,i,sequence)) for i in result.values()])
-
-			corrected.extend(new_reps)
+			corrected_with_coords.extend(new_reps)
 
 		else:
 
@@ -373,78 +374,89 @@ def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # c
 	
 	#sort repetitions using each start
 
-	s_c_=sorted(corrected, key=itemgetter(1,2))
+	s_c_=sorted(corrected_with_coords, key=itemgetter(1,2))
 
 	#filter out overlapping repetitions, considering only larger ones
 
 	purified=sorted(GetLargestFromNested(s_c_), key=itemgetter(1,2))
-
 
 	clipped_intervals=dict()
 
 	significant=[]
 	
 	for (a,b,c,d) in s_c_: #deal with reps that falls entirely in clipped regions
-		
-		if (a,b,c,d) in purified:
 
+		if (a,b,c,d) in purified:
+		
 			if b == c: #if the two coordinates are the same, we are in a clipped or inserted region that may contain that repetition. Create nested dictionaries to evaluate
 
 				if (b,c) not in clipped_intervals:
 
-					clipped_intervals[(b,c)] = {a:d}
+					if len(a) *d >= size:
 
-				else:
-
-					if a in clipped_intervals[(b,c)]:
-
-						clipped_intervals[(b,c)][a] += d
+						clipped_intervals[(b,c)] = [{a:d}]
 
 					else:
 
-						clipped_intervals[(b,c)][a] = d
+						continue
 
-				
+				else:
+
+					if len(a)*d >= size:
+
+						clipped_intervals[(b,c)].append({a:d})
+
+					else:
+
+						continue
+
 			else:
 
 				if len(a)*d >= size:
 
-					significant.append((a,b,c,d))				 
-				
+					significant.append((a,b,c,d)) 
+
 		else:
 
 			continue
 	
+
+	if len(clipped_intervals) != 0:	
+
 	#from SAME intervals, get those ones with larger motif first (they are more likely to be real for the correction method we have). For our correction method, we define the number of this repetitions, but it's hard to tell their exact location inside the clipped region
 
-	for key1 in clipped_intervals.keys():
+		for key1 in clipped_intervals.keys():
 
-		to_keep={k: v for k, v in clipped_intervals[key1].items() if len(k)*v >= size}
-
-		if len(to_keep) != 0:
-
-			ratings=sorted(to_keep.items(),key=lambda x: (len(x[0]),x[1]),reverse=True) #sort by reps len and then by number of repetitions, reverse so that the rep with highest rate is at the top
+			list_of_dict=clipped_intervals[key1] #sort by reps len and then by number of repetitions, reverse so that the rep with highest rate is at the top
+			ratings = sorted([(key,val) for dic in list_of_dict for key,val in dic.items()], key=lambda x:(len(x[0]),x[1]), reverse=True)
 
 			if len(ratings)==1:
+	
+				significant.append(ratings[0][0], key1[0], key1[1], ratings[0][1])
 
-				significant.append((ratings[0][0], key1[0], key1[1], ratings[0][1]))
+				continue
 
 			else:
 
 				i=0
 				motifs_seen=set()
 
-				while i <= len(ratings):
+				while i <= len(ratings)-1:
 
 					if i==0:
-
+					
 						motifs_seen.add(ratings[i][0])
 						significant.append((ratings[i][0], key1[0], key1[1], ratings[i][1]))
 						i+=1
 					
 					else:
 
-						if any(x in motifs_seen for x in possible_rotations(ratings[i][0])): #if the motif is a rotation of another already seen, skip
+						if ratings[i][0] in motifs_seen: #same motif but different location in string, even it has same coordinates: keep 
+
+							significant.append((ratings[i][0], key1[0], key1[1], ratings[i][1]))
+							i+=1
+
+						elif any(x in motifs_seen for x in possible_rotations(ratings[i][0])): #if the motif is a rotation of another already seen, skip
 
 							i+=1
 
@@ -454,8 +466,10 @@ def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # c
 
 						else:
 
+							motifs_seen.add(ratings[i][0])
 							significant.append((ratings[i][0], key1[0], key1[1], ratings[i][1]))
 							i+=1
+
 
 
 	return sorted(significant, key=itemgetter(1,2))
