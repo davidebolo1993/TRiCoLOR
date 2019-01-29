@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#merging .bam files without exeeding limit of 1024 open files at time
+#merging .bam files without exeeding limit of 1024 open files at the same time
 
 cd $2
 
