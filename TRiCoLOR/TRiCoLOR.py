@@ -527,8 +527,16 @@ def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq,
 				else:
 
 					cor_coord_reps=corrector(ref_seq, seq, repetitions, coords, size, allowed=1) #probably an exception here is needed
-					TableWriter(chromosome, cor_coord_reps,out_)
-					repetitions_h1.extend(cor_coord_reps)
+
+					if isEmpty(cor_coord_reps): #size dimension exclude repetitions previously found
+
+						Table=EmptyTable(os.path.abspath(out_ +'/' + chromosome + '.repetitions.bed'))
+						Table.write()
+
+					else:
+
+						TableWriter(chromosome, cor_coord_reps,out_)
+						repetitions_h1.extend(cor_coord_reps)
 
 		#merge and clean
 
@@ -615,6 +623,16 @@ def Haplo2_Repeats(bamfile2, chromosome, start, end, kmer, times, size, ref_seq,
 					cor_coord_reps=corrector(ref_seq, seq, repetitions, coords, size, allowed=1) #probably an exception here is needed
 					TableWriter(chromosome, cor_coord_reps,out_)
 					repetitions_h2.extend(cor_coord_reps)
+
+					if isEmpty(cor_coord_reps): #size dimension exclude repetitions previously found
+
+						Table=EmptyTable(os.path.abspath(out_ +'/' + chromosome + '.repetitions.bed'))
+						Table.write()
+
+					else:
+
+						TableWriter(chromosome, cor_coord_reps,out_)
+						repetitions_h2.extend(cor_coord_reps)
 
 		#merge and clean
 
