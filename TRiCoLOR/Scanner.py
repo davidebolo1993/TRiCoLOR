@@ -218,44 +218,26 @@ def entropy_finder(sequence,coordinates,scansize,entropy_treshold): # get coordi
 	ind_start=0
 	ind_end=scansize
 
+	terminal_ind=len(sequence)-1
+
 	hit=[]
 
 
-	while len(sequence)-1 >= ind_start:
+	while terminal_ind > ind_end:
 
-
-		if len(sequence) -1 >= ind_end:
+		if terminal_ind-ind_end >= scansize:
 
 			if entropy(sequence[ind_start:ind_end]) < entropy_treshold:
 
 				hit.append((coordinates[ind_start],coordinates[ind_end])) #use 0-based coordinates
 
-				ind_start+=scansize
-				ind_end+=scansize
-
-			else:
-
-				ind_start+=scansize
-				ind_end+=scansize
+			ind_start+=scansize
+			ind_end+=scansize
 
 		else:
 
-			if len(sequence)-ind_end > scansize-int(scansize/4):
+			break
 
-				if entropy(sequence[ind_start:len(sequence)]) < entropy_treshold:
-
-					hit.append((coordinates[ind_start], coordinates[-1])) #use 0-based coordinates
-
-					break #reached the end
-
-				else:
-
-					break #reached the end
-			
-			else: 
-
-				break #for short intervals the treshold for a sequence with low entropy can be different
-	
 	return hit
 
 
