@@ -50,7 +50,7 @@ def Get_Alignment_Positions(bamfile,chromosome,start,end):
 
 	for read in BamFile.fetch(chromosome, start-1, end-1):
 
-		if not read.is_unmapped and not read.is_secondary:
+		if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
 
 			coords = read.get_reference_positions(full_length=True)
 			seq=read.seq
@@ -134,6 +134,10 @@ def Modifier(list_of_coord,seq):
 
 			coords_purified.append(coords_without_insertions[i])
 			NewSeq+=seq[i]
+
+
+	coords_purified.append(coords_without_insertions[-1])
+	NewSeq += seq[-1]
 
 	return coords_purified,NewSeq
 
