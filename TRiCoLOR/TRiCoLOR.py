@@ -77,7 +77,7 @@ def main():
 
 	#check the presence of needed external tools
 
-	external_tools=['samtools', 'minimap2', 'htsbox', 'bgzip', 'tabix', 'bcftools']
+	external_tools=['samtools', 'minimap2', 'htsbox', 'bgzip', 'tabix', 'vcftools', 'bcftools']
 
 	for tools in external_tools:
 
@@ -279,10 +279,16 @@ def main():
 
 	try:
 
-		subprocess.check_call(['bgzip', os.path.abspath(args.output + '/TRiCoLOR.vcf')])
-		subprocess.check_call(['tabix', os.path.abspath(args.output + '/TRiCoLOR.vcf.gz')])
-		subprocess.call(['bcftools', 'norm', '-f', os.path.abspath(args.genome), '-o', os.path.abspath(args.output + '/TRiCoLOR.norm.vcf.gz'), '-O', 'z', os.path.abspath(args.output + '/TRiCoLOR.vcf.gz')],stderr=open(os.devnull, 'wb'))
+		with open(os.path.abspath(args.output + '/TRiCoLOR.srt.vcf'), 'w') as srtvcfout:
 
+			subprocess.check_call(['vcf-sort', os.path.abspath(args.output + '/TRiCoLOR.vcf')],stderr=open(os.devnull, 'wb'),stdout=srtvcfout) #outputted .vcf file is supposed to be sorted
+
+		os.remove(os.path.abspath(args.output + '/TRiCoLOR.vcf'))
+
+		subprocess.check_call(['bgzip', os.path.abspath(args.output + '/TRiCoLOR.srt.vcf')])
+		subprocess.check_call(['tabix', os.path.abspath(args.output + '/TRiCoLOR.srt.vcf.gz')])
+
+		subprocess.call(['bcftools', 'norm', '-f', os.path.abspath(args.genome), '-o', os.path.abspath(args.output + '/TRiCoLOR.norm.vcf.gz'), '-O', 'z', os.path.abspath(args.output + '/TRiCoLOR.vcf.gz')],stderr=open(os.devnull, 'wb'))
 
 	except:
 
@@ -523,6 +529,7 @@ def Haplo1_Repeats(bamfile1, chromosome, start, end, kmer, times, size ,ref_seq,
 
 						Table=EmptyTable(os.path.abspath(out_ +'/' + chromosome + '.repetitions.bed'))
 						Table.write()
+
 
 				else:
 
