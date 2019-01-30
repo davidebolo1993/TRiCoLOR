@@ -118,7 +118,7 @@ def Bamfile_Analyzer(bamfilein,chromosome,start,end): #double sliding window fun
 
 		for read in bamfile.fetch(chromosome,start,pointer):
 
-			if not read.is_unmapped and not read.is_secondary:
+			if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
 
 				inf[i].append(Basic_Infos(read))
 
