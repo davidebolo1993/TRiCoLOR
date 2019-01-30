@@ -126,7 +126,7 @@ def Get_Alignment_Positions(bamfilein): #as the consensus sequence is supposed t
 
 	for read in bamfile.fetch():
 
-		if not read.is_unmapped and not read.is_secondary: 
+		if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
 
 			coords = read.get_reference_positions(full_length=True)
 			seq=read.seq
