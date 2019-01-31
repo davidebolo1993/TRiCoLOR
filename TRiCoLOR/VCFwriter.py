@@ -181,7 +181,6 @@ def Modifier(list_of_coord,seq,reps):
 
 
 
-
 def Get_Seq_Pos(bamfilein,chromosome, start,end): #as the consensus sequence is supposed to generate just one sequence aligned to the reference, secondary alignments are removed
 	
 
@@ -201,7 +200,7 @@ def Get_Seq_Pos(bamfilein,chromosome, start,end): #as the consensus sequence is 
 
 		bamfile=pysam.AlignmentFile(bamfilein,'rb')
 
-		for read in bamfile.fetch(chromosome, start, end): #fetch on zero-based ??????????
+		for read in bamfile.fetch(chromosome, start-1, end-1): #fetch on zero-based, as clipped regions many not be in coordinates
 
 			if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
 
@@ -1598,7 +1597,8 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 				ref=reference_sequence[(reps[0]-1):reps[1]]
 
 				seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) #this coordinates must exist
-				coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables				
+				
+				coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
 				si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 				alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
 
