@@ -1156,7 +1156,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 							alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
 
-							if alt=='': #start coordinate or end coordinate not present, same as we don't have coverage
+							if alt1=='': #start coordinate or end coordinate not present, same as we don't have coverage
 
 								info=dict()
 			
@@ -1597,7 +1597,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 				ref=reference_sequence[(reps[0]-1):reps[1]]
 
 				seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) #this coordinates must exist
-				
+
 				coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
 				si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 				alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
