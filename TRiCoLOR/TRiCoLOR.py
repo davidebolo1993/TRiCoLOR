@@ -288,7 +288,8 @@ def main():
 		subprocess.check_call(['bgzip', os.path.abspath(args.output + '/TRiCoLOR.srt.vcf')])
 		subprocess.check_call(['tabix', os.path.abspath(args.output + '/TRiCoLOR.srt.vcf.gz')])
 
-		subprocess.call(['bcftools', 'norm', '-f', os.path.abspath(args.genome), '-o', os.path.abspath(args.output + '/TRiCoLOR.norm.srt.vcf.gz'), '-O', 'z', os.path.abspath(args.output + '/TRiCoLOR.srt.vcf.gz')],stderr=open(os.devnull, 'wb'))
+		subprocess.check_call(['bcftools', 'norm', '-f', os.path.abspath(args.genome), '-o', os.path.abspath(args.output + '/TRiCoLOR.norm.srt.vcf.gz'), '-O', 'z', os.path.abspath(args.output + '/TRiCoLOR.srt.vcf.gz')],stderr=open(os.devnull, 'wb'))
+		subprocess.check_call(['tabix', os.path.abspath(args.output + '/TRiCoLOR.norm.srt.vcf.gz')])
 
 	except:
 
