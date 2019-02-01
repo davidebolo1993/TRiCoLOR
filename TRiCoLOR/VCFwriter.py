@@ -1472,6 +1472,8 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 							if ref==alt2:
 
+								info=dict()
+
 								info['END'] = reps[1]
 								info['H1M'] = '.'
 								info['H1N'] = '.'
@@ -1483,6 +1485,8 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								VCF_variantwriter(chromosome, pos, ref, '.', info, form, out)
 
 							else:
+
+								info=dict()
 
 
 								info['END'] = reps[1]
@@ -1501,6 +1505,8 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 							if ref==alt1:
 
+								info=dict()
+
 								info['END'] = reps[1]
 								info['H1M'] = '.'
 								info['H1N'] = '.'
@@ -1512,6 +1518,8 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								VCF_variantwriter(chromosome, pos, ref, '.', info, form, out)
 
 							else:
+
+								info=dict()
 
 
 								info['END'] = reps[1]
