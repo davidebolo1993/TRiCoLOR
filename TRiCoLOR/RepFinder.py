@@ -5,454 +5,354 @@ import itertools
 import sys
 import pyfaidx
 import pysam
+from bisect import bisect_left, bisect_right
+import editdistance
 from collections import defaultdict
 from operator import itemgetter
 
 
-def GetLargestFromNested(intervals): 
 
-	i=0
+def nestover(SortedIntervals, string, coords):
 
-	purified=[]
+    extended=[]
+    extended.append(SortedIntervals[0])
 
-	while i < len(intervals):
+    i=1
 
+    while i < len(SortedIntervals):
 
-		if i==0:
+        if extended[-1][2] >= SortedIntervals[i][1]: #the two intervals overlap
 
-			if intervals[i][2] > intervals[i+1][1]: #the two intervals overlap
+            m1,n1=extended[-1][0], extended[-1][3]
+            m2,n2=SortedIntervals[i][0], SortedIntervals[i][3]
 
+            new_s,new_e=min(extended[-1][1],SortedIntervals[i][1]), max(extended[-1][2],SortedIntervals[i][2])
 
-				if intervals[i+1][2] - intervals[i+1][1] > intervals[i][2] - intervals[i][1]:
+            string_s,string_e = bisect_left(coords,new_s), bisect_right(coords, new_e)
 
-					purified.append(intervals[i+1])
-					i+=2
+            rank1,count1=rank(string[string_s:string_e], m1)
+            rank2,count2=rank(string[string_s:string_e], m2)
 
+            extended.remove(extended[-1])
 
-				elif intervals[i+1][2] - intervals[i+1][1] == intervals[i][2] - intervals[i][1]:
+            if rank1 >= rank2:
 
+                extended.append((m1,new_s,new_e,count1))
 
-					if intervals[i+1][3]*len(intervals[i+1][0]) > intervals[i][3]*len(intervals[i][0]):
+            else:
 
-						purified.append(intervals[i+1])
-						i+=2
+                extended.append((m2,new_s, new_e, count2))
 
-					else:
+            i+=1
 
-						purified.append(intervals[i])
-						i+=2
+        else:
 
-				else: 
+            if extended[-1][1] <=  SortedIntervals[i][1] and extended[-1][2] >= SortedIntervals[i][2]: #following interval is smaller than previous
 
-					purified.append(intervals[i])
-					i+=2
+                i+=1     
+               
 
-			else:
+            elif extended[-1][2] < SortedIntervals[i][1]: #following does not overlap and is not nested
 
-				purified.append(intervals[i])
-				purified.append(intervals[i+1])
-				i+=2
+                extended.append(SortedIntervals[i])
+                i+=1
 
-		else:
-
-			if intervals[i][1] < purified[-1][2]:
-
-
-				if intervals[i][2] - intervals[i][1] > purified[-1][2] - purified[-1][1]:
-
-					purified.remove(purified[-1])
-					purified.append(intervals[i])
-					i+=1
-
-				elif intervals[i][2] - intervals[i][1] == purified[-1][2] - purified[-1][1]:
-
-
-					if intervals[i][3]*len(intervals[i][0]) > purified[-1][3]*len(purified[-1][0]):
-
-						purified.remove(purified[-1])
-						purified.append(intervals[i])
-						i+=1
-
-					else:
-
-						i+=1
-
-				else:
-
-					#don't remove the existing interval
-					i+=1
-
-			else:
-
-				purified.append(intervals[i])
-				i+=1
-
-
-	return list(purified)
+    return extended
 
 
 
-def RepeatsFinder(string,kmer,times): #find repetitions in string using the RegEx approach. Times is the lower bound for the number of times a repetition must occur
+def RepeatsFinder(string,kmer,times, maxkmerlength, overlapping): #find non-overlapping or overlapping repetitions in string using the RegEx approach. Times is the lower bound for the number of times a repetition must occur, Kmer is the motif size
 
-	if kmer != 0 and times == 0:
+    seen=set()
 
-		my_regex = r'(.{'  + str(kmer) + r'})\1+'
+    if kmer != 0 and times == 0:
 
-	elif kmer != 0 and times != 0:
+        my_regex = r'(.{'  + str(kmer) + r'})\1+' if not overlapping else r'(?=(.{'  + str(kmer) + r'})\1+)'
 
-		my_regex = r'(.{'  + str(kmer) + r'})\1{' + str(times-1) + r',}'
+    elif kmer == 0 and times != 0:
 
-	elif kmer == 0 and times != 0:
+        my_regex = r'(.+?)\1{' + str(times-1) + r',}' if not overlapping else r'(?=(.+?)\1{' + str(times-1) + r',})'
 
-		my_regex = r'(.+?)\1{' + str(times-1) + r',}'
+    elif kmer != 0 and times != 0:
 
-	else:
+        my_regex = r'(.{'  + str(kmer) + r'})\1{' + str(times-1) + r',}' if not overlapping else r'(?=(.{'  + str(kmer) + r'})\1{' + str(times-1) + r',})'
 
-		my_regex = r'(.+?)\1+'
+    else:
 
-	r=re.compile(my_regex)
+        my_regex = r'(.+?)\1+' if not overlapping else r'(?=(.+?)\1+)'
 
-	for match in r.finditer(string):
+    r=re.compile(my_regex)
 
-		yield (match.group(1), match.start(1), match.start(1)+len(match.group(1))*int(len(match.group(0))/len(match.group(1)))-1,int(len(match.group(0))/len(match.group(1))))
+    for match in r.finditer(string):
+
+        motif=match.group(1)
+
+        if motif not in seen and len(motif) <= maxkmerlength:
+
+            seen.add(motif)
+
+    return seen
 
 
 def Get_Alignment_Positions(bamfilein): #as the consensus sequence is supposed to generate just one sequence aligned to the reference, secondary alignments are removed
-	
-	coords=[]
-	seq=[]
+  
+    coords=[]
+    seq=[]
 
-	bamfile=pysam.AlignmentFile(bamfilein,'rb')
+    bamfile=pysam.AlignmentFile(bamfilein,'rb')
 
-	for read in bamfile.fetch():
+    for read in bamfile.fetch():
 
-		if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
+        if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
 
-			coords = read.get_reference_positions(full_length=True)
-			seq=read.seq
+            coords = read.get_reference_positions(full_length=True)
+            seq=read.seq
 
-		else:
+        else:
 
-			bamfile.close()
-			return coords,seq
+            bamfile.close()
+            return coords,seq
 
-	bamfile.close()
+    bamfile.close()
 
-	return coords,seq
+    return coords,seq
 
 
 def modifier(coordinates): #fast way to remove None and substitute with closest number in list
 
-	
-	coordinates=[el+1 if el is not None else el for el in coordinates] #get true coordinates
-	start = next(ele for ele in coordinates if ele is not None)
-
-	for ind, ele in enumerate(coordinates):
-		
-		if ele is None:
-
-			coordinates[ind] = start
-		
-		else:
-
-			start = ele
-
-	return coordinates
+    
+    coordinates=[el+1 if el is not None else el for el in coordinates] #get true coordinates
+    beginning = next(ind for ind, ele in enumerate(coordinates) if ele is not None)
+    start=next(ele for ele in coordinates if ele is not None)
 
 
-def Get_Alignment_Coordinates(coord_list,repetitions): 
+    for ind, ele in enumerate(coordinates):
+        
+        if ele is None:
 
-	rep_coord_list=[(a,b,c,d) for a,b,c,d in zip([repetition[0] for repetition in repetitions],[coord_list[repetition[1]] for repetition in repetitions],[coord_list[repetition[2]] for repetition in repetitions],[repetition[3] for repetition in repetitions])]
+            if ind < beginning:
 
-	return rep_coord_list
+                coordinates[ind] = start-1
+
+            else:
+
+                coordinates[ind] = start
+        
+        else:
+
+            start = ele
+
+    return coordinates
+
+
+
+def Get_Alignment_Coordinates(coord_list,repetitions):
+
+    rep_coord_list=[(a,b,c,d) for a,b,c,d in zip([repetition[0] for repetition in repetitions],[coord_list[repetition[1]] for repetition in repetitions],[coord_list[repetition[2]] for repetition in repetitions],[repetition[3] for repetition in repetitions])]
+
+    return rep_coord_list
 
 
 def look_for_self(rep,sequence): #build another regular expression, looking for the core of the repetition
 
-	for match in re.finditer(rep,sequence):
+    for match in re.finditer(rep,sequence):
 
-		yield (match.group(), match.start(), match.start()+len(match.group())*int(len(match.group())/len(match.group()))-1,int(len(match.group())/len(match.group())))
+        yield (match.group(), match.start(), match.start()+len(match.group())*int(len(match.group())/len(match.group()))-1,int(len(match.group())/len(match.group())))
 
 
 def dfs(adj_list, visited, vertex, result, key):
 
-	visited.add(vertex)
-	result[key].append(vertex)
+    visited.add(vertex)
+    result[key].append(vertex)
 
-	for neighbor in adj_list[vertex]:
+    for neighbor in adj_list[vertex]:
 
-		if neighbor not in visited:
+        if neighbor not in visited:
 
-			dfs(adj_list, visited, neighbor, result, key)
+            dfs(adj_list, visited, neighbor, result, key)
 
 
-def neighbors(pattern, d): # works even with very long patterns without problems
+def check_edit(string1, string2, allowed): #cython-based way to check for edit distance, faster than check every time for neighbors
 
-	assert(d <= len(pattern))
+    if string2 == '':
 
-	chars='ATCG'
+        return True
 
-	if d == 0:
+    elif len(string2) == allowed:
 
-		return [pattern]
+        return True
 
-	r2 = neighbors(pattern[1:], d-1)
-	r = [c + r3 for r3 in r2 for c in chars if c != pattern[0]]
+    elif editdistance.eval(string1,string2) <= allowed:
 
-	if (d < len(pattern)):
+        return True
 
-		r2 = neighbors(pattern[1:], d)
-		r += [pattern[0] + r3 for r3 in r2]
+    return False
 
-	return r
 
 
-def d_neighbors(pattern,d=1):
+def d_neighbors(pattern, d, DNAchars='ATCG'):
 
-	return sum([neighbors(pattern, d2) for d2 in range(d + 1)], [])
+    if d > len(pattern):
 
+        d == len(pattern)
 
-def one_deletion_neighbors(word):
+    if d == 0:
 
-	splits = [(word[:i], word[i:]) for i in range(len(word) + 1)]
-	deletes = [left + right[1:] for left,right in splits if right]
+        return [pattern]
 
-	return deletes
+    r2 = d_neighbors(pattern[1:], d-1)
+    r = [c + r3 for r3 in r2 for c in DNAchars if c != pattern[0]]
 
+    if (d < len(pattern)):
 
-def check_ref(ref_seq, test_seq): #pyfaidx way to get start/end in fasta is valid, as coordinates are adjusted one-based
+        r2 = d_neighbors(pattern[1:], d)
+        r += [pattern[0] + r3 for r3 in r2]
 
-	return ref_seq != test_seq
+    return list(set(sum([r for d2 in range(d + 1)], [])))
 
 
-def get_rep_num(reps,interval,sequence): #get the most-likely corrected number of repetition based on the assumptions commented in corrector function
+def del_neighbors(pattern,d):
 
-	
-	test_case=[]
+    n=len(pattern)-d
 
-	test_case.extend(d_neighbors(reps))
-	test_case.extend(one_deletion_neighbors(reps))
-	
-	substr=sequence[interval[0]:interval[-1]+len(reps)]
-	self_=list(look_for_self(reps,substr))
-	where_in_sub=[el[1] for el in self_]
+    return list(set(''.join(x) for x in list(itertools.combinations(pattern,n))))
 
-	i=0 # position in string
-	l=0 # position in occurences list
-	count=0 #number of putative repetitions
 
-	while i <= where_in_sub[-1]:
+def check_ref(string1, string2): #check if ref_string and test_string are different
 
-		if i in where_in_sub: #is a perfect repetition
+    return string1 != string2
 
-			i+= len(reps)
-			count+=1
-			l+=1
 
-		else:
+def not_occur_probability(string, motif): #crude approach to calculate not occuring probability
 
-			dim=where_in_sub[l]-i
+    r=len(motif)
+    n=len(string)
+    occurence_prob=(1/4)**r #probability of k-mer occurence
+    number_of_locations=n-r+1
+    not_occurence_p=(1-occurence_prob)**number_of_locations
 
-			if substr[i:i+dim] in test_case:
 
-				i+= dim
-				count+=1 #what we see is a deletion of an existing repetition, so we will count this as a repetition
-			
-			else:
+def rank(string,motif): #useful for rank reps in overlapping and clipped regions
 
-				i+= dim
-				count+=0 #don't consider this a repetition
+    count=string.count(motif)
+    reward=not_occur_probability(string,motif)
 
+    return (count*len(motif))/len(string) + reward,count #rank longer patterns before others
 
-	return count
 
 
+def repsnum(reps,interval,sequence,testcase): #get the number of repetitions. Pass testcase from outside, faster than call it every time.
 
-def possible_rotations(word):
+     
+    substr=sequence[interval[0]:interval[-1]+len(reps)]
+    all_starts=[]
 
-	rotations=[]
+    for match in re.finditer(reps,substr):
 
-	for i in range(len(word)):
+        all_starts.append(match.start())
 
-		rotation = word[i:]+word[:i]
-		
-		rotations.append(rotation)
+    i=0 # position in string
+    l=0 # position in occurences list
+    count=0 #number of putative repetitions
 
-	rotations.remove(word)
+    while i <= all_starts[-1]:
 
-	return rotations
+        if i in all_starts: #is a perfect repetition
 
+            i+= len(reps)
+            count+=1
+            l+=1
 
-def CheckForRotations(motif, motifs_seen):
+        else:
 
-	for x in motifs_seen:
+            dim=all_starts[l]-i
 
-		for y in possible_rotations(x):
+            if substr[i:i+dim] in testcase:
 
-			if motif in y:
+                i+= dim
+                count+=1 #what we see is a deletion of an existing repetition, so we will count this as a repetition
+          
+            else:
 
-				return True
+                i+= dim
+                count+=0 #don't consider this a repetition
 
-	return False
 
+    return count
 
 
-def corrector(ref_seq, sequence, repetitions, coordinates, size, allowed=1): # correct for one-nucleotide insertions, substitutions and deletions between a repetition already started if this alterations are not in the reference sequence
 
-	corrected_with_coords=[]
+def corrector(reference, string, repetitions, coordinates, size, allowed): # correct for n-nucleotides insertions/deletions/substitutions inside a repetitive range
 
-	coords=modifier(coordinates)
+    corr_=[]
 
-	for reps in list(set(el[0] for el in repetitions)):
+    coords=modifier(coordinates)
 
-		self_=list(look_for_self(reps,sequence))
-		self__= Get_Alignment_Coordinates(coords,self_)
-		self_=[el[1] for el in self_]
+    for reps in repetitions:
 
-		ranges=[]
+        self_=list(look_for_self(reps,string))
+        self__= Get_Alignment_Coordinates(coords,self_)
 
-		for i in range(len(self_)-1):
+        ranges=[]
 
-			if self__[i+1][1]-self__[i][1] <= len(reps): #allows repetitions that have same coordinates 'cause are 'insertions'
+        for i in range(len(self_)-1):
 
-				if self_[i+1] - self_[i] == len(reps) or self_[i+1] - self_[i] == len(reps) + allowed:
+            if self__[i+1][1]-self__[i][1] <= len(reps): #coords are subsequent or in inserted region
 
-					ranges.append((self_[i],self_[i+1]))
+                if check_edit(reps,string[self_[i][1]+len(reps):self_[i+1][1]], allowed): #reps are subsequent or separated by n-allowed chars or by a string with edit distance n from reps
 
-			elif self__[i+1][1]-self__[i][1] == len(reps)+allowed and sequence[self_[i+1]-(len(reps)-1):self_[i+1]] not in one_deletion_neighbors(reps) and check_ref(ref_seq[self__[i][1]-1: self__[i+1][1]],sequence[self_[i]: self_[i+1]+1]): #allows a mono-nucleotide insertion that broke the previous RegEx; for dinucleotide repetitions, can't discriminate between mono-nucleotide insertion or deletion if they are edit distance 1 neighbors and in that case are considered deletions
-				
-				ranges.append((self_[i],self_[i+1]))
+                    ranges.append((self_[i][1],self_[i+1][1])) #accept as putative interval with reps
 
-			elif self__[i+1][1]-self__[i][1] == len(reps)+(len(reps)-1)+allowed and sequence[self_[i+1]-len(reps):self_[i+1]] in d_neighbors(reps) and check_ref(ref_seq[self__[i][1]-1: self__[i+1][1]],sequence[self_[i]: self_[i+1]+1]): #allows a mono-nucleotide substitution that broke the previous RegEx
+                else:
 
-				ranges.append((self_[i],self_[i+1]))
+                    continue
 
-			elif self__[i+1][1]-self__[i][1] == len(reps)+(len(reps)-2)+allowed and sequence[self_[i+1]-(len(reps)-1):self_[i+1]] in one_deletion_neighbors(reps) and check_ref(ref_seq[self__[i][1]-1: self__[i+1][1]],sequence[self_[i]: self_[i+1]+1]): #allows a mono-nucleotide deletion that broke the previous RegEx
+            else:
 
-				ranges.append((self_[i],self_[i+1]))
+                if check_edit(reps,string[self_[i][1]+len(reps):self_[i+1][1]], allowed) and check_ref(reference[self__[i][1]-1:self__[i+1][1]],string[self_[i][1]: self_[i+1][1]+1]):
 
-		collapsed_ranges= defaultdict(list)
-		
-		for x, y in ranges:
+                    ranges.append((self_[i][1],self_[i+1][1])) #allows same motifs separated by a string with edit distance n from the rep
 
-			collapsed_ranges[x].append(y)
-			collapsed_ranges[y].append(x)
+                else:
 
-		result = defaultdict(list)
-		visited = set()
-		
-		for vertex in collapsed_ranges:
+                    continue
 
-			if vertex not in visited:
 
-				dfs(collapsed_ranges, visited, vertex, result, vertex)
+        collapsed_ranges= defaultdict(list)
+      
+        for x, y in ranges:
 
-		if len(result) != 0:
+            collapsed_ranges[x].append(y)
+            collapsed_ranges[y].append(x)
 
-			new_reps=Get_Alignment_Coordinates(coords,[(reps, i[0], i[-1]+(len(reps)-1), get_rep_num(reps,i,sequence)) for i in result.values()])
-			corrected_with_coords.extend(new_reps)
+        result = defaultdict(list)
+        visited = set()
+      
+        for vertex in collapsed_ranges:
 
-		else:
+            if vertex not in visited:
 
-			continue
-	
-	#sort repetitions using each start
+                dfs(collapsed_ranges, visited, vertex, result, vertex) #collapse ranges that have common bounds
 
-	s_c_=sorted(corrected_with_coords, key=itemgetter(1,2))
 
-	#filter out overlapping repetitions, considering only larger ones
+        if len(result) != 0:
 
-	purified=sorted(GetLargestFromNested(s_c_), key=itemgetter(1,2))
+            testcase=[]
+            testcase.extend(d_neighbors(reps,allowed)) #extend testcase
+            testcase.extend(del_neighbors(reps,allowed)) #extend testcase
 
-	clipped_intervals=dict()
+            corr_.extend(Get_Alignment_Coordinates(coords,[(reps, interv[0], interv[-1]+(len(reps)-1), repsnum(reps,interv,string,testcase)) for interv in result.values()]))
 
-	significant=[]
-	
-	for (a,b,c,d) in s_c_: #deal with reps that falls entirely in clipped regions
+        else:
 
-		if (a,b,c,d) in purified:
-		
-			if b == c: #if the two coordinates are the same, we are in a clipped or inserted region that may contain that repetition. Create nested dictionaries to evaluate
+            continue
 
-				if (b,c) not in clipped_intervals:
+    if corr_ == []: #nearly impossible
 
-					if len(a) *d >= size:
+        return corr_
 
-						clipped_intervals[(b,c)] = [{a:d}]
+    s_corr_=sorted(corr_, key=itemgetter(1,2))
 
-					else:
+    mod_int=nestover(s_corr_, string, coords)
 
-						continue
-
-				else:
-
-					if len(a)*d >= size:
-
-						clipped_intervals[(b,c)].append({a:d})
-
-					else:
-
-						continue
-
-			else:
-
-				if len(a)*d >= size:
-
-					significant.append((a,b,c,d)) 
-
-		else:
-
-			continue
-	
-
-	if len(clipped_intervals) != 0:	
-
-	#from SAME intervals, get those ones with larger motif first (they are more likely to be real for the correction method we have). For our correction method, we define the number of this repetitions, but it's hard to tell their exact location inside the clipped region
-
-		for key1 in clipped_intervals.keys():
-
-			list_of_dict=clipped_intervals[key1] #sort by reps len and then by number of repetitions, reverse so that the rep with highest rate is at the top
-			ratings = sorted([(key,val) for dic in list_of_dict for key,val in dic.items()], key=lambda x:(len(x[0]),x[1]), reverse=True)
-
-			if len(ratings)==1:
-	
-				significant.append((ratings[0][0], key1[0], key1[1], ratings[0][1]))
-
-				continue
-
-			else:
-
-				i=0
-				motifs_seen=set()
-
-				while i <= len(ratings)-1:
-
-					if i==0:
-					
-						motifs_seen.add(ratings[i][0])
-						significant.append((ratings[i][0], key1[0], key1[1], ratings[i][1]))
-						i+=1
-					
-					else:
-
-						if ratings[i][0] in motifs_seen: #same motif but different location in string, even it has same coordinates: keep 
-
-							significant.append((ratings[i][0], key1[0], key1[1], ratings[i][1]))
-							i+=1
-
-						elif any(x in motifs_seen for x in possible_rotations(ratings[i][0])): #if the motif is a rotation of another already seen, skip
-
-							i+=1
-
-						elif CheckForRotations(ratings[i][0], motifs_seen): #if the motif is a substring of another already seen or of a rotation of another already seen, skip
-
-							i+=1
-
-						else:
-
-							motifs_seen.add(ratings[i][0])
-							significant.append((ratings[i][0], key1[0], key1[1], ratings[i][1]))
-							i+=1
-
-
-	return sorted(significant, key=itemgetter(1,2))
+    return [coords for coords in mod_int if len(coords[0])*coords[3] >= size]
