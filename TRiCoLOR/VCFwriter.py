@@ -4,6 +4,7 @@
 import pysam
 import datetime
 import os
+from bisect import bisect_left, bisect_right
 from collections import defaultdict
 from operator import itemgetter
 import subprocess
@@ -117,13 +118,21 @@ def modifier(coordinates): #fast way to remove None and substitute with closest 
 
 	
 	coordinates=[el+1 if el is not None else el for el in coordinates] #get true coordinates
-	start = next(ele for ele in coordinates if ele is not None)
+	beginning = next(ind for ind, ele in enumerate(coordinates) if ele is not None)
+	start=next(ele for ele in coordinates if ele is not None)
+
 
 	for ind, ele in enumerate(coordinates):
 		
 		if ele is None:
 
-			coordinates[ind] = start
+			if ind < beginning:
+
+				coordinates[ind] = start-1
+
+			else:
+
+				coordinates[ind] = start
 		
 		else:
 
@@ -214,10 +223,10 @@ def Get_Seq_Pos(bamfilein,chromosome, start,end): #as the consensus sequence is 
 
 def GetIndex(start, end, coordinates):
 
-	si=[i for i,e in enumerate(coordinates) if e==start]
-	ei=[i for i,e in enumerate(coordinates) if e==end]
+	si=bisect_left(coordinates, start)
+	ei=bisect_right(coordinates, end)-1
 
-	return si[0],ei[-1]
+	return si,ei
 
 
 
