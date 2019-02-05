@@ -30,8 +30,6 @@ def nestover(SortedIntervals, string, coords):
 
             string_s,string_e = bisect_left(coords,new_s), bisect_right(coords, new_e)
 
-            print(string[string_s:string_e], m1, m2)
-
             rank1,count1=rank(string[string_s:string_e], m1)
             rank2,count2=rank(string[string_s:string_e], m2)
 
