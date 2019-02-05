@@ -12,7 +12,7 @@ from operator import itemgetter
 
 
 
-def nestover(SortedIntervals, string, coords):
+def nestover(SortedIntervals, string, coords, treshold):
 
     extended=[]
     extended.append(SortedIntervals[0])
@@ -21,41 +21,65 @@ def nestover(SortedIntervals, string, coords):
 
     while i < len(SortedIntervals):
 
-        if extended[-1][2] >= SortedIntervals[i][1]: #the two intervals overlap
-
-            m1,n1=extended[-1][0], extended[-1][3]
-            m2,n2=SortedIntervals[i][0], SortedIntervals[i][3]
-
-            new_s,new_e=min(extended[-1][1],SortedIntervals[i][1]), max(extended[-1][2],SortedIntervals[i][2])
-
-            string_s,string_e = bisect_left(coords,new_s), bisect_right(coords, new_e)
-
-            rank1,count1=rank(string[string_s:string_e], m1)
-            rank2,count2=rank(string[string_s:string_e], m2)
-
-            extended.remove(extended[-1])
-
-            if rank1 >= rank2:
-
-                extended.append((m1,new_s,new_e,count1))
-
-            else:
-
-                extended.append((m2,new_s, new_e, count2))
-
-            i+=1
+        if extended==[]: # if something has been removed
+        
+            extended.append(SortedIntervals[i])
 
         else:
 
-            if extended[-1][1] <=  SortedIntervals[i][1] and extended[-1][2] >= SortedIntervals[i][2]: #following interval is smaller than previous
+            if extended[-1][2] >= SortedIntervals[i][1]: #the two intervals overlap
 
-                i+=1     
-               
+                m1,n1=extended[-1][0], extended[-1][3]
+                m2,n2=SortedIntervals[i][0], SortedIntervals[i][3]
 
-            elif extended[-1][2] < SortedIntervals[i][1]: #following does not overlap and is not nested
+                new_s,new_e=min(extended[-1][1],SortedIntervals[i][1]), max(extended[-1][2],SortedIntervals[i][2])
 
-                extended.append(SortedIntervals[i])
-                i+=1
+                string_s,string_e = bisect_left(coords,new_s), bisect_right(coords, new_e)
+
+
+                rank1,count1=rank(string[string_s:string_e], m1)
+                rank2,count2=rank(string[string_s:string_e], m2)
+
+                if rank1 < treshold and rank2 < treshold:
+
+                    extended.remove(extended[-1])
+                    i+=1
+
+                elif rank1 < treshold and rank2 >= treshold:
+
+                    extended.remove(extended[-1])
+                    extended.append(SortedIntervals[i])
+                    i+=1
+
+                elif rank1 >= treshold and rank2 < treshold:
+
+                    i+=1
+
+                elif rank1 >= treshold and rank2 >= treshold:
+
+                    extended.remove(extended[-1])
+
+                    if rank1 >= rank2: 
+
+                        extended.append((m1,new_s,new_e,count1))
+
+                    else:
+
+                        extended.append((m2,new_s, new_e, count2))
+
+                    i+=1
+
+            else:
+
+                if extended[-1][1] <=  SortedIntervals[i][1] and extended[-1][2] >= SortedIntervals[i][2]: #following interval is smaller than previous
+
+                    i+=1     
+                   
+
+                elif extended[-1][2] < SortedIntervals[i][1]: #following does not overlap and is not nested
+
+                    extended.append(SortedIntervals[i])
+                    i+=1
 
     return extended
 
@@ -122,21 +146,13 @@ def modifier(coordinates): #fast way to remove None and substitute with closest 
 
     
     coordinates=[el+1 if el is not None else el for el in coordinates] #get true coordinates
-    beginning = next(ind for ind, ele in enumerate(coordinates) if ele is not None)
     start=next(ele for ele in coordinates if ele is not None)
-
 
     for ind, ele in enumerate(coordinates):
         
         if ele is None:
 
-            if ind < beginning:
-
-                coordinates[ind] = start-1
-
-            else:
-
-                coordinates[ind] = start
+            coordinates[ind] = start
         
         else:
 
@@ -355,6 +371,6 @@ def corrector(reference, string, repetitions, coordinates, size, allowed): # cor
 
     s_corr_=sorted(corr_, key=itemgetter(1,2))
 
-    mod_int=nestover(s_corr_, string, coords)
+    mod_int=nestover(s_corr_, string, coords, treshold=.5)
 
     return [coords for coords in mod_int if len(coords[0])*coords[3] >= size]
