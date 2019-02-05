@@ -724,8 +724,6 @@ def Haplo2_Repeats(bamfile2, chromosome, start, end, coverage, kmer, times, maxm
 				else:
 
 					cor_coord_reps=corrector(ref_seq, seq, repetitions, coords, size, allowed) #probably an exception here is needed
-					TableWriter(chromosome, cor_coord_reps,out_)
-					repetitions_h2.extend(cor_coord_reps)
 
 					if isEmpty(cor_coord_reps): #size dimension exclude repetitions previously found
 
