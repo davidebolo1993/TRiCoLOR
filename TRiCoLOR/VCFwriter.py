@@ -4,7 +4,6 @@
 import pysam
 import datetime
 import os
-from bisect import bisect_left, bisect_right
 from collections import defaultdict
 from operator import itemgetter
 import subprocess
