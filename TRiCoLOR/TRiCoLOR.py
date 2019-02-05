@@ -200,7 +200,11 @@ def main():
 
 			if chromosomes_seen: #set is not empty
 
-				CleanResults(list(chromosomes_seen)[-1], args.output, os.path.abspath(args.bamfile1), os.path.abspath(args.bamfile2)) #clean results for previous chromosome
+				res=CleanResults(list(chromosomes_seen)[-1], args.output, os.path.abspath(args.bamfile1), os.path.abspath(args.bamfile2)) #clean results for previous chromosome
+
+				if type(res) == str:
+
+					logging.error(res)
 				
 			chrom=ref[chromosome]
 			ref_seq=chrom[:len(chrom)].seq
@@ -286,7 +290,11 @@ def main():
 
 
 
-	CleanResults(list(chromosomes_seen)[-1], args.output, os.path.abspath(args.bamfile1), os.path.abspath(args.bamfile2)) #clean results at the end of the process
+	res=CleanResults(list(chromosomes_seen)[-1], args.output, os.path.abspath(args.bamfile1), os.path.abspath(args.bamfile2)) #clean results at the end of the process
+
+	if type(res) == str:
+
+		logging.error(res)
 
 
 	#.vcf file post-processing
@@ -781,8 +789,8 @@ def CleanResults(chromosome, out, bam1, bam2):
 
 		except:
 
-			logging.exception('Something wrong in merging for haplotype 1, ' + chromosome)
-			sys.exit(1)
+			message= 'Something wrong in merging for haplotype 1, ' + chromosome
+			return message
 
 
 	if not os.listdir(out_[2]): #directory is empty
@@ -797,8 +805,8 @@ def CleanResults(chromosome, out, bam1, bam2):
 
 		except:
 
-			logging.exception('Something wrong in merging for haplotype 2, ' + chromosome)
-			sys.exit(1)
+			message= 'Something wrong in merging for haplotype 2, ' + chromosome
+			return message
 
 
 
