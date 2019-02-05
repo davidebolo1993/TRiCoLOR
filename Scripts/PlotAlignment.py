@@ -48,7 +48,6 @@ def main():
 
 
 
-
 class CustomFormat(HelpFormatter):
 
 	def _format_action_invocation(self, action):
@@ -149,21 +148,14 @@ def modifier(coordinates): #fast way to remove None and substitute with closest 
 
     
     coordinates=[el+1 if el is not None else el for el in coordinates] #get true coordinates
-    beginning = next(ind for ind, ele in enumerate(coordinates) if ele is not None)
     start=next(ele for ele in coordinates if ele is not None)
 
 
     for ind, ele in enumerate(coordinates):
         
         if ele is None:
-
-            if ind < beginning:
-
-                coordinates[ind] = start-1
-
-            else:
-
-                coordinates[ind] = start
+                
+            coordinates[ind] = start
         
         else:
 
