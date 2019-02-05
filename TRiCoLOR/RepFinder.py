@@ -30,6 +30,8 @@ def nestover(SortedIntervals, string, coords):
 
             string_s,string_e = bisect_left(coords,new_s), bisect_right(coords, new_e)
 
+            print(string[string_s:string_e], m1, m2)
+
             rank1,count1=rank(string[string_s:string_e], m1)
             rank2,count2=rank(string[string_s:string_e], m2)
 
@@ -231,11 +233,13 @@ def not_occur_probability(string, motif): #crude approach to calculate not occur
     number_of_locations=n-r+1
     not_occurence_p=(1-occurence_prob)**number_of_locations
 
+    return not_occurence_p
+
 
 def rank(string,motif): #useful for rank reps in overlapping and clipped regions
 
     count=string.count(motif)
-    reward=not_occur_probability(string,motif)
+    reward=not_occur_probability(string, motif)
 
     return (count*len(motif))/len(string) + reward,count #rank longer patterns before others
 
