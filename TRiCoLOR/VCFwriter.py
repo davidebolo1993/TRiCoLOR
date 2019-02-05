@@ -118,21 +118,13 @@ def modifier(coordinates): #fast way to remove None and substitute with closest 
 
 	
 	coordinates=[el+1 if el is not None else el for el in coordinates] #get true coordinates
-	beginning = next(ind for ind, ele in enumerate(coordinates) if ele is not None)
 	start=next(ele for ele in coordinates if ele is not None)
-
 
 	for ind, ele in enumerate(coordinates):
 		
 		if ele is None:
 
-			if ind < beginning:
-
-				coordinates[ind] = start-1
-
-			else:
-
-				coordinates[ind] = start
+			coordinates[ind] = start
 		
 		else:
 
@@ -223,8 +215,8 @@ def Get_Seq_Pos(bamfilein,chromosome, start,end): #as the consensus sequence is 
 
 def GetIndex(start, end, coordinates):
 
-	si=bisect_left(coordinates, start)
-	ei=bisect_right(coordinates, end)-1
+	si=[i for i,e in enumerate(coordinates) if e == start][0]
+	ei=[i for i,e in enumerate(coordinates) if e == end][-1]
 
 	return si,ei
 
@@ -665,6 +657,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
 						alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
+
 
 						if ref == alt1: #re-check if, for any reasons, the two sequences are the same. If so, skip to next.
 
