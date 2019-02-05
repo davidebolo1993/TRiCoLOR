@@ -6,6 +6,7 @@ import os
 import glob
 import pysam
 import math
+from bisect import bisect_left
 import subprocess
 
 
@@ -14,37 +15,43 @@ def Sub_None(list_of_coord):
 	return [-999999 if v is None else v for v in list_of_coord] #return a very small number so that it won't be take into account
 
 
-def Get_Start_Ind(list_of_coord,start):
+def Start_Index(list_of_coord,start):
 
 	if start in list_of_coord:
 
-		return [i for i,el  in enumerate(list_of_coord) if el == start]
-
-	elif any(i <= start and i != -999999 for i in Sub_None(list_of_coord)): #check if any coord is lower in read than start, else return None (sequence has not a start in interval)
-
-		fake_start=min(Sub_None(list_of_coord), key=lambda x:abs(x-start))
-		return [i for i,el  in enumerate(list_of_coord) if el == fake_start]
-
+		index=bisect_left(list_of_coord, start)
+		return index
 
 	else:
 
-		return
+		if any(x < start and x != -999999 for x in list_of_coord): #if there is something lower than start, take closest
+
+			alternative=min(list_of_coord, key=lambda x:abs(x-start))
+			index= bisect_left(list_of_coord, alternative)
+			return index
+
+		else:
+
+			return #no overlapping start
 
 
-def Get_End_Ind(list_of_coord,end):
+def End_Index(list_of_coord,end):
 
 	if end in list_of_coord:
 
-		return [i for i,el  in enumerate(list_of_coord) if el == end]
-
-	elif any(i >= end for i in Sub_None(list_of_coord)): #check if any coord is higher in read than end, else return None (sequence has not an end in interval)
-
-		fake_end = min(Sub_None(list_of_coord), key=lambda x:abs(x-end))
-		return [i for i,el  in enumerate(list_of_coord) if el == fake_end]
+		index=bisect_left(list_of_coord, end)
+		return index
 
 	else:
 
-		return
+		if any(x > end for x in list_of_coord): #check if any coord is higher in read than end, else return None (sequence has not an end in interval)
+
+			alternative = min(list_of_coord, key=lambda x:abs(x-end))
+			index=bisect_left(list_of_coord, alternative)
+
+		else:
+
+			return
 
 
 def Basic_Infos(pysam_AlignedSegment):
@@ -62,26 +69,28 @@ def Get_Coords(pysam_AlignedSegment,start,end):
 	a_coord=pysam_AlignedSegment.get_reference_positions(full_length=True) #list that indicates the reference position on which each base alignes (None included for insertion/soft clipped bases)
 	identifier=pysam_AlignedSegment.query_name
 	
+	a_coord=Sub_None(a_coord)	
 
-	ind_start=Get_Start_Ind(a_coord,start)
-	ind_end=Get_End_Ind(a_coord,end)
+	ind_start=Start_Index(a_coord,start)
+	ind_end=End_Index(a_coord,end)
 
 	if ind_start is None or ind_end is None:
 
 		return
 
-	elif ind_end[0] - ind_start[0] <= 10: #set a cut-off. If start and end indexes are approximatley the same, it means that wanted coordinates are not in the sequence (closest are taken)
+	elif ind_end - ind_start <= 10: #set a cut-off. If start and end indexes are approximatley the same, it means that wanted coordinates are not in the sequence (closest are taken)
 
 		return
 
 	else:
 		
-		return (identifier,ind_start[0],ind_end[0])
+		return (identifier,ind_start,ind_end)
 
 
 def split_equal(value, parts):
 
 	value = float(value)
+	
 	return int(value/parts), len([i*value/parts for i in range(1,parts+1)])
 
 
@@ -99,7 +108,24 @@ def SizeChecker(start, end, treshold=2): #adjust size of interval so that we don
 	
 
 
-def Bamfile_Analyzer(bamfilein,chromosome,start,end): #double sliding window function to retrive informations
+def check_coverage(pysam_AlignmentFile, chromosome, start, end, coverage):
+
+	counter = 0
+
+	for reads in pysam_AlignmentFile.fetch(chromosome, start, end):
+
+		counter +=1
+
+	if counter >= coverage:
+
+		return True
+
+	else:
+
+		return False
+
+
+def Bamfile_Analyzer(bamfilein,chromosome,start,end, coverage): #double sliding window function to retrive informations
 
 	bamfile=pysam.AlignmentFile(bamfilein,'rb')
 	start,end,size=SizeChecker(start,end) #split the period in sub-period of max length 2000 bp
@@ -116,19 +142,21 @@ def Bamfile_Analyzer(bamfilein,chromosome,start,end): #double sliding window fun
 		inf.append([])
 		coord.append([])
 
-		for read in bamfile.fetch(chromosome,start,pointer):
+		if check_coverage(bamfile, chromosome, start, pointer, coverage):
 
-			if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
+			for read in bamfile.fetch(chromosome,start,pointer):
 
-				inf[i].append(Basic_Infos(read))
+				if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
 
-				if end > start+size:
+					inf[i].append(Basic_Infos(read))
 
-					coord[i].append(Get_Coords(read,start,start+size))
+					if end > start+size:
 
-				else:
+						coord[i].append(Get_Coords(read,start,start+size))
 
-					coord[i].append(Get_Coords(read,start,end))
+					else:
+
+						coord[i].append(Get_Coords(read,start,end))
 
 		if end-start > size:
 
@@ -148,8 +176,7 @@ def Bamfile_Analyzer(bamfilein,chromosome,start,end): #double sliding window fun
 
 	bamfile.close()
 
-
-	return inf,coord[:len(coord)-1] #number of item in list is equal to number of iteration for inf, equal to the number of times size is included in end-start window for coord
+	return inf,coord[:len(coord)-1] 
 
 
 def Reorder(l1,l2): #reorder and filtering
