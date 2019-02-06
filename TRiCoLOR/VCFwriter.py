@@ -274,9 +274,10 @@ def Merger(sorted_int, refreps, h1reps, h2reps): #return non overlapping-ranges 
 
 			list_.append(reps)
 
+			recursive_merge(sorted_int, list_, i+l)
+
 			new_=(min(list_, key=itemgetter(1)), max(list_,key=itemgetter(2))) #get extended range
 			new_range=(new_[0][1], new_[-1][2])
-			recursive_merge(sorted_int, list_, i+l)
 
 			for el_ in list_:
 
@@ -316,7 +317,7 @@ def Merger(sorted_int, refreps, h1reps, h2reps): #return non overlapping-ranges 
 						hap2_dict_motif[new_range].append(el_[0])
 						hap2_dict_number[new_range].append(el_[3])
 
-			i+=len(list_)-l
+			i+=len(list_)
 			sorted_ranges.append(new_range)
 
 		else:
@@ -398,6 +399,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 	else:
 
 		sorted_intersection=sorted(intersection, key=itemgetter(1,2)) #sort repetitions by start and then by end
+
 		sorted_ranges,ref_dict_number,ref_dict_motif,hap1_dict_number,hap1_dict_motif,hap2_dict_number,hap2_dict_motif=Merger(sorted_intersection, repref, repsh1, repsh2)
 
 		for reps in sorted_ranges:
