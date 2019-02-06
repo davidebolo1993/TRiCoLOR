@@ -274,7 +274,7 @@ def Merger(sorted_int, refreps, h1reps, h2reps): #return non overlapping-ranges 
 
 			list_.append(reps)
 
-			recursive_merge(sorted_int, list_, i+l)
+			recursive_merge(sorted_int, list_, i+len(list_)-1)
 
 			new_=(min(list_, key=itemgetter(1)), max(list_,key=itemgetter(2))) #get extended range
 			new_range=(new_[0][1], new_[-1][2])
@@ -365,7 +365,7 @@ def Merger(sorted_int, refreps, h1reps, h2reps): #return non overlapping-ranges 
 
 				sorted_ranges.append(new_range)
 
-		i += 1
+			i += 1
 
 	return sorted_ranges,ref_dict_number,ref_dict_motif,hap1_dict_number,hap1_dict_motif,hap2_dict_number,hap2_dict_motif
 
