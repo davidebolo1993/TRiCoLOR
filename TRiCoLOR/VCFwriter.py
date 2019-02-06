@@ -4,6 +4,7 @@
 import pysam
 import datetime
 import os
+from bisect import bisect_left, bisect_right
 from collections import defaultdict
 from operator import itemgetter
 import subprocess
@@ -214,10 +215,24 @@ def Get_Seq_Pos(bamfilein,chromosome, start,end): #as the consensus sequence is 
 
 def GetIndex(start, end, coordinates):
 
-	si=[i for i,e in enumerate(coordinates) if e == start][0]
-	ei=[i for i,e in enumerate(coordinates) if e == end][-1]
+	si=bisect_left(coordinates, start)
+	ei=bisect_right(coordinates, end) -1
 
 	return si,ei
+
+
+def recursive_merge(sorted_int, list_, i):
+
+	new_=(min(list_, key=itemgetter(1)), max(list_,key=itemgetter(2))) #get extended range
+	new_range=(new_[0][1], new_[-1][2])
+
+	if i < len(sorted_int) -1:
+
+		if sorted_int[i+1][1] <= new_range[1]:
+
+			list_.append(sorted_int[i+1])
+			recursive_merge(sorted_int, list_, i+1)
+
 
 
 
@@ -243,21 +258,25 @@ def Merger(sorted_int, refreps, h1reps, h2reps): #return non overlapping-ranges 
 		to_int=sorted_int[i+1:]
 
 		list_=[]
+		l=0
 
 		for elem in to_int:
 
-			if elem[1] < reps[2]:
+			if elem[1] <= reps[2]:
 
-				i+=1
+				l+=1
 
 				list_.append(elem)
 
+
 		if len(list_) != 0:
+
 
 			list_.append(reps)
 
 			new_=(min(list_, key=itemgetter(1)), max(list_,key=itemgetter(2))) #get extended range
 			new_range=(new_[0][1], new_[-1][2])
+			recursive_merge(sorted_int, list_, i+l)
 
 			for el_ in list_:
 
@@ -297,6 +316,7 @@ def Merger(sorted_int, refreps, h1reps, h2reps): #return non overlapping-ranges 
 						hap2_dict_motif[new_range].append(el_[0])
 						hap2_dict_number[new_range].append(el_[3])
 
+			i+=len(list_)-l
 			sorted_ranges.append(new_range)
 
 		else:
