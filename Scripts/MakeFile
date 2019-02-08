@@ -1,0 +1,1 @@
+g++ -o Validate Validate.cpp -lboost_filesystem
