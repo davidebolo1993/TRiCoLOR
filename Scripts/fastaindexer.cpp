@@ -92,9 +92,6 @@ int main(int argc, char **argv) {
         std::cout << '[' << boost::posix_time::to_simple_string(timer) << "] " << "Done" << std::endl;
 
 
-        //std::cout << "AT occurs " << count(fm_index,"AT") << " times.\n";
-
-
         return 0;
 
     }
