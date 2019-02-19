@@ -156,7 +156,7 @@ int main(int argc, char **argv) {
 
 
         timer = boost::posix_time::second_clock::local_time();
-        std::cout << '[' << boost::posix_time::to_simple_string(timer) << "] " << "Starting FM-indexing ..." << std::endl;
+        std::cout << '[' << boost::posix_time::to_simple_string(timer) << "] " << "FM-indexing ..." << std::endl;
         construct(fm_index,modreference.string(), 1); // construct from file, avoid problems with memory ?
         store_to_file(fm_index,fm.string()); // so that it can be re-used
         timer = boost::posix_time::second_clock::local_time();
@@ -167,10 +167,12 @@ int main(int argc, char **argv) {
 
     }
 
+    input.close();
+
 
     else {
 
-        return 1; // if any error occur
+        return 1; // if any error occur, return non-0
 
     }
 
