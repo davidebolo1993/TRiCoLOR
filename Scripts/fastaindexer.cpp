@@ -1,8 +1,7 @@
 #include <iostream>
 #include <fstream>
-#include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
-#include <sdsl/suffix_arrays.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/iostreams/stream.hpp>
@@ -11,6 +10,7 @@
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 
+#include <sdsl/suffix_arrays.hpp>
 
 
 
@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
     // first, check if the input is gzipped
 
 
-        if (((uint8_t)fcode[0] == (uint8_t)0x1f) && ((uint8_t)fcode[1] == (uint8_t)0x8b)) { //input is gzipped
+        if (((uint8_t)fcode[0] == (uint8_t)0x1f) && ((uint8_t)fcode[1] == (uint8_t)0x8b)) { // check for magic numbers
 
             timer = boost::posix_time::second_clock::local_time();
             std::cout << '[' << boost::posix_time::to_simple_string(timer) << "] " << "Preparing for FM indexing, gzipped input ..." << std::endl;
@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
             inbuf.push(to_stream);
             //Convert streambuf to istream
             std::istream instream(&inbuf);
-            //Iterate lines
+            //Iterate over lines
             std::string line;
             std::ofstream output(modreference.string());
 
@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
 
                 }
 
-                else if (line[0] == '>') {
+                else if (line[0] == '>') { // exclude headers, but just from the second one
 
 
                     if (!first_header) {
@@ -100,8 +100,7 @@ int main(int argc, char **argv) {
         }
 
 
-        else {
-
+        else { // input is not gzipped, avoid using decompressors
 
             timer = boost::posix_time::second_clock::local_time();
             std::cout << '[' << boost::posix_time::to_simple_string(timer) << "] " << "Preparing for FM indexing, not gizzipped input ..." << std::endl;
@@ -120,7 +119,7 @@ int main(int argc, char **argv) {
 
                 }
 
-                else if (line[0] == '>') {
+                else if (line[0] == '>') {  // exclude headers, but just from the second one
 
 
                     if (!first_header) {
@@ -158,8 +157,8 @@ int main(int argc, char **argv) {
 
         timer = boost::posix_time::second_clock::local_time();
         std::cout << '[' << boost::posix_time::to_simple_string(timer) << "] " << "Starting FM-indexing ..." << std::endl;
-        construct(fm_index,modreference.string(), 1);
-        store_to_file(fm_index,fm.string());
+        construct(fm_index,modreference.string(), 1); // construct from file, avoid problems with memory ?
+        store_to_file(fm_index,fm.string()); // so that it can be re-used
         timer = boost::posix_time::second_clock::local_time();
         std::cout << '[' << boost::posix_time::to_simple_string(timer) << "] " << "Done" << std::endl;
 
@@ -171,7 +170,7 @@ int main(int argc, char **argv) {
 
     else {
 
-        return 1;
+        return 1; // if any error occur
 
     }
 
