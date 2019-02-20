@@ -50,6 +50,7 @@ all:   	$(TARGETS)
 
 .sdsl: $(SDSLSOURCES)
 	if [ -r src/sdsl-lite/install.sh ]; then cd src/sdsl-lite/ && ./install.sh ${PBASE}src/sdsl-lite && cd ../../ && touch .sdsl; fi
+	if [ ! -r src/sdsl-lite/install.sh ]; then cd src/ && git clone https://github.com/simongog/sdsl-lite.git && cd sdsl-lite/ && ./install.sh ${PBASE}src/sdsl-lite && cd ../../ && touch .sdsl; fi
 
 src/fmindexer: ${SUBMODULES} $(SOURCES)
 	$(CXX) $(CXXFLAGS) $@.cpp -o $@ $(LDFLAGS)
