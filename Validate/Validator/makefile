@@ -1,10 +1,12 @@
+#makefile
+
 DEBUG ?= 0
 STATIC ?= 0
 
 # Submodules
 PWD = $(shell pwd)
 EBROOTHTSLIB ?= ${PWD}/src/htslib/
-SDSL_ROOT ?= ${PWD}/src/sdsl-lite/
+SDSL_ROOT ?= ${PWD}/src/sdsl-lite/src/sdsl-lite
 
 # Install dir
 prefix = ${PWD}
@@ -13,8 +15,8 @@ bindir ?= $(exec_prefix)/bin
 
 
 CXX=g++
-CXXFLAGS += -std=c++11 -isystem ${EBROOTHTSLIB} -isystem ${SDSL_ROOT}/include -pedantic -W -Wall -fvisibility=hidden
-LDFLAGS +=  -I ~/include -L ~/lib -lsdsl -ldivsufsort -ldivsufsort64 -lboost_iostreams -lboost_filesystem -lboost_system -lboost_program_options -lboost_date_time -L${EBROOTHTSLIB} -L${EBROOTHTSLIB}/lib -lpthread
+CXXFLAGS += -std=c++11 -isystem ${EBROOTHTSLIB} -I ${SDSL_ROOT}/include -pedantic -W -Wall -fvisibility=hidden
+LDFLAGS += -L ${SDSL_ROOT}/lib -lsdsl -ldivsufsort -ldivsufsort64 -lboost_iostreams -lboost_filesystem -lboost_system -lboost_program_options -lboost_date_time -L${EBROOTHTSLIB} -L${EBROOTHTSLIB}/lib -lpthread
 
 
 
@@ -53,9 +55,11 @@ all:   	$(TARGETS)
 
 .sdsl: $(SDSLSOURCES)
 	if [ -r src/sdsl-lite/install.sh ]; then cd src/sdsl-lite/ && ./install.sh ${PBASE}src/sdsl-lite && cd ../../ && touch .sdsl; fi
+	if [ ! -r src/sdsl-lite/install.sh ]; then cd src/ && git clone https://github.com/simongog/sdsl-lite.git && cd sdsl-lite/ && ./install.sh ${PBASE}src/sdsl-lite && cd ../../ && touch .sdsl; fi
 
 .htslib: $(HTSLIBSOURCES)
 	if [ -r src/htslib/Makefile ]; then cd src/htslib && make && make lib-static && cd ../../ && touch .htslib; fi
+	if [ ! -r src/htslib/Makefile ];then cd src/ && git clone https://github.com/samtools/htslib.git && cd htslib && make && make lib-static && cd ../../ && touch .htslib; fi
 
 src/validator: ${SUBMODULES} $(SOURCES)
 	$(CXX) $(CXXFLAGS) $@.cpp -o $@ $(LDFLAGS)
