@@ -1,9 +1,11 @@
+#makefile
+
 DEBUG ?= 0
 STATIC ?= 0
 
 # Submodules
 PWD = $(shell pwd)
-SDSL_ROOT ?= ${PWD}/src/sdsl-lite/
+SDSL_ROOT ?= ${PWD}/src/sdsl-lite/src/sdsl-lite
 
 # Install dir
 prefix = ${PWD}
@@ -12,8 +14,8 @@ bindir ?= $(exec_prefix)/bin
 
 
 CXX=g++
-CXXFLAGS += -std=c++11 -isystem ${SDSL_ROOT}/include -pedantic -W -Wall -fvisibility=hidden
-LDFLAGS +=  -L ~/lib -I ~/include -lsdsl -ldivsufsort -ldivsufsort64 -lboost_filesystem -lboost_system -lboost_date_time -lboost_iostreams -lpthread
+CXXFLAGS += -std=c++11 -pedantic -I ${SDSL_ROOT}/include -W -Wall -fvisibility=hidden
+LDFLAGS +=  -L ${SDSL_ROOT}/lib  -lsdsl -ldivsufsort -ldivsufsort64 -lboost_filesystem -lboost_system -lboost_date_time -lboost_iostreams -lpthread
 
 
 
@@ -58,7 +60,7 @@ install: ${BUILT_PROGRAMS}
 	install -p ${BUILT_PROGRAMS} ${bindir}
 
 clean:
-	if [ -r src/sdsl-lite/install.sh ]; then cd src/sdsl-lite/ && ./uninstall.sh && cd ../../ && rm -rf src/sdslLite/; fi
+	if [ -r src/sdsl-lite/install.sh ]; then cd src/sdsl-lite/ && ./uninstall.sh && cd ../../ && rm -rf src/sds-lite/; fi
 	rm -f $(TARGETS) $(TARGETS:=.o) ${SUBMODULES}
 
 distclean: clean
