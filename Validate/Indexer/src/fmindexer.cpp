@@ -54,6 +54,7 @@ int main(int argc, char **argv) {
             std::ofstream output(modfast.string());
 
             bool first_seq=true;
+            bool read_next=true;
 
             while (std::getline(instream, line)) {
 
@@ -63,33 +64,43 @@ int main(int argc, char **argv) {
 
                 }
 
-                else if (toupper(line[0]) == 'A' || toupper(line[0]) == 'C' || toupper(line[0]) == 'T' || toupper(line[0]) == 'G' ||  line[0] == 'N'){ // this is the sequence, works with both .fasta and .fast
+                else if (line[0] == '>' || line[0] == '@'){ // this is the line immediately before the sequence
 
+                    read_next=true;
+                    continue;
 
-                    if (!first_seq) {
+                }
+
+                else { // line is not header and is not empty
+
+                    if (read_next==true) { // line before was the header
+
+                        if (!first_seq) { // if not first time that we see a sequence go to new line and get it.
+                          
+                            output << std::endl << boost::to_upper_copy(line);
+                            read_next=false; // do not read until the next line of a new header
+                            continue;
                     
-                        output << std::endl << boost::to_upper_copy(line);
-                        continue;
-                    
+                        }
+
+                        else {
+
+                            first_seq=false;
+                            read_next=false;
+                            output << boost::to_upper_copy(line); // do not go to new line if it is the first time we see the sequence
+                            continue;
+
+                        }                        
+
                     }
 
                     else {
 
-                        first_seq=false;
-                        output << boost::to_upper_copy(line);
                         continue;
-
                     }
 
-
                 }
            
-                else {
-               
-                    continue;
-           
-                }
-
             }
 
             output << std::endl;
@@ -109,8 +120,9 @@ int main(int argc, char **argv) {
             std::ofstream output(modfast.string());
 
             bool first_seq=true;
+            bool read_next=true;
 
-            while (std::getline(to_stream, line)) {
+            while (std::getline(to_stream, line)) { // same routine
 
                 if(line.empty()) { // exclude blank lines
 
@@ -118,35 +130,45 @@ int main(int argc, char **argv) {
 
                 }
 
-                else if (toupper(line[0]) == 'A' || toupper(line[0]) == 'C' || toupper(line[0]) == 'T' || toupper(line[0]) == 'G' ||  line[0] == 'N'){ // this is the sequence, works with both .fasta and .fast
+                else if (line[0] == '>' || line[0] == '@'){ // this is the line immediately before the sequence
 
+                    read_next=true;
+                    continue;
 
-                    if (!first_seq) {
+                }
+
+                else { // read only if header before
+
+                    if (read_next==true) {
+
+                        if (!first_seq) {
                     
-                        output << std::endl << boost::to_upper_copy(line);
-                        continue;
+                            output << std::endl << boost::to_upper_copy(line);
+                            read_next=false;
+                            continue;
                     
+                        }
+
+                        else {
+
+                            first_seq=false;
+                            read_next=false;
+                            output << boost::to_upper_copy(line);
+                            continue;
+
+                        }                        
+
                     }
 
                     else {
 
-                        first_seq=false;
-                        output << boost::to_upper_copy(line);
                         continue;
-
                     }
 
-
                 }
            
-                else {
-               
-                    continue;
-           
-                }
-
             }
-
+            
             output << std::endl;
             output.close();
             to_stream.close();
@@ -163,7 +185,7 @@ int main(int argc, char **argv) {
         timer = boost::posix_time::second_clock::local_time();
         std::cout << '[' << boost::posix_time::to_simple_string(timer) << "] " << "FM-index built and saved" << std::endl;
 
-        boost::filesystem::remove(modfast);
+        //boost::filesystem::remove(modfast);
 
 
         return 0;
