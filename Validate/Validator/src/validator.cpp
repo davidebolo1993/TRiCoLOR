@@ -52,8 +52,6 @@ char revcomp(char n) {
 
 
 
-
-
 void findReadTrim(bam1_t const* rec, int start, int end, int& leftPos, int& rightPos) { // Taken from Alfred
 
 	int rp = rec->core.pos; // reference pointer
@@ -146,7 +144,7 @@ void findReadTrim(bam1_t const* rec, int start, int end, int& leftPos, int& righ
 
 
 
-std::string sequencechecker(bam1_t* rec, int start, int end, csa_wt<>& f, std::string seq) {
+std::string sequencechecker(bam1_t* rec, int start, int end, csa_wt<>& fm_index_ref, std::string seq) {
 
 
 	bool found=false;
@@ -172,7 +170,7 @@ std::string sequencechecker(bam1_t* rec, int start, int end, csa_wt<>& f, std::s
 
 		}
 
-		app = count(f,sub);
+		app = count(fm_index_ref,sub);
 
 		if (app == 0) {
 
@@ -193,7 +191,7 @@ std::string sequencechecker(bam1_t* rec, int start, int end, csa_wt<>& f, std::s
 
 
 
-std::string sequencegetter(samFile* samfile1, hts_idx_t* pointer, int head, int start, int end, csa_wt<>& fmr) {
+std::string sequencegetter(samFile* samfile1, hts_idx_t* pointer, int head, int start, int end, csa_wt<>& fm_index_ref) {
 
 
 	hts_itr_t* iter = sam_itr_queryi(pointer, head, start, end);
@@ -228,7 +226,7 @@ std::string sequencegetter(samFile* samfile1, hts_idx_t* pointer, int head, int 
 			}
 		}
 
-		seqtr=sequencechecker(rec, start, end, fmr, sequence);
+		seqtr=sequencechecker(rec, start, end, fm_index_ref, sequence);
 				
 	}
 
@@ -323,138 +321,134 @@ int main(int argc, char* argv[]) {
 
 		std::cout << rec.chrName << "\t" << rec.svStart << "\t" << rec.svEnd << "\t" << rec.gen1 << "|" << rec.gen2 << std::endl;
 
-		//seq1 = sequencegetter(samfile1, idx1, refIndex1, rec.svStart, rec.svEnd, fm_index_ref);
-		//seq2 = sequencegetter(samfile2, idx2, refIndex2, rec.svStart, rec.svEnd, fm_index_ref);
 
-
-		if ((rec.gen1 == -1 || rec.gen1 == 0) &&  (rec.gen2 == -1 || rec.gen2 == 0)) { // skip entries for which there is no genome information. It is supposed NOT to happen.
-
-			continue;
-
-		}
-
-		else if (rec.gen1 == 1 && (rec.gen2 == -1 || rec.gen2 == 0)) { // only haplotype #1 contains informations to validate
-
+		if ((rec.gen1 == 1) && ((rec.gen2 == -1) || (rec.gen2 == 0))) {
 
 			//variant +=1;
 
+			//std::cout << "True" << std::endl;
 			seq1 = sequencegetter(samfile1, idx1, refIndex1, rec.svStart, rec.svEnd, fm_index_ref);
 
-			if (seq1.empty()) { // couldn't find a sequnce that was not in the reference;
+
+			if (seq1.empty()) {
 
 				continue;
-
 			}
 
 			else {
 
 				std::cout << seq1 << std::endl;
 
-				//if count(seq1,fm_index_ill) != 0 {
+				//if (count(seq1,fm_index_ill) != 0) {
 
-					//valid +=1;
+					//valid +=1
 
 				//}
 
 				//else {
 
 					//string not confirmed in illumina, do not increment confirmed
-
 				//}
 
-			}
+			} 
 		}
 
-
-		else if ((rec.gen1 == -1 || rec.gen1 == 0) && rec.gen2 == 2) { // only haplotype #2 contains informations to validate
+		else if (((rec.gen1 == -1) || (rec.gen1 == 0)) && ((rec.gen2 == 1) ||(rec.gen2 == 2))) {
 
 
 			//variant +=1;
 
 			seq2 = sequencegetter(samfile2, idx2, refIndex2, rec.svStart, rec.svEnd, fm_index_ref);
 
-			if (seq2.empty()) { // couldn't find a sequnce that was not in the reference;
+
+			if (seq2.empty()) {
 
 				continue;
-
 			}
 
 			else {
 
 				std::cout << seq2 << std::endl;
 
-				//if count(seq2,fm_index_ill) != 0 {
+				//if (count(seq2,fm_index_ill) != 0) {
 
-					//valid +=1;
+					//valid +=1
 
 				//}
 
 				//else {
 
 					//string not confirmed in illumina, do not increment confirmed
-
 				//}
-			}
+
+			} 
 
 		}
 
 
-		else { // both haplotypes contain informations to validate
+		else if ((rec.gen1 == 1) && (rec.gen2 == 2)) {
 
 
 			//variant +=2;
 
+
 			seq1 = sequencegetter(samfile1, idx1, refIndex1, rec.svStart, rec.svEnd, fm_index_ref);
 
-			if (seq1.empty()) { // couldn't find a sequnce that was not in the reference;
+
+			if (seq1.empty()) {
 
 				continue;
-
 			}
 
 			else {
 
 				std::cout << seq1 << std::endl;
 
-				//if count(seq1,fm_index_ill) != 0 {
+				//if (count(seq1,fm_index_ill) != 0) {
 
-					//valid +=1;
+					//valid +=1
 
 				//}
 
 				//else {
 
 					//string not confirmed in illumina, do not increment confirmed
-
 				//}
 
-			}
+			} 
+
+
 
 			seq2 = sequencegetter(samfile2, idx2, refIndex2, rec.svStart, rec.svEnd, fm_index_ref);
 
 
-			if (seq2.empty()) { // couldn't find a sequnce that was not in the reference;
+			if (seq2.empty()) {
 
 				continue;
-
 			}
 
 			else {
 
 				std::cout << seq2 << std::endl;
 
-				//if count(seq2,fm_index_ill) != 0 {
+				//if (count(seq2,fm_index_ill) != 0) {
 
-					//valid +=1;
+					//valid +=1
 
 				//}
 
 				//else {
 
 					//string not confirmed in illumina, do not increment confirmed
-
 				//}
-			}
+
+			} 
+
+		}
+
+		else {
+
+			continue;
 
 		}
 
@@ -471,3 +465,5 @@ int main(int argc, char* argv[]) {
 	return 0;
 
 } 
+
+
