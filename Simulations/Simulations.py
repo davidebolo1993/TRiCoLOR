@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 import subprocess
 import random
 import glob
@@ -134,7 +132,7 @@ def Simulate(bed, reference, number_of_simulations, sim_type, model_qc, accuracy
 
 			try:
 
-				subprocess.check_call(['python','/home/bolognin/TRiCoLOR_py/TRiCoLOR.py','-g', reference, '-b','Sim.bed', '-b1', 'Simh1.srt.bam', '-b2', 'Simh2.srt.bam', '-m', str(kmer), '-t','4', '-o',os.path.abspath(out + '/Contractions/Sim'+str(i)+'/Res'+str(i)), '-mmi', new_mmi])
+				subprocess.check_call(['python','/home/bolognin/TRiCoLOR_py/TRiCoLOR.py','-g', reference, '-bed','Sim.bed', '-bam1', 'Simh1.srt.bam', '-bam2', 'Simh2.srt.bam', '-m', str(kmer), '-t','4', '-O',os.path.abspath(out + '/Contractions/Sim'+str(i)+'/Res'+str(i)), '-mmi', new_mmi])
 			
 			except:
 
@@ -146,8 +144,8 @@ def Simulate(bed, reference, number_of_simulations, sim_type, model_qc, accuracy
 			reference_repetitions=int(header1.split('_',4)[3].split(':')[1])
 			repetition_type=header1.split('_',3)[2].split(':')[1]
 
-			Hap1_Tab=pd.read_csv(os.path.abspath(out +'/Contractions/Sim'+str(i)+'/Res'+str(i)+'/haplotype1/RepetitionsTable.tsv'), sep='\t')
-			Hap2_Tab=pd.read_csv(os.path.abspath(out +'/Contractions/Sim'+str(i)+'/Res'+str(i)+'/haplotype2/RepetitionsTable.tsv'), sep='\t')
+			Hap1_Tab=pd.read_csv(os.path.abspath(out +'/Contractions/Sim'+str(i)+'/Res'+str(i)+'/haplotype1/' + chromosome + '.repetitions.bed'), sep='\t')
+			Hap2_Tab=pd.read_csv(os.path.abspath(out +'/Contractions/Sim'+str(i)+'/Res'+str(i)+'/haplotype2/' + chromosome + '.repetitions.bed'), sep='\t')
 
 			Hap1=[]
 			Hap2=[]
@@ -158,14 +156,14 @@ def Simulate(bed, reference, number_of_simulations, sim_type, model_qc, accuracy
 
 				if abs(Hap1_Tab['Start'][l] - true_point) <= acceptable or abs (Hap1_Tab['End'][l] -  (true_point+len(repetition_type)*reference_repetitions)) <= acceptable:
 
-					Hap1.append((Hap1_Tab['Repetition Motif'][l],Hap1_Tab['Repetitions Number'][l]))
+					Hap1.append((Hap1_Tab['Repeated Motif'][l],Hap1_Tab['Repetitions Number'][l]))
 
 
 			for l in range(len(Hap2_Tab['Start'])):
 
 				if abs(Hap2_Tab['Start'][l] - true_point) <= acceptable or abs (Hap2_Tab['End'][l] -  (true_point+len(repetition_type)*reference_repetitions)) <= acceptable:
 
-					Hap2.append((Hap2_Tab['Repetition Motif'][l],Hap2_Tab['Repetitions Number'][l]))
+					Hap2.append((Hap2_Tab['Repeated Motif'][l],Hap2_Tab['Repetitions Number'][l]))
 
 
 			#sum the occurences, even if is only one: something left from the first time we simulate looking for general expansions and contractions
@@ -286,7 +284,7 @@ def Simulate(bed, reference, number_of_simulations, sim_type, model_qc, accuracy
 
 			try:
 
-				subprocess.check_call(['python','/home/bolognin/TRiCoLOR_py/TRiCoLOR.py','-g', reference, '-b','Sim.bed', '-b1', 'Simh1.srt.bam', '-b2', 'Simh2.srt.bam', '-m', str(kmer), '-t','4', '-o',os.path.abspath(out + '/Expansions/Sim'+str(i)+'/Res'+str(i)), '-mmi', new_mmi])
+				subprocess.check_call(['python','/home/bolognin/TRiCoLOR_py/TRiCoLOR.py','-g', reference, '-bed','Sim.bed', '-bam1', 'Simh1.srt.bam', '-bam2', 'Simh2.srt.bam', '-m', str(kmer), '-t','4', '-O',os.path.abspath(out + '/Contractions/Sim'+str(i)+'/Res'+str(i)), '-mmi', os.path.abspath(os.path.dirname(reference))])
 			
 			except:
 
@@ -298,8 +296,8 @@ def Simulate(bed, reference, number_of_simulations, sim_type, model_qc, accuracy
 			reference_repetitions=int(header1.split('_',4)[3].split(':')[1])
 			repetition_type=header1.split('_',3)[2].split(':')[1]
 
-			Hap1_Tab=pd.read_csv(os.path.abspath(out +'/Expansions/Sim'+str(i)+'/Res'+str(i)+'/haplotype1/RepetitionsTable.tsv'), sep='\t')
-			Hap2_Tab=pd.read_csv(os.path.abspath(out +'/Expansions/Sim'+str(i)+'/Res'+str(i)+'/haplotype2/RepetitionsTable.tsv'), sep='\t')
+			Hap1_Tab=pd.read_csv(os.path.abspath(out +'/Expansions/Sim'+str(i)+'/Res'+str(i)+'/haplotype1/' + chromosome + '.repetitions.bed'), sep='\t')
+			Hap2_Tab=pd.read_csv(os.path.abspath(out +'/Expansions/Sim'+str(i)+'/Res'+str(i)+'/haplotype2/' + + chromosome + '.repetitions.bed'), sep='\t')
 
 			Hap1=[]
 			Hap2=[]
@@ -310,14 +308,14 @@ def Simulate(bed, reference, number_of_simulations, sim_type, model_qc, accuracy
 
 				if abs(Hap1_Tab['Start'][l] - true_point) <= acceptable or abs (Hap1_Tab['End'][l] -  (true_point+len(repetition_type)*reference_repetitions)) <= acceptable:
 
-					Hap1.append((Hap1_Tab['Repetition Motif'][l],Hap1_Tab['Repetitions Number'][l]))
+					Hap1.append((Hap1_Tab['Repeated Motif'][l],Hap1_Tab['Repetitions Number'][l]))
 
 
 			for l in range(len(Hap2_Tab['Start'])):
 
 				if abs(Hap2_Tab['Start'][l] - true_point) <= acceptable or abs (Hap2_Tab['End'][l] -  (true_point+len(repetition_type)*reference_repetitions)) <= acceptable:
 
-					Hap2.append((Hap2_Tab['Repetition Motif'][l],Hap2_Tab['Repetitions Number'][l]))
+					Hap2.append((Hap2_Tab['Repeated Motif'][l],Hap2_Tab['Repetitions Number'][l]))
 
 
 			#sum the occurences, even if is only one: something left from the first time we simulate looking for general expansions and contractions
@@ -353,20 +351,18 @@ def Concat_Tables(list_of_paths):
 	return By_Row
 
 
-def Shifted(word): #check if word is shifted by one
+def Shifted(word):
 
-	if len(word) == 2:
+    c=[]
 
-		return word[1:] + word[0]
+    b = len(word)
 
-	else:
+    for i in range (b):
 
-		possibilities=[]
+        c.append(word[i:]+word[:i])
 
-		possibilities.append(word[1:] + word[0])
-		possibilities.append(word[2] + word[:-1])
-
-		return possibilities
+    return c
+        
 
 
 def Precision_Recall_and_Exact_Core(number_of_simulations, out):
@@ -867,17 +863,20 @@ def ConstructPie(title=None, points=None):
 
 
 
-#Example
-#Executing codes...
 
+
+
+bed='/home/bolognin/DataForSim/KnownRepetitions.bed'
+reference='/home/bolognin/TRiCoLOR/GenomeDir/GRCh38Decoy.fa'
+number_of_simulations=100
+model_qc='/home/bolognin/DataForSim/model_qc_clr.bed'
+accuracy=0.9
+out='/home/bolognin/SimAccuracy09New'
 
 for simtype in ['contraction', 'expansion']:
 
-	Simulate(bed, reference, number_of_simulations, sim_type=simtype, model_qc, accuracy=0.9, out)
+	Simulate(bed, reference, number_of_simulations,simtype, model_qc, accuracy, out)
 
-	#or run in parallel in 2 different ipython idles
-	#Simulate('/home/bolognin/DataForSim/KnownRepetitions.bed', '/home/bolognin/TRiCoLOR/GenomeDir/GRCh38Decoy.fa', 100, 'contraction', '/home/bolognin/DataForSim/model_qc_clr', 0.9, '/home/bolognin/Simulations_Accuracy_09')
-	#Simulate('/home/bolognin/DataForSim/KnownRepetitions.bed', '/home/bolognin/TRiCoLOR/GenomeDir/GRCh38Decoy.fa', 100, 'expansion', '/home/bolognin/DataForSim/model_qc_clr', 0.9, '/home/bolognin/Simulations_Accuracy_09')
 
 pr,core=Precision_Recall_and_Exact_Core(number_of_simulations, out)
 colors=[['#8FC3C9','#309FE7','#2B35AB','#26263B'],['#D38D8D','#EB7F7F','#DC4444', '#E21515']]
