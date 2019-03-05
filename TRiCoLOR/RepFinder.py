@@ -12,33 +12,42 @@ from operator import itemgetter
 
 
 
-def nestover(SortedIntervals, string, coords, treshold):
+def nestover(SortedIntervals, string, coords, allowed, treshold):
 
     extended=[]
-    extended.append(SortedIntervals[0])
+
+    s_,e_=SortedIntervals[0][1], SortedIntervals[0][2]
+    string_s,string_e = bisect_left(coords,s_), bisect_right(coords, e_)
+    extended.append((SortedIntervals[0][0], s_, e_, string[string_s:string_e].count(SortedIntervals[0][0])))
 
     i=1
 
     while i < len(SortedIntervals):
 
         if extended==[]: # if something has been removed
+
+            s_,e_=SortedIntervals[i][1], SortedIntervals[i][2]
+            string_s,string_e = bisect_left(coords,s_), bisect_right(coords, e_)
+            extended.append((SortedIntervals[i][0], s_, e_, string[string_s:string_e].count(SortedIntervals[i][0])))
+
+            i+=1
         
-            extended.append(SortedIntervals[i])
 
         else:
 
             if extended[-1][2] >= SortedIntervals[i][1]: #the two intervals overlap
 
-                m1,n1=extended[-1][0], extended[-1][3]
-                m2,n2=SortedIntervals[i][0], SortedIntervals[i][3]
+                m1=extended[-1][0]
+                m2=SortedIntervals[i][0]
 
                 new_s,new_e=min(extended[-1][1],SortedIntervals[i][1]), max(extended[-1][2],SortedIntervals[i][2])
 
                 string_s,string_e = bisect_left(coords,new_s), bisect_right(coords, new_e)
 
+                st_=string[string_s:string_e]
 
-                rank1,count1=rank(string[string_s:string_e], m1)
-                rank2,count2=rank(string[string_s:string_e], m2)
+                rank1, count1=rank(st_, m1)
+                rank2, count2=rank(st_, m2)
 
                 if rank1 < treshold and rank2 < treshold:
 
@@ -48,7 +57,7 @@ def nestover(SortedIntervals, string, coords, treshold):
                 elif rank1 < treshold and rank2 >= treshold:
 
                     extended.remove(extended[-1])
-                    extended.append(SortedIntervals[i])
+                    extended.append((m2,new_s, new_e, count2))
                     i+=1
 
                 elif rank1 >= treshold and rank2 < treshold:
@@ -78,7 +87,10 @@ def nestover(SortedIntervals, string, coords, treshold):
 
                 elif extended[-1][2] < SortedIntervals[i][1]: #following does not overlap and is not nested
 
-                    extended.append(SortedIntervals[i])
+                    s_,e_=SortedIntervals[i][1], SortedIntervals[i][2]
+                    string_s,string_e = bisect_left(coords,s_), bisect_right(coords, e_)
+                    extended.append((SortedIntervals[i][0], s_, e_, string[string_s:string_e].count(SortedIntervals[i][0])))
+
                     i+=1
 
     return extended
@@ -164,7 +176,7 @@ def modifier(coordinates): #fast way to remove None and substitute with closest 
 
 def Get_Alignment_Coordinates(coord_list,repetitions):
 
-    rep_coord_list=[(a,b,c,d) for a,b,c,d in zip([repetition[0] for repetition in repetitions],[coord_list[repetition[1]] for repetition in repetitions],[coord_list[repetition[2]] for repetition in repetitions],[repetition[3] for repetition in repetitions])]
+    rep_coord_list=[(a,b,c) for a,b,c in zip([repetition[0] for repetition in repetitions],[coord_list[repetition[1]] for repetition in repetitions],[coord_list[repetition[2]] for repetition in repetitions])]
 
     return rep_coord_list
 
@@ -206,32 +218,35 @@ def check_edit(string1, string2, allowed): #cython-based way to check for edit d
 
 
 
-def d_neighbors(pattern, d, DNAchars='ATCG'):
+#def d_neighbors(pattern, d, DNAchars='ATCG'):
 
-    if d > len(pattern):
+    #if d > len(pattern):
 
-        d == len(pattern)
+        #d == len(pattern)
 
-    if d == 0:
+    #if d == 0:
 
-        return [pattern]
+        #return [pattern]
 
-    r2 = d_neighbors(pattern[1:], d-1)
-    r = [c + r3 for r3 in r2 for c in DNAchars if c != pattern[0]]
+    #r2 = d_neighbors(pattern[1:], d-1)
+    #r = [c + r3 for r3 in r2 for c in DNAchars if c != pattern[0]]
 
-    if (d < len(pattern)):
+    #if (d < len(pattern)):
 
-        r2 = d_neighbors(pattern[1:], d)
-        r += [pattern[0] + r3 for r3 in r2]
+        #r2 = d_neighbors(pattern[1:], d)
+        #r += [pattern[0] + r3 for r3 in r2]
 
-    return list(set(sum([r for d2 in range(d + 1)], [])))
+    #return list(set(sum([r for d2 in range(d + 1)], [])))
 
 
-def del_neighbors(pattern,d):
+#def del_neighbors(pattern,d):
 
-    n=len(pattern)-d
+    #n=len(pattern)-d
 
-    return list(set(''.join(x) for x in list(itertools.combinations(pattern,n))))
+    #return list(set(''.join(x) for x in list(itertools.combinations(pattern,n))))
+
+
+#def insertion_neighbors(pattern,d,DNAchars='ATCG')
 
 
 def check_ref(string1, string2): #check if ref_string and test_string are different
@@ -255,48 +270,90 @@ def rank(string,motif): #useful for rank reps in overlapping and clipped regions
     count=string.count(motif)
     reward=not_occur_probability(string, motif)
 
-    return (count*len(motif))/len(string) + reward,count #rank longer patterns before others
+    return (count*len(motif))/len(string) + reward, count #rank longer patterns before others
 
 
 
-def repsnum(reps,interval,sequence,testcase): #get the number of repetitions. Pass testcase from outside, faster than call it every time.
+#def lcs(motif, string): #longest common subsequence
 
-     
-    substr=sequence[interval[0]:interval[-1]+len(reps)]
-    all_starts=[]
 
-    for match in re.finditer(reps,substr):
+    #if not motif or not string:
 
-        all_starts.append(match.start())
+        #return ""
 
-    i=0 # position in string
-    l=0 # position in occurences list
-    count=0 #number of putative repetitions
+    #x, xs, y, ys = motif[0], motif[1:], string[0], string[1:]
 
-    while i <= all_starts[-1]:
+    #if x == y:
 
-        if i in all_starts: #is a perfect repetition
+        #return x + lcs(xs, ys)
 
-            i+= len(reps)
-            count+=1
-            l+=1
+    #else:
 
-        else:
+        #return max(lcs(motif, ys), lcs(xs, string), key=len)
 
-            dim=all_starts[l]-i
 
-            if substr[i:i+dim] in testcase:
 
-                i+= dim
-                count+=1 #what we see is a deletion of an existing repetition, so we will count this as a repetition
+
+#def counter(string,motif, allowed):
+
+    #all_starts=[]
+
+    #for match in re.finditer(motif,string):
+    
+        #all_starts.append(match.start()) 
+
+    #i=0 # position in string
+    #l=0 # position in occurences list
+    #count=0 #number of putative repetitions
+
+    #while i <= all_starts[-1]:
+
+        #if i in all_starts: #is a perfect repetition
+
+            #i+= len(motif)
+            #count+=1
+            #l+=1
+
+        #else:
+
+            #dim=all_starts[l]-i
+
+            #if len(motif)==1:
+
+                #i+= dim
+
+            #else:
+
+                #s_=string[i:i+dim]
+
+                #if len(motif) >= len(s_): #string between has edit distance n from motif, and is a d_neighbor or del_neighbor
+
+                    #if len(lcs(motif,s_)) >= len(motif)-allowed:
+
+                        #i+= dim
+                        #count+=1 #what we see is a deletion of an existing repetition, so we will count this as a repetition
           
-            else:
+                    #else:
 
-                i+= dim
-                count+=0 #don't consider this a repetition
+                        #i+= dim
+
+                #else:
+
+                    #chrs=list(motif)
+
+                    #if all (x in s_ for x in chrs) and len(lcs(motif,s_)) >= len(motif)-allowed:
 
 
-    return count
+                        #i+= dim
+                        #count+=1 #what we see is a deletion of an existing repetition, so we will count this as a repetition
+          
+                    #else:
+
+                        #i+= dim
+
+
+    #return count
+
 
 
 
@@ -355,11 +412,11 @@ def corrector(reference, string, repetitions, coordinates, size, allowed): # cor
 
         if len(result) != 0:
 
-            testcase=[]
-            testcase.extend(d_neighbors(reps,allowed)) #extend testcase
-            testcase.extend(del_neighbors(reps,allowed)) #extend testcase
+            #testcase=[]
+            #testcase.extend(d_neighbors(reps,allowed)) #extend testcase
+            #testcase.extend(del_neighbors(reps,allowed)) #extend testcase
 
-            corr_.extend(Get_Alignment_Coordinates(coords,[(reps, interv[0], interv[-1]+(len(reps)-1), repsnum(reps,interv,string,testcase)) for interv in result.values()]))
+            corr_.extend(Get_Alignment_Coordinates(coords,[(reps, interv[0], interv[-1]+(len(reps)-1)) for interv in result.values()]))
 
         else:
 
@@ -371,6 +428,10 @@ def corrector(reference, string, repetitions, coordinates, size, allowed): # cor
 
     s_corr_=sorted(corr_, key=itemgetter(1,2))
 
-    mod_int=nestover(s_corr_, string, coords, treshold=.5)
+    print(s_corr_)
+
+    mod_int=nestover(s_corr_, string, coords, allowed, treshold=.5)
+
+    print(mod_int)
 
     return [coords for coords in mod_int if len(coords[0])*coords[3] >= size]
