@@ -297,7 +297,7 @@ def Simulate(bed, reference, number_of_simulations, sim_type, model_qc, accuracy
 			repetition_type=header1.split('_',3)[2].split(':')[1]
 
 			Hap1_Tab=pd.read_csv(os.path.abspath(out +'/Expansions/Sim'+str(i)+'/Res'+str(i)+'/haplotype1/' + chromosome + '.repetitions.bed'), sep='\t')
-			Hap2_Tab=pd.read_csv(os.path.abspath(out +'/Expansions/Sim'+str(i)+'/Res'+str(i)+'/haplotype2/' + + chromosome + '.repetitions.bed'), sep='\t')
+			Hap2_Tab=pd.read_csv(os.path.abspath(out +'/Expansions/Sim'+str(i)+'/Res'+str(i)+'/haplotype2/' + chromosome + '.repetitions.bed'), sep='\t')
 
 			Hap1=[]
 			Hap2=[]
