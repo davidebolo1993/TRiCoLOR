@@ -21,6 +21,14 @@ int main(int argc, char **argv) {
 
     boost::filesystem::path fast(argv[1]);
     boost::filesystem::path fm(argv[2]);
+    std::string type(argv[3]);
+
+    if ((type != "fasta") && (type != "fastq")) {
+
+        std::cout << "Accepted type inputs are fasta and fastq" << std::endl;
+        return 1;
+    }
+
 
     boost::filesystem::path modfast(fast.string() + ".tmp");
 
@@ -34,7 +42,7 @@ int main(int argc, char **argv) {
         input.seekg(0);
         input.read(fcode, 4);
 
-    // first, check if the input is gzipped
+        // first, check if the input is gzipped
 
 
         if (((uint8_t)fcode[0] == (uint8_t)0x1f) && ((uint8_t)fcode[1] == (uint8_t)0x8b)) { // check for magic numbers (gzipped input??)
@@ -52,41 +60,38 @@ int main(int argc, char **argv) {
             //Iterate over lines
             std::string line;
             std::ofstream output(modfast.string());
-
+            
             bool first_seq=true;
-            bool read_next=true;
 
-            while (std::getline(instream, line)) {
+            if (type == "fasta") { // input is fasta
 
-                if(line.empty()) { // exclude blank lines
+                while (std::getline(instream, line)) {
 
-                    continue;
+                    if(line.empty()) { // exclude blank lines
 
-                }
+                        continue;
 
-                else if (line[0] == '>' || line[0] == '@'){ // this is the line immediately before the sequence
+                    }
 
-                    read_next=true;
-                    continue;
+                    else if (line[0] == '>') { // this is the line immediately before the sequence
 
-                }
+                        continue;
 
-                else { // line is not header and is not empty
+                    }
 
-                    if (read_next==true) { // line before was the header
+                    else { // line is not header and is not empty
+
 
                         if (!first_seq) { // if not first time that we see a sequence go to new line and get it.
-                          
+                              
                             output << std::endl << boost::to_upper_copy(line);
-                            read_next=false; // do not read until the next line of a new header
                             continue;
-                    
+                        
                         }
 
                         else {
 
                             first_seq=false;
-                            read_next=false;
                             output << boost::to_upper_copy(line); // do not go to new line if it is the first time we see the sequence
                             continue;
 
@@ -94,14 +99,61 @@ int main(int argc, char **argv) {
 
                     }
 
-                    else {
+                }
+               
+            }
+
+
+            else { // input is .fastq
+
+                bool read_next=false;
+
+                while (std::getline(instream, line)) { // same routine
+
+
+                    if(line.empty()) { // exclude blank lines
 
                         continue;
+
                     }
 
+                    else if (line[0] == '@'){ // this is the line immediately before the sequence
+
+                        //std::cout << line << std::endl;
+                        read_next=true;
+                        continue;
+
+                    }
+
+                    else { // read only if header before
+
+                        if (read_next==true) {
+
+                            if (!first_seq) {
+                        
+                                output << std::endl << boost::to_upper_copy(line);
+                                read_next=false;
+                                continue;
+                        
+                            }
+
+                            else {
+
+                                first_seq=false;
+                                read_next=false;
+                                output << boost::to_upper_copy(line);
+                                continue;
+
+                            }                        
+
+                        }
+
+                    }
+               
                 }
-           
+
             }
+
 
             output << std::endl;
             output.close();
@@ -120,53 +172,97 @@ int main(int argc, char **argv) {
             std::ofstream output(modfast.string());
 
             bool first_seq=true;
-            bool read_next=true;
 
-            while (std::getline(to_stream, line)) { // same routine
 
-                if(line.empty()) { // exclude blank lines
+            if (type == "fasta") { // input is fasta
 
-                    continue;
+                while (std::getline(to_stream, line)) {
 
-                }
+                    if(line.empty()) { // exclude blank lines
 
-                else if (line[0] == '>' || line[0] == '@'){ // this is the line immediately before the sequence
+                        continue;
 
-                    read_next=true;
-                    continue;
+                    }
 
-                }
+                    else if (line[0] == '>') { // this is the line immediately before the sequence
 
-                else { // read only if header before
+                        continue;
 
-                    if (read_next==true) {
+                    }
 
-                        if (!first_seq) {
-                    
+                    else { // line is not header and is not empty
+
+
+                        if (!first_seq) { // if not first time that we see a sequence go to new line and get it.
+                              
                             output << std::endl << boost::to_upper_copy(line);
-                            read_next=false;
                             continue;
-                    
+                        
                         }
 
                         else {
 
                             first_seq=false;
-                            read_next=false;
-                            output << boost::to_upper_copy(line);
+                            output << boost::to_upper_copy(line); // do not go to new line if it is the first time we see the sequence
                             continue;
 
                         }                        
 
                     }
 
-                    else {
+                }
+               
+            }
+
+
+            else { // input is .fastq
+
+                bool read_next=false;
+
+                while (std::getline(to_stream, line)) { // same routine
+
+
+                    if(line.empty()) { // exclude blank lines
 
                         continue;
+
                     }
 
+                    else if (line[0] == '@'){ // this is the line immediately before the sequence
+
+                        //std::cout << line << std::endl;
+                        read_next=true;
+                        continue;
+
+                    }
+
+                    else { // read only if header before
+
+                        if (read_next==true) {
+
+                            if (!first_seq) {
+                        
+                                output << std::endl << boost::to_upper_copy(line);
+                                read_next=false;
+                                continue;
+                        
+                            }
+
+                            else {
+
+                                first_seq=false;
+                                read_next=false;
+                                output << boost::to_upper_copy(line);
+                                continue;
+
+                            }                        
+
+                        }
+
+                    }
+               
                 }
-           
+
             }
             
             output << std::endl;
