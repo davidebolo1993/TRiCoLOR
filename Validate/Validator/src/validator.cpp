@@ -180,8 +180,8 @@ std::string sequencechecker(bam1_t* rec, int start, int end, csa_wt<>& fm_index_
 
 		else {
 
-			start-=2; // move by 2 bases left
-			end+=2; // move by 2 bases right
+			start-=1; // move by 1 bases left. Move just a little, in order to avoid to increase the probability of an error
+			end+=1; // move by 1 bases right. Move just a little, in order to avoid to increase the probability of an error
 		}
 	}
 
@@ -239,6 +239,66 @@ std::string sequencegetter(samFile* samfile1, hts_idx_t* pointer, int head, int 
  
 
 
+void get_all_fmi(const boost::filesystem::path& root, const std::string& ext, std::vector<boost::filesystem::path>& ret) {
+
+
+    if(!boost::filesystem::exists(root) || !boost::filesystem::is_directory(root)) return;
+
+    boost::filesystem::recursive_directory_iterator it(root);
+    boost::filesystem::recursive_directory_iterator endit;
+
+    while(it != endit) {
+
+        if(boost::filesystem::is_regular_file(*it) && it->path().extension() == ext) ret.push_back(it->path());
+        ++it;
+
+    }
+
+}
+
+
+
+bool counter(std::string& seq, int& dim, std::vector<csa_wt<>>& fm_index_ill) {
+
+	int i=0;
+
+	bool found=false;
+	bool findable=true;
+
+
+	while (!found && findable) {
+
+		if (i == dim) {
+
+			findable=false;
+
+		}
+
+		else {
+
+			if (count(fm_index_ill[i], seq) >= 1) {
+
+				found=true;
+
+			}
+
+
+			else {
+
+				i+=1;
+
+			}
+
+		}
+
+	}
+
+	return found;
+
+}
+
+
+
 int main(int argc, char* argv[]) {
 
 
@@ -248,20 +308,53 @@ int main(int argc, char* argv[]) {
 	boost::filesystem::path bcfin(argv[1]);
 	boost::filesystem::path hap1bam(argv[2]);
 	boost::filesystem::path hap2bam(argv[3]);
-	boost::filesystem::path fmref(argv[4]);
-	//boost::filesystem::path fmill(argv[5]);
+	boost::filesystem::path fmref(argv[4]); // is a file
+	boost::filesystem::path fmill(argv[5]); // is a directory containin illumina .fmi indexes
 
 
-	csa_wt<> fm_index_ref;
-	csa_wt<> fm_index_ill;
+	std::string ext=".fmi"; // file ending with .fmi. wchih are .fm indexes
+	std::vector<boost::filesystem::path> ret; // create a vector to store all the paths to indexes. Difficult 
+	get_all_fmi(fmill,ext,ret); // fill ret with paths
 
+	int dim = ret.size();
+
+	if (dim == 0) {
+
+		std::cout << "No fm indexes in folder" << std::endl;
+		return 1;
+
+	}
+
+	// print .fm indexes
+
+	std::cout << "FM indexes in folder are:" << std::endl;
+
+	for (int i=0; i<dim; ++i) {
+
+		std::cout << boost::filesystem::path(ret[i]) << std::endl;
+
+	}
+
+	csa_wt<> fm_index_ref; // variable to load ref fmindex
+	std::vector<csa_wt<>> fm_index_ill(dim); // vector to load all the .fm indexes. Same size as ret
 
 	timer = boost::posix_time::second_clock::local_time();
 	std::cout << '[' << boost::posix_time::to_simple_string(timer) << "] " << "Loading reference FM index" << std::endl;
 	load_from_file(fm_index_ref,fmref.string().c_str());
 	std::cout << '[' << boost::posix_time::to_simple_string(timer) << "] " << "Done" << std::endl;
-	std::cout << '[' << boost::posix_time::to_simple_string(timer) << "] " << "Loading illumina FM index" << std::endl;
-	//load_from_file(fm_index_ill,fmill.string().c_str());
+	
+	std::cout << '[' << boost::posix_time::to_simple_string(timer) << "] " << "Loading illumina FM indexes" << std::endl;
+	
+	//fill vector
+	
+	for(int i=0; i<dim; ++i) {
+
+		load_from_file(fm_index_ill[i], ret[i].string().c_str());
+		timer = boost::posix_time::second_clock::local_time();
+		std::cout << '[' << boost::posix_time::to_simple_string(timer) << "] " << "Loaded " << ret[i] << std::endl;
+
+	}
+
 	std::cout << '[' << boost::posix_time::to_simple_string(timer) << "] " << "Done" << std::endl;
 
 	(void)argc;
@@ -302,8 +395,8 @@ int main(int argc, char* argv[]) {
 		
 	std::string seq1, seq2;
 
-	//int variant=0;
-	//int valid=0;
+	int variant=0;
+	int valid=0;
 
 
 	while(bcf_read(bcf, header, record) == 0) {
@@ -324,11 +417,9 @@ int main(int argc, char* argv[]) {
 
 		if ((rec.gen1 == 1) && ((rec.gen2 == -1) || (rec.gen2 == 0))) {
 
-			//variant +=1;
+			variant +=1;
 
-			//std::cout << "True" << std::endl;
 			seq1 = sequencegetter(samfile1, idx1, refIndex1, rec.svStart, rec.svEnd, fm_index_ref);
-
 
 			if (seq1.empty()) {
 
@@ -339,16 +430,19 @@ int main(int argc, char* argv[]) {
 
 				std::cout << seq1 << std::endl;
 
-				//if (count(seq1,fm_index_ill) != 0) {
+				if (counter(seq1,dim,fm_index_ill)) {
 
-					//valid +=1
+					valid +=1;
+					std::cout << "Confirmed in Illumina" << std::endl;
 
-				//}
+				}
 
-				//else {
+				else {
 
-					//string not confirmed in illumina, do not increment confirmed
-				//}
+					std::cout << "Not confirmed in Illumina" << std::endl;
+
+				}
+
 
 			} 
 		}
@@ -356,7 +450,7 @@ int main(int argc, char* argv[]) {
 		else if (((rec.gen1 == -1) || (rec.gen1 == 0)) && ((rec.gen2 == 1) ||(rec.gen2 == 2))) {
 
 
-			//variant +=1;
+			variant +=1;
 
 			seq2 = sequencegetter(samfile2, idx2, refIndex2, rec.svStart, rec.svEnd, fm_index_ref);
 
@@ -370,16 +464,20 @@ int main(int argc, char* argv[]) {
 
 				std::cout << seq2 << std::endl;
 
-				//if (count(seq2,fm_index_ill) != 0) {
+				if (counter(seq2,dim,fm_index_ill)) {
 
-					//valid +=1
+					valid +=1;
+					std::cout << "Confirmed in Illumina" << std::endl;
 
-				//}
+				}
 
-				//else {
+				else {
 
-					//string not confirmed in illumina, do not increment confirmed
-				//}
+					std::cout << "Not confirmed in Illumina" << std::endl;
+
+
+				}
+
 
 			} 
 
@@ -389,7 +487,7 @@ int main(int argc, char* argv[]) {
 		else if ((rec.gen1 == 1) && (rec.gen2 == 2)) {
 
 
-			//variant +=2;
+			variant +=2;
 
 
 			seq1 = sequencegetter(samfile1, idx1, refIndex1, rec.svStart, rec.svEnd, fm_index_ref);
@@ -404,19 +502,22 @@ int main(int argc, char* argv[]) {
 
 				std::cout << seq1 << std::endl;
 
-				//if (count(seq1,fm_index_ill) != 0) {
+				if (counter(seq1,dim,fm_index_ill)) {
 
-					//valid +=1
+					std::cout << "Confirmed in Illumina" << std::endl;
 
-				//}
+					valid +=1;
 
-				//else {
+				}
 
-					//string not confirmed in illumina, do not increment confirmed
-				//}
+				else {
+
+					std::cout << "Not confirmed in Illumina" << std::endl;
+
+
+				}
 
 			} 
-
 
 
 			seq2 = sequencegetter(samfile2, idx2, refIndex2, rec.svStart, rec.svEnd, fm_index_ref);
@@ -431,16 +532,21 @@ int main(int argc, char* argv[]) {
 
 				std::cout << seq2 << std::endl;
 
-				//if (count(seq2,fm_index_ill) != 0) {
+				if (counter(seq2,dim,fm_index_ill)) {
 
-					//valid +=1
+					std::cout << "Confirmed in Illumina" << std::endl;
 
-				//}
+					valid +=1;
 
-				//else {
+				}
 
-					//string not confirmed in illumina, do not increment confirmed
-				//}
+				else {
+
+					std::cout << "Not confirmed in Illumina" << std::endl;
+
+
+				}
+
 
 			} 
 
@@ -455,6 +561,8 @@ int main(int argc, char* argv[]) {
 
 	}
 
+	std::cout << variant << std::endl;
+	std::cout << valid << std::endl;
 
 	free(svend);
 	free(gt);
@@ -465,5 +573,3 @@ int main(int argc, char* argv[]) {
 	return 0;
 
 } 
-
-
