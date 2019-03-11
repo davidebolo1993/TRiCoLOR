@@ -14,6 +14,7 @@ using namespace sdsl;
 
 int main(int argc, char **argv) {
 
+
     (void)argc; 
 
 
@@ -23,6 +24,7 @@ int main(int argc, char **argv) {
     boost::filesystem::path fm(argv[2]);
     std::string type(argv[3]);
 
+
     if ((type != "fasta") && (type != "fastq")) {
 
         std::cout << "Accepted type inputs are fasta and fastq" << std::endl;
@@ -30,7 +32,7 @@ int main(int argc, char **argv) {
     }
 
 
-    boost::filesystem::path modfast(fast.string() + ".tmp");
+    boost::filesystem::path modfast(fm.string() + ".tmp");
 
     boost::posix_time::ptime timer;
 
@@ -281,7 +283,7 @@ int main(int argc, char **argv) {
         timer = boost::posix_time::second_clock::local_time();
         std::cout << '[' << boost::posix_time::to_simple_string(timer) << "] " << "FM-index built and saved" << std::endl;
 
-        //boost::filesystem::remove(modfast);
+        boost::filesystem::remove(modfast);
 
 
         return 0;
