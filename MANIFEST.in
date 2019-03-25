@@ -1,0 +1,3 @@
+include TRiCoLOR/SENSoR/data/*.bed
+include TRiCoLOR/REFER/alfred/bin/alfred
+include TRiCoLOR/REFER/merging.sh
