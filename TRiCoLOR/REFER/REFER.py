@@ -339,7 +339,7 @@ class Bed_Reader():
 
 					if len(line) < 3:
 
-						logging.error('.bed given to TRiCoLOR REFER --bedfile must be a .bed file with at least 3 fields: chromosome, start and end')
+						logging.error('.bed given to TRiCoLOR REFER -bed/--bedfile must be a .bed file with at least 3 fields: chromosome, start and end')
 						sys.exit(1)
 
 					else:
