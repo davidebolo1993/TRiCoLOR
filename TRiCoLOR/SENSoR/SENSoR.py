@@ -146,7 +146,7 @@ def run(parser, args):
 	os.remove(os.path.abspath(args.output + '/' + args.label + '_hap2.srt.bed')) #remove un-merged
 
 
-	if args.reftype is None:
+	if args.genometype is None:
 
 		logging.info('.bed file ready')
 		logging.info('Done')
@@ -275,7 +275,7 @@ def BScanner(bamfilein,bedfileout,scansize,entropy_treshold,call_treshold, dist_
 
 	with open (bedfileout, 'w') as fin:
 
-		fin.write('#Bed file with regions in which an entropy lower than ' + str(entropy_treshold) + ' was found at least ' + str(call_treshold) + ' times. Intervals overlapping in +- 500 bp range are merged' + '\n')
+		fin.write('#Bed file with regions in which an entropy lower than ' + str(entropy_treshold) + ' was found at least ' + str(call_treshold) + ' times. Minimum size of repetitive region is ' + str(dist_treshold) + '. Intervals overlapping in +- 500 bp range are merged' + '\n')
 
 	classic_chrs = ['chr{}'.format(x) for x in list(range(1,23)) + ['X', 'Y']]
 
