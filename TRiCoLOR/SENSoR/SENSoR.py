@@ -158,7 +158,7 @@ def run(parser, args):
 
 		with open(os.path.abspath(args.output + '/' + args.label + '.filtered.merged.bed'), 'w') as bedout:
 
-			subprocess.call(['bedops', '-d', os.path.abspath(args.output + '/' + args.label + '.merged.bed'), os.path.abspath(data_path + '/' + args.reftype + '.srt.bed')], stdout=bedout)
+			subprocess.call(['bedops', '-d', os.path.abspath(args.output + '/' + args.label + '.merged.bed'), os.path.abspath(data_path + '/' + args.genometype + '.srt.bed')], stdout=bedout)
 
 		os.remove(os.path.abspath(args.output + '/' + args.label + '.merged.bed'))
 
