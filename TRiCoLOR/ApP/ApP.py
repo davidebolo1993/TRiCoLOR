@@ -176,7 +176,7 @@ class Bed_Reader():
 
 					if len(line) < 4:
 
-						logging.error('.bed given to TRiCoLOR ApP --bedfile must be a .bed file with at least 4 fields: chromosome, start, end, label')
+						logging.error('.bed given to TRiCoLOR ApP -bed/--bedfile must be a .bed file with at least 4 fields: chromosome, start, end, label')
 						sys.exit(1)
 
 					else:
