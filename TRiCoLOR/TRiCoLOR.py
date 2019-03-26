@@ -153,7 +153,7 @@ def str2bool(v):
 	
 	else:
 
-		raise argparse.ArgumentTypeError('Boolean value expected for argument TRiCoLOR REFER -o / --overlapping. Use True or False.')
+		raise argparse.ArgumentTypeError('Boolean value expected for argument TRiCoLOR REFER -o/--overlapping. Use True or False.')
 
 
 def run_subtool(parser, args):
