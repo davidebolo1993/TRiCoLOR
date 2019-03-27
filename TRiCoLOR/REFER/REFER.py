@@ -527,6 +527,7 @@ def Haplo1_Repeats(alfred_path, bamfile1, chromosome, start, end, coverage, kmer
 		return
 
 	else:
+		
 		parser.MSA(alfred_path, out_,mmi_ref)
 		consensus_bams=glob.glob(os.path.abspath(out_+'/*consensus.srt.bam'))
 
