@@ -673,6 +673,12 @@ def Haplo2_Repeats(alfred_path, bamfile2, chromosome, start, end, coverage, kmer
 
 		else:
 
+			with open(os.path.abspath(out_ + '/FileToMerge.txt'), 'a') as fin:
+
+				for file in consensus_bams:
+
+					fin.write(file + '\n')
+
 			subprocess.call(['samtools', 'merge', '-b', os.path.abspath(out_ + '/FileToMerge.txt'), os.path.abspath(out_+'/'+str(iteration+1) + '.srt.bam')])
 			os.remove(os.path.abspath(out_ + '/FileToMerge.txt'))
 
