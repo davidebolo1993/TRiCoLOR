@@ -396,7 +396,7 @@ def TableWriter(chromosome,repetitions_with_coord, out): #Table is in .bed (chro
 
 
 
-def ref_nestover(SortedIntervals, string): #for reference, condier largest between nested repetitions
+def ref_nestover(SortedIntervals, string): #for reference, consider largest between nested repetitions
 
 	extended=[]
 	extended.append(SortedIntervals[0])
@@ -697,10 +697,10 @@ def CleanResults(merging_path, chromosome, out, bam1, bam2):
 
 	#merge all the .srt.bam files for the two haplotypes
 
-	out_=[os.path.abspath(out+j) for j in ['/reference', '/haplotype1', '/haplotype2']]
+	out_=[os.path.abspath(out+j) for j in ['/haplotype1', '/haplotype2']]
 
 
-	if not os.listdir(out_[1]): #directory is empty
+	if not os.listdir(out_[0]): #directory is empty
 
 		return
 
@@ -708,15 +708,15 @@ def CleanResults(merging_path, chromosome, out, bam1, bam2):
 
 		try:
 
-			subprocess.check_call(['bash', merging_path, bam1, os.path.abspath(out_[1]),chromosome],stderr=open(os.devnull, 'wb'))
+			subprocess.check_call(['bash', merging_path, bam1, os.path.abspath(out_[0]),chromosome],stderr=open(os.devnull, 'wb'))
 
 		except:
 
-			message= 'Something wrong during mergning step for haplotype 1, ' + chromosome
+			message= 'Something wrong while mergning .bam files for haplotype 1, ' + chromosome
 			return message
 
 
-	if not os.listdir(out_[2]): #directory is empty
+	if not os.listdir(out_[0]): #directory is empty
 
 		return
 
@@ -724,9 +724,9 @@ def CleanResults(merging_path, chromosome, out, bam1, bam2):
 
 		try:
 
-			subprocess.check_call(['bash', merging_path, bam2, os.path.abspath(out_[2]),chromosome],stderr=open(os.devnull, 'wb'))
+			subprocess.check_call(['bash', merging_path, bam2, os.path.abspath(out_[0]),chromosome],stderr=open(os.devnull, 'wb'))
 
 		except:
 
-			message= 'Something wrong during mergning step for haplotype 2, ' + chromosome
+			message= 'Something wrong while mergning .bam files for haplotype 2, ' + chromosome
 			return message
