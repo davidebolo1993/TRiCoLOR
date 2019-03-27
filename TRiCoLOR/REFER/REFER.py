@@ -148,14 +148,8 @@ def run(parser, args):
 			sys.exit(1)
 
 
-	if args.mmiref is not None:
 
-		mmi_abspath=os.path.abspath(args.mmiref)
-
-	else:
-
-		mmi_abspath=os.path.dirname(os.path.abspath(args.genome))
-
+	mmi_abspath=os.path.abspath(os.path.dirname(args.genome))
 
 	alfred_path=os.path.abspath(os.path.dirname(__file__) + '/alfred/bin/alfred')
 
@@ -204,12 +198,7 @@ def run(parser, args):
 
 				if not os.access(mmi_abspath, os.W_OK): #check if we have write permissions on the directory
 
-					logging.error('You do not have write permissions on the .mmi index folder. This is necessary to store .mmi indexes')
-					sys.exit(1)
-
-				if not os.access(os.path.abspath(os.path.dirname(args.reference)), os.W_OK): #check if we have write permissions on the reference wehre chromosomes will be sliced
-
-					logging.error('You do not have write permissions on the reference folder. This is necessary to extract chromosomes from reference before generating .mmi indexes')
+					logging.error('You do not have write permissions on the referene genome folder. This is necessary to create .mmi indexes')
 					sys.exit(1)
 
 
@@ -221,7 +210,7 @@ def run(parser, args):
 
 				except:
 
-					logging.error('Something went wrong with the creation of the .mmi chromosome index. Does your genome contain informations for ' + chromosome + ' ?')
+					logging.error('Something went wrong with the creation of the .mmi chromosome index. Does your reference genome contain informations for ' + chromosome + ' ?')
 					sys.exit(1)
 
 				subprocess.call(['minimap2','-d', os.path.abspath(mmi_abspath + '/' + chromosome + '.mmi'),os.path.abspath(mmi_abspath + '/' + chromosome + '.fa')]) #must work as everything has been checked
@@ -230,11 +219,6 @@ def run(parser, args):
 
 
 		try:
-
-
-			print("Analyzing", chromosome,start,"-",end)
-
-			#analyze also .bam files or skip?
 
 			further = Ref_Repeats(ref_seq, chromosome, start, end, args.motif, args.times, args.maxmotif, args.overlapping, args.size, args.output)
 
