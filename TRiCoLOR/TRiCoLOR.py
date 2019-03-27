@@ -64,9 +64,8 @@ def main():
 
 	utilities.add_argument('-c', '--coverage', type=int, help='minimum number of reads to call a valid consensus sequence [5]', metavar='', default=5)
 	
-	additionals = parser_finder.add_argument_group('Additional arguments')
+	additionals = parser_finder.add_argument_group('Additional argument')
 
-	additionals.add_argument('-mmi','--mmiref', help='path to a folder containing .mmi indexes for each chromosome. A .mmi index for each chromosome analyzed will be generated in the reference folder if none specified [None]',metavar='', default=None)
 	additionals.add_argument('-sname','--samplename', help='sample name to use in .vcf header [Sample]',metavar='',default='Sample')
 
 	parser_finder.set_defaults(func=run_subtool)
