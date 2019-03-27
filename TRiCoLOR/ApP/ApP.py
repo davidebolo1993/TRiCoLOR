@@ -7,8 +7,11 @@ import glob
 import math
 import logging
 from collections import defaultdict
+from shutil import which
 import timeit
-
+import sys
+import subprocess
+import csv
 
 # additional libraries
 
@@ -39,11 +42,6 @@ def run(parser, args):
 		if not os.access(os.path.dirname(os.path.abspath(args.output)),os.W_OK): #path exists but no write permissions on that folder
 
 			print('You do not have write permissions on the directory in which results will be stored. Specify a folder for which you have write permissions')
-			sys.exit(1)
-
-		elif os.listdir(os.path.abspath(args.output)):
-
-			print('Cannot output in a directory that is not empty. Specify an empty folder')
 			sys.exit(1)
 
 
@@ -77,7 +75,7 @@ def run(parser, args):
 
 	try:
 
-		subprocess.check_call(['samtools','quickcheck',os.path.abspath(args.mergedbamfile1)],stderr=open(os.devnull, 'wb'))
+		subprocess.call(['samtools','quickcheck',os.path.abspath(args.mergedbamfile1)],stderr=open(os.devnull, 'wb'))
 
 	except:
 
@@ -93,7 +91,6 @@ def run(parser, args):
 
 		logging.error('merged.bam file 2 does not exist, is not readable or is not a valid .bam file')
 		sys.exit(1)
-
 
 
 	if not os.path.exists(os.path.abspath(args.mergedbamfile1 + '.bai')):
