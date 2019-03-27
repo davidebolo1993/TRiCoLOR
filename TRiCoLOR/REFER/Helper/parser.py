@@ -98,7 +98,7 @@ def Bamfile_Analyzer(bamfilein,chromosome,start,end, coverage, fastaout):
 					if read_start <= start and read_end >= read_end: #make sure that the same read cover the entire region
 
 						sequence=read.seq
-						coord=Sub_None(read.get_reference_positions(full_length=True))
+						coord=sub_none(read.get_reference_positions(full_length=True))
 						header=read.query_name
 
 						s_,e_=min(coord, key=lambda x:abs(x-start)), min(coord, key=lambda x:abs(x-(start+size))) #must exist
