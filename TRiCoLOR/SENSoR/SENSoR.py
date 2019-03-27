@@ -58,7 +58,7 @@ def run(parser, args):
 
 	try:
 
-		subprocess.check_call(['samtools','quickcheck',os.path.abspath(args.bamfile1)],stderr=open(os.devnull, 'wb'))
+		subprocess.check_call(['samtools','quickcheck', os.path.abspath(args.bamfile1)],stderr=open(os.devnull, 'wb'))
 
 	except:
 
@@ -79,7 +79,7 @@ def run(parser, args):
 
 	if not os.path.exists(os.path.abspath(args.bamfile1 + '.bai')):
 
-		logging.info('Creating index for .bamfile 1, as it was not found in folder...')
+		logging.info('Creating index for .bam file 1, as it was not found in folder...')
 
 		try:
 
