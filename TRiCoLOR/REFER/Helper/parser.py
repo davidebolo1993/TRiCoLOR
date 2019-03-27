@@ -114,7 +114,7 @@ def Bamfile_Analyzer(bamfilein,chromosome,start,end, coverage, fastaout):
 			start += size
 			next_ += size
 
-		elif end-next_ <  size:
+		else:
 
 			final=True
 
