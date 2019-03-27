@@ -14,7 +14,6 @@ from collections import defaultdict
 from operator import itemgetter
 from multiprocessing import Process,Manager
 from shutil import which
-from bisect import bisect_left, bisect_right
 import logging
 import datetime
 import timeit
@@ -514,10 +513,9 @@ def Haplo1_Repeats(alfred_path, bamfile1, chromosome, start, end, coverage, kmer
 
 		os.makedirs(out_)
 
-	seq,coord = parser.Bamfile_Analyzer(bamfile1,chromosome,start,end, coverage)
-	filseq,filcoord=parser.InCommon(seq,coord)
+	parser.Bamfile_Analyzer(bamfile1,chromosome,start,end, coverage, out_)
 
-	if isEmpty(filseq): #no informations for that region in this haplotype
+	if isEmpty(glob.glob(os.path.abspath(out_)+'/*.unaligned.fa')): #no informations for that region in this haplotype
 
 		Table=EmptyTable(os.path.abspath(out_ +'/' + chromosome + '.repetitions.bed'))
 		Table.write()
@@ -528,8 +526,6 @@ def Haplo1_Repeats(alfred_path, bamfile1, chromosome, start, end, coverage, kmer
 		return
 
 	else:
-
-		parser.Fasta_Generator(filseq,filcoord,out_)
 		parser.MSA(alfred_path, out_,mmi_ref)
 		consensus_bams=glob.glob(os.path.abspath(out_+'/*consensus.srt.bam'))
 
@@ -608,10 +604,9 @@ def Haplo2_Repeats(alfred_path, bamfile2, chromosome, start, end, coverage, kmer
 
 		os.makedirs(out_)
 
-	seq,coord = parser.Bamfile_Analyzer(bamfile2,chromosome,start,end, coverage)
-	filseq,filcoord=parser.InCommon(seq,coord)
+	parser.Bamfile_Analyzer(bamfile2,chromosome,start,end, coverage, out_)
 
-	if isEmpty(filseq): #no informations for that region in this haplotype
+	if isEmpty(glob.glob(os.path.abspath(out_)+'/*.unaligned.fa')): #no informations for that region in this haplotype
 
 		Table=EmptyTable(os.path.abspath(out_ +'/' + chromosome + '.repetitions.bed'))
 		Table.write()
@@ -623,7 +618,6 @@ def Haplo2_Repeats(alfred_path, bamfile2, chromosome, start, end, coverage, kmer
 
 	else:
 
-		parser.Fasta_Generator(filseq,filcoord,out_)
 		parser.MSA(alfred_path, out_,mmi_ref)
 		consensus_bams=glob.glob(os.path.abspath(out_+'/*consensus.srt.bam'))
 
