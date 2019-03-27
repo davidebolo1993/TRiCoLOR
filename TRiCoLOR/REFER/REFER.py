@@ -712,7 +712,7 @@ def CleanResults(merging_path, chromosome, out, bam1, bam2):
 			return message
 
 
-	if not os.listdir(out_[0]): #directory is empty
+	if not os.listdir(out_[1]): #directory is empty
 
 		return
 
@@ -720,7 +720,7 @@ def CleanResults(merging_path, chromosome, out, bam1, bam2):
 
 		try:
 
-			subprocess.check_call(['bash', merging_path, bam2, os.path.abspath(out_[0]),chromosome],stderr=open(os.devnull, 'wb'))
+			subprocess.check_call(['bash', merging_path, bam2, os.path.abspath(out_[1]),chromosome],stderr=open(os.devnull, 'wb'))
 
 		except:
 
