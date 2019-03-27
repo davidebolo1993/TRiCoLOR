@@ -57,7 +57,7 @@ def run(parser, args):
 
 		elif os.listdir(os.path.abspath(args.output)):
 
-			print('Cannot output in a directory that is not empty. Specify an empty folder')
+			print('Output folder is not empty. Clean the folder and re-run TRiCoLOR REFER')
 			sys.exit(1)
 	
 	
@@ -130,7 +130,7 @@ def run(parser, args):
 
 		except:
 
-			logging.error('.bam1 file could not be indexed')
+			logging.error('.bam file 1 could not be indexed')
 			sys.exit(1)
 
 
@@ -144,7 +144,7 @@ def run(parser, args):
 
 		except:
 
-			logging.error('.bam2 file could not be indexed')
+			logging.error('.bam file 2 could not be indexed')
 			sys.exit(1)
 
 
