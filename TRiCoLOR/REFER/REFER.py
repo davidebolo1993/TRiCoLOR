@@ -706,9 +706,9 @@ def CleanResults(merging_path, chromosome, out, bam1, bam2):
 
 			subprocess.check_call(['bash', merging_path, bam1, os.path.abspath(out_[0]),chromosome],stderr=open(os.devnull, 'wb'))
 
-		except:
+		except BaseException as be:
 
-			message= 'Something wrong while mergning .bam files for haplotype 1, ' + chromosome
+			message= 'Something wrong while mergning .bam files for haplotype 1:' + '\n' + be
 			return message
 
 
@@ -722,7 +722,7 @@ def CleanResults(merging_path, chromosome, out, bam1, bam2):
 
 			subprocess.check_call(['bash', merging_path, bam2, os.path.abspath(out_[1]),chromosome],stderr=open(os.devnull, 'wb'))
 
-		except:
+		except BaseException as be:
 
-			message= 'Something wrong while mergning .bam files for haplotype 2, ' + chromosome
+			message= 'Something wrong while mergning .bam files for haplotype 2:' + '\n' + be
 			return message
