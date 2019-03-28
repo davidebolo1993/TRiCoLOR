@@ -2,7 +2,6 @@
 
 #python 3 standard library
 
-import sys
 import os
 import glob
 import math
