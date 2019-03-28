@@ -59,7 +59,7 @@ def run(parser, args):
 
 	except:
 
-		logging.error('Reference file does not exist, is not readable or is not a valid .fasta file')
+		logging.error('Reference genome file does not exist, is not readable or is not a valid .fasta file')
 		sys.exit(1)
 
 
