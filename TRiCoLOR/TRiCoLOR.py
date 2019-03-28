@@ -53,10 +53,10 @@ def main():
 
 	algorithm = parser_finder.add_argument_group('Regex-search parameters')
 
-	algorithm.add_argument('-m','--motif', type=int, help='size of the motif of the repetition: use 0 for any [0]',metavar='',default=0)
+	algorithm.add_argument('-m','--motif', type=int, help='minimum size of the motif of the repetition: use 0 or 1 for any [0]',metavar='',default=0)
 	algorithm.add_argument('-t','--times', type=int, help='consencutive times a repetition must occur at least to be detected: use 0 for any [3]',metavar='',default=3)
 	algorithm.add_argument('-s','--size', type=int, help='minimum size the repeated period must have at least to be called [10]',metavar='',default=10)
-	algorithm.add_argument('-o','--overlapping', type=str2bool, help='check for overlapping repetitions [False]',metavar='', default='False', choices=['True', 'true', 'TRUE', 'False', 'false', 'FALSE'])
+	algorithm.add_argument('-o','--overlapping', type=str2bool, help='check for overlapping repetitions [False]',metavar='', default='False')
 	algorithm.add_argument('-mm','--maxmotif', type=int, help='exclude motifs which length is greater than value [6]',metavar='', default=6)
 	algorithm.add_argument('-edit','--editdistance', type=int, help='allow specified number of insertions, deletions or substitutions in repetitive patterns [1]',metavar='', default=1)
 
