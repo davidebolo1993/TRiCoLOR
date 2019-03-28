@@ -339,26 +339,6 @@ class Bed_Reader():
 			return size
 
 
-class EmptyTable():
-
-	def __init__ (self, tablepath):
-
-		self.tablepath=tablepath
-
-	def write(self):
-
-		if os.path.exists(os.path.abspath(self.tablepath)):
-
-			return
-
-		else:
-
-			with open(self.tablepath, 'w') as refout:
-
-				Empty=pd.DataFrame(columns=['Chromosome', 'Start', 'End', 'Repeated Motif','Repetitions Number'])
-				Empty.to_csv(refout, index=False, sep='\t')
-
-
 
 def isEmpty(list_obj): #recursive function to check for empty list
 
@@ -483,9 +463,6 @@ def Ref_Repeats(reference_seq, chromosome, start, end, kmer, times, maxmotif, ov
 
 	if 'N' in wanted: #region with ambiguous bases
 
-		Table=EmptyTable(os.path.abspath(out_ + '/' + chromosome + '.repetitions.bed'))
-		Table.write()
-
 		return False
 
 	else:
@@ -494,12 +471,7 @@ def Ref_Repeats(reference_seq, chromosome, start, end, kmer, times, maxmotif, ov
 
 		filtered=Reference_Filter(repetitions,wanted,size,start)
 
-		if isEmpty(filtered):
-
-			Table=EmptyTable(os.path.abspath(out_ + '/' + chromosome + '.repetitions.bed'))
-			Table.write()
-
-		else:
+		if not isEmpty(filtered):
 
 			TableWriter(chromosome,filtered,out_)
 		
@@ -518,9 +490,6 @@ def Haplo1_Repeats(alfred_path, bamfile1, chromosome, start, end, coverage, kmer
 
 	if isEmpty(glob.glob(os.path.abspath(out_)+'/*.unaligned.fa')): #no informations for that region in this haplotype
 
-		Table=EmptyTable(os.path.abspath(out_ +'/' + chromosome + '.repetitions.bed'))
-		Table.write()
-
 		open(os.path.abspath(out_ +'/' + str(iteration +1) + '.srt.bam'), 'w').close() #create empty
 		open(os.path.abspath(out_ +'/' + str(iteration +1) + '.srt.bam.bai'), 'w').close() #create empty
 
@@ -537,37 +506,17 @@ def Haplo1_Repeats(alfred_path, bamfile1, chromosome, start, end, coverage, kmer
 
 			if isEmpty(seq):
 
-				Table=EmptyTable(os.path.abspath(out_ +'/' + chromosome + '.repetitions.bed'))
-				Table.write()
-
 				continue
 
 			else:
 
 				repetitions=list(finder.RepeatsFinder(seq,kmer,times, maxmotif, overlapping))
 
-				if isEmpty(repetitions): #no repetitions found in the region
-
-					if bam != consensus_bams[-1]: #not the last one
-
-						continue
-
-					else:
-
-						Table=EmptyTable(os.path.abspath(out_ +'/' + chromosome + '.repetitions.bed'))
-						Table.write()
-
-
-				else:
+				if not isEmpty(repetitions): #no repetitions found in the region
 
 					cor_coord_reps=finder.corrector(ref_seq, seq, repetitions, coords, size, allowed) #probably an exception here is needed
 
-					if isEmpty(cor_coord_reps): #size dimension exclude repetitions previously found
-
-						Table=EmptyTable(os.path.abspath(out_ +'/' + chromosome + '.repetitions.bed'))
-						Table.write()
-
-					else:
+					if not isEmpty(cor_coord_reps): #size dimension exclude repetitions previously found
 
 						TableWriter(chromosome, cor_coord_reps,out_)
 						repetitions_h1.extend(cor_coord_reps)
@@ -610,9 +559,6 @@ def Haplo2_Repeats(alfred_path, bamfile2, chromosome, start, end, coverage, kmer
 
 	if isEmpty(glob.glob(os.path.abspath(out_)+'/*.unaligned.fa')): #no informations for that region in this haplotype
 
-		Table=EmptyTable(os.path.abspath(out_ +'/' + chromosome + '.repetitions.bed'))
-		Table.write()
-
 		open(os.path.abspath(out_ +'/' + str(iteration +1) + '.srt.bam'), 'w').close() #create empty
 		open(os.path.abspath(out_ +'/' + str(iteration +1) + '.srt.bam.bai'), 'w').close() #create empty
 
@@ -629,40 +575,21 @@ def Haplo2_Repeats(alfred_path, bamfile2, chromosome, start, end, coverage, kmer
 
 			if isEmpty(seq):
 
-				Table=EmptyTable(os.path.abspath(out_ +'/' + chromosome + '.repetitions.bed'))
-				Table.write()
-
 				continue
 
 			else:
 
 				repetitions=list(finder.RepeatsFinder(seq,kmer,times, maxmotif, overlapping))
 
-				if isEmpty(repetitions): #no repetitions found in the region
-
-					if bam != consensus_bams[-1]: #not the last one
-
-						continue
-
-					else:
-
-						Table=EmptyTable(os.path.abspath(out_ +'/' + chromosome + '.repetitions.bed'))
-						Table.write()
-
-
-				else:
+				if not isEmpty(repetitions): #no repetitions found in the region
 
 					cor_coord_reps=finder.corrector(ref_seq, seq, repetitions, coords, size, allowed) #probably an exception here is needed
 
-					if isEmpty(cor_coord_reps): #size dimension exclude repetitions previously found
-
-						Table=EmptyTable(os.path.abspath(out_ +'/' + chromosome + '.repetitions.bed'))
-						Table.write()
-
-					else:
+					if not isEmpty(cor_coord_reps): #size dimension exclude repetitions previously found
 
 						TableWriter(chromosome, cor_coord_reps,out_)
 						repetitions_h2.extend(cor_coord_reps)
+
 
 		#merge and clean
 
