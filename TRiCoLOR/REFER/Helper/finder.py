@@ -20,19 +20,19 @@ def nestover(SortedIntervals, string, coords, allowed, treshold):
 
     extended=[]
 
-    s_,e_=SortedIntervals[0][1], SortedIntervals[0][2]
-    string_s,string_e = bisect_left(coords,s_), bisect_right(coords, e_)
-    extended.append((SortedIntervals[0][0], s_, e_, string[string_s:string_e].count(SortedIntervals[0][0])))
-
-    i=1
+    i=0
 
     while i < len(SortedIntervals):
 
-        if extended==[]: # if something has been removed
+        if extended==[]: # first time or something has been removed
 
             s_,e_=SortedIntervals[i][1], SortedIntervals[i][2]
             string_s,string_e = bisect_left(coords,s_), bisect_right(coords, e_)
-            extended.append((SortedIntervals[i][0], s_, e_, string[string_s:string_e].count(SortedIntervals[i][0])))
+            num=string[string_s:string_e].count(SortedIntervals[i][0])
+
+            #if num*len(SortedIntervals[i][0]) >= minsize:
+
+            extended.append((SortedIntervals[i][0], s_, e_, num))
 
             i+=1
         
@@ -40,6 +40,13 @@ def nestover(SortedIntervals, string, coords, allowed, treshold):
         else:
 
             if extended[-1][2] >= SortedIntervals[i][1]: #the two intervals overlap
+
+
+                s1,e1=bisect_left(coords,extended[-1][1]), bisect_right(coords,extended[-1][2])
+                st1=string[s1:e1]
+                c1=st1.count(extended[-1][0])
+
+
 
                 m1=extended[-1][0]
                 m2=SortedIntervals[i][0]
@@ -53,34 +60,38 @@ def nestover(SortedIntervals, string, coords, allowed, treshold):
                 rank1, count1=rank(st_, m1)
                 rank2, count2=rank(st_, m2)
 
+                #if len(m2)* count2 >= minsize: #the one in extended has already been checked
+
+
                 if rank1 < treshold and rank2 < treshold:
 
                     extended.remove(extended[-1])
-                    i+=1
 
                 elif rank1 < treshold and rank2 >= treshold:
 
                     extended.remove(extended[-1])
                     extended.append((m2,new_s, new_e, count2))
-                    i+=1
 
                 elif rank1 >= treshold and rank2 < treshold:
 
-                    i+=1
+                    pass
 
                 elif rank1 >= treshold and rank2 >= treshold:
 
-                    extended.remove(extended[-1])
+                    if rank1 >= rank2:
 
-                    if rank1 >= rank2: 
+                        if c1 < count1: #if extending did not increase the number of repetition, keep the original region; otherwise do what follows
 
-                        extended.append((m1,new_s,new_e,count1))
+                            extended.remove(extended[-1])
+                            extended.append((m1,new_s,new_e,count1))
 
                     else:
 
+                        extended.remove(extended[-1])
                         extended.append((m2,new_s, new_e, count2))
 
-                    i+=1
+
+                i+=1
 
             else:
 
@@ -93,7 +104,12 @@ def nestover(SortedIntervals, string, coords, allowed, treshold):
 
                     s_,e_=SortedIntervals[i][1], SortedIntervals[i][2]
                     string_s,string_e = bisect_left(coords,s_), bisect_right(coords, e_)
-                    extended.append((SortedIntervals[i][0], s_, e_, string[string_s:string_e].count(SortedIntervals[i][0])))
+
+                    num = string[string_s:string_e].count(SortedIntervals[i][0])
+
+                    #if num * len(SortedIntervals[i][0]) >= minsize:
+
+                    extended.append((SortedIntervals[i][0], s_, e_, num))
 
                     i+=1
 
@@ -101,13 +117,13 @@ def nestover(SortedIntervals, string, coords, allowed, treshold):
 
 
 
-def RepeatsFinder(string,kmer,times, maxkmerlength, overlapping): #find non-overlapping or overlapping repetitions in string using the RegEx approach. Times is the lower bound for the number of times a repetition must occur, Kmer is the motif size
+def RepeatsFinder(string,kmer,times, maxkmerlength, overlapping): #find non-overlapping or overlapping repetitions in string using the RegEx approach. Times is the lower bound for the number of times a repetition must occur, Kmer is the minimum motif size
 
     seen=set()
 
     if kmer != 0 and times == 0:
 
-        my_regex = r'(.{'  + str(kmer) + r'})\1+' if not overlapping else r'(?=(.{'  + str(kmer) + r'})\1+)'
+        my_regex = r'(.{'  + str(kmer) + r',})\1+' if not overlapping else r'(?=(.{'  + str(kmer) + r',})\1+)'
 
     elif kmer == 0 and times != 0:
 
@@ -115,7 +131,7 @@ def RepeatsFinder(string,kmer,times, maxkmerlength, overlapping): #find non-over
 
     elif kmer != 0 and times != 0:
 
-        my_regex = r'(.{'  + str(kmer) + r'})\1{' + str(times-1) + r',}' if not overlapping else r'(?=(.{'  + str(kmer) + r'})\1{' + str(times-1) + r',})'
+        my_regex = r'(.{'  + str(kmer) + r',})\1{' + str(times-1) + r',}' if not overlapping else r'(?=(.{'  + str(kmer) + r',})\1{' + str(times-1) + r',})'
 
     else:
 
@@ -210,7 +226,7 @@ def check_edit(string1, string2, allowed): #cython-based way to check for edit d
 
         #return True
 
-    if len(string2) <= allowed: #string 2 is empy or is motif of length leq allowed
+    if len(string2) <= allowed: #string 2 is empty or is motif of length leq allowed
 
         return True
 
@@ -386,7 +402,7 @@ def corrector(reference, string, repetitions, coordinates, size, allowed): # cor
 
                     continue
 
-            else: #coordinated are more distant than len reps
+            else: #coordinates are more distant than len reps
 
                 if check_edit(reps,string[self_[i][1]+len(reps):self_[i+1][1]], allowed) and check_ref(reference[self__[i][1]-1:self__[i+1][1]],string[self_[i][1]: self_[i+1][1]+1]):
 
@@ -428,6 +444,10 @@ def corrector(reference, string, repetitions, coordinates, size, allowed): # cor
 
     s_corr_=sorted(corr_, key=itemgetter(1,2))
 
+    print(s_corr_)
+
     mod_int=nestover(s_corr_, string, coords, allowed, treshold=.5)
 
-    return [coords for coords in mod_int if len(coords[0])*coords[3] >= size]
+
+
+    return [(a,b,c,d) for a,b,c,d in mod_int if len(a)*d >= size]
