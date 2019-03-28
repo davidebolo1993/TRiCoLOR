@@ -59,7 +59,7 @@ def run(parser, args):
 
 	except:
 
-		logging.error('Reference genome file does not exist, is not readable or is not a valid .fasta file')
+		logging.error('Reference file does not exist, is not readable or is not a valid .fasta file')
 		sys.exit(1)
 
 
@@ -103,7 +103,7 @@ def run(parser, args):
 
 		except:
 
-			logging.error('merged.bam file 2 could not be indexed')
+			logging.error('merged.bam1 file could not be indexed')
 			sys.exit(1)
 
 
@@ -117,7 +117,7 @@ def run(parser, args):
 
 		except:
 
-			logging.error('merged.bam file 2 could not be indexed')
+			logging.error('merged.bam2 file could not be indexed')
 			sys.exit(1)
 
 	start_t=timeit.default_timer()
