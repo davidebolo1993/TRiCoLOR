@@ -3,8 +3,6 @@
 #python 3 standard library
 
 import re
-import itertools
-import sys
 from bisect import bisect_left, bisect_right
 from collections import defaultdict
 from operator import itemgetter
