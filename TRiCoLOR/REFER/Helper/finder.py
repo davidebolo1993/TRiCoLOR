@@ -4,7 +4,7 @@
 
 import re
 from bisect import bisect_left, bisect_right
-from collections import defaultdict
+from collections import defaultdict, Counter
 from operator import itemgetter
 
 #additional libraries
@@ -16,7 +16,7 @@ import editdistance
 
 
 
-def nestover(SortedIntervals, string, coords, allowed, treshold):
+def nestover(SortedIntervals, string, coords):
 
     extended=[]
 
@@ -24,14 +24,11 @@ def nestover(SortedIntervals, string, coords, allowed, treshold):
 
     while i < len(SortedIntervals):
 
-        if extended==[]: # first time or something has been removed
+        if extended==[]:
 
             s_,e_=SortedIntervals[i][1], SortedIntervals[i][2]
             string_s,string_e = bisect_left(coords,s_), bisect_right(coords, e_)
             num=string[string_s:string_e].count(SortedIntervals[i][0])
-
-            #if num*len(SortedIntervals[i][0]) >= minsize:
-
             extended.append((SortedIntervals[i][0], s_, e_, num))
 
             i+=1
@@ -46,8 +43,6 @@ def nestover(SortedIntervals, string, coords, allowed, treshold):
                 st1=string[s1:e1]
                 c1=st1.count(extended[-1][0])
 
-
-
                 m1=extended[-1][0]
                 m2=SortedIntervals[i][0]
 
@@ -57,39 +52,24 @@ def nestover(SortedIntervals, string, coords, allowed, treshold):
 
                 st_=string[string_s:string_e]
 
-                rank1, count1=rank(st_, m1)
-                rank2, count2=rank(st_, m2)
-
-                #if len(m2)* count2 >= minsize: #the one in extended has already been checked
+                rank1,count1=Markovchain(m1,st_),st_.count(m1)
+                rank2,count2=Markovchain(m2,st_),st_.count(m2)
 
 
-                if rank1 < treshold and rank2 < treshold:
-
-                    extended.remove(extended[-1])
-
-                elif rank1 < treshold and rank2 >= treshold:
+                if rank2 > rank1:
 
                     extended.remove(extended[-1])
                     extended.append((m2,new_s, new_e, count2))
 
-                elif rank1 >= treshold and rank2 < treshold:
 
-                    pass
+                else:
 
-                elif rank1 >= treshold and rank2 >= treshold:
-
-                    if rank1 >= rank2:
-
-                        if c1 < count1: #if extending did not increase the number of repetition, keep the original region; otherwise do what follows
-
-                            extended.remove(extended[-1])
-                            extended.append((m1,new_s,new_e,count1))
-
-                    else:
+                    if c1 < count1:
 
                         extended.remove(extended[-1])
-                        extended.append((m2,new_s, new_e, count2))
+                        extended.append((m1,new_s, new_e, count1))
 
+                    #else keep the existent
 
                 i+=1
 
@@ -104,11 +84,7 @@ def nestover(SortedIntervals, string, coords, allowed, treshold):
 
                     s_,e_=SortedIntervals[i][1], SortedIntervals[i][2]
                     string_s,string_e = bisect_left(coords,s_), bisect_right(coords, e_)
-
                     num = string[string_s:string_e].count(SortedIntervals[i][0])
-
-                    #if num * len(SortedIntervals[i][0]) >= minsize:
-
                     extended.append((SortedIntervals[i][0], s_, e_, num))
 
                     i+=1
@@ -222,10 +198,6 @@ def dfs(adj_list, visited, vertex, result, key):
 
 def check_edit(string1, string2, allowed): #cython-based way to check for edit distance, faster than check every time for neighbors
 
-    #if string2 == '': #no distance between string 1 and string 2
-
-        #return True
-
     if len(string2) <= allowed: #string 2 is empty or is motif of length leq allowed
 
         return True
@@ -238,35 +210,22 @@ def check_edit(string1, string2, allowed): #cython-based way to check for edit d
 
 
 
-#def d_neighbors(pattern, d, DNAchars='ATCG'):
+def Markovchain(motif,string):
 
-    #if d > len(pattern):
+    STATE_LEN = len(motif)
 
-        #d == len(pattern)
+    model = defaultdict(Counter)
 
-    #if d == 0:
-
-        #return [pattern]
-
-    #r2 = d_neighbors(pattern[1:], d-1)
-    #r = [c + r3 for r3 in r2 for c in DNAchars if c != pattern[0]]
-
-    #if (d < len(pattern)):
-
-        #r2 = d_neighbors(pattern[1:], d)
-        #r += [pattern[0] + r3 for r3 in r2]
-
-    #return list(set(sum([r for d2 in range(d + 1)], [])))
+    for i in range(len(string) - STATE_LEN):
+        state = string[i:i + STATE_LEN]
+        next_ = string[i + STATE_LEN :i + STATE_LEN*2]
+        model[state][next_] += 1
 
 
-#def del_neighbors(pattern,d):
+    motif_probability=(model[motif][motif]/len(string))*len(motif) + len(motif)/len(string) #reward based on motif length
 
-    #n=len(pattern)-d
+    return motif_probability
 
-    #return list(set(''.join(x) for x in list(itertools.combinations(pattern,n))))
-
-
-#def insertion_neighbors(pattern,d,DNAchars='ATCG')
 
 
 def check_ref(string1, string2): #check if ref_string and test_string are different
@@ -274,106 +233,27 @@ def check_ref(string1, string2): #check if ref_string and test_string are differ
     return string1 != string2
 
 
-def not_occur_probability(string, motif): #crude approach to calculate not occuring probability
+#def not_occur_probability(string, motif): #crude approach to calculate not occuring probability
 
-    r=len(motif)
-    n=len(string)
-    occurence_prob=(1/4)**r #probability of k-mer occurence
-    number_of_locations=n-r+1
-    not_occurence_p=(1-occurence_prob)**number_of_locations
+    #if motif not in string:
 
-    return not_occurence_p
+        #return 0
+ 
+    #r=len(motif)
+    #n=len(string)
+    #occurence_prob=(1/4)**r #probability of k-mer occurence
+    #number_of_locations=n-r+1
+    #not_occurence_p=(1-occurence_prob)**number_of_locations
 
-
-def rank(string,motif): #useful for rank reps in overlapping and clipped regions
-
-    count=string.count(motif)
-    reward=not_occur_probability(string, motif)
-
-    return (count*len(motif))/len(string) + reward, count #rank longer patterns before others: if we see them, they are more likely to be there
+    #return not_occurence_p
 
 
+#def rank(string,motif): #useful for rank reps in overlapping and clipped regions
 
-#def lcs(motif, string): #longest common subsequence
+    #count=string.count(motif)
+    #reward=not_occur_probability(string, motif)
 
-
-    #if not motif or not string:
-
-        #return ""
-
-    #x, xs, y, ys = motif[0], motif[1:], string[0], string[1:]
-
-    #if x == y:
-
-        #return x + lcs(xs, ys)
-
-    #else:
-
-        #return max(lcs(motif, ys), lcs(xs, string), key=len)
-
-
-
-
-#def counter(string,motif, allowed):
-
-    #all_starts=[]
-
-    #for match in re.finditer(motif,string):
-    
-        #all_starts.append(match.start()) 
-
-    #i=0 # position in string
-    #l=0 # position in occurences list
-    #count=0 #number of putative repetitions
-
-    #while i <= all_starts[-1]:
-
-        #if i in all_starts: #is a perfect repetition
-
-            #i+= len(motif)
-            #count+=1
-            #l+=1
-
-        #else:
-
-            #dim=all_starts[l]-i
-
-            #if len(motif)==1:
-
-                #i+= dim
-
-            #else:
-
-                #s_=string[i:i+dim]
-
-                #if len(motif) >= len(s_):
-
-                    #if len(lcs(motif,s_)) >= len(motif)-allowed:
-
-                        #i+= dim
-                        #count+=1 #what we see is a deletion of an existing repetition, so we will count this as a repetition
-          
-                    #else:
-
-                        #i+= dim
-
-                #else:
-
-                    #chrs=list(motif)
-
-                    #if all (x in s_ for x in chrs) and len(lcs(motif,s_)) >= len(motif)-allowed:
-
-
-                        #i+= dim
-                        #count+=1 #what we see is a deletion of an existing repetition, so we will count this as a repetition
-          
-                    #else:
-
-                        #i+= dim
-
-
-    #return count
-
+    #return (count*len(motif))/len(string) + reward, count #rank longer patterns before others: if we see them, they are more likely to be there
 
 
 
@@ -432,7 +312,7 @@ def corrector(reference, string, repetitions, coordinates, size, allowed): # cor
 
         if len(result) != 0:
 
-            corr_.extend(Get_Alignment_Coordinates(coords,[(reps, interv[0], interv[-1]+(len(reps)-1)) for interv in result.values()]))
+            corr_.extend(Get_Alignment_Coordinates(coords,[(reps, interv[0], interv[-1]+(len(reps)-1)) for interv in result.values() if interv[-1]+len(reps)-interv[0] >= size]))
 
         else:
 
@@ -444,10 +324,6 @@ def corrector(reference, string, repetitions, coordinates, size, allowed): # cor
 
     s_corr_=sorted(corr_, key=itemgetter(1,2))
 
-    print(s_corr_)
+    mod_int=nestover(s_corr_, string, coords)
 
-    mod_int=nestover(s_corr_, string, coords, allowed, treshold=.5)
-
-
-
-    return [(a,b,c,d) for a,b,c,d in mod_int if len(a)*d >= size]
+    return mod_int
