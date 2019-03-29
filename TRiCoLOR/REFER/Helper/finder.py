@@ -140,11 +140,6 @@ def Get_Alignment_Positions(bamfilein): #as the consensus sequence is supposed t
             coords = read.get_reference_positions(full_length=True)
             seq=read.seq
 
-        else:
-
-            bamfile.close()
-            return coords,seq
-
     bamfile.close()
 
     return coords,seq
