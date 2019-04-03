@@ -97,15 +97,15 @@ def RepeatsFinder(string,kmer,times, maxkmerlength, overlapping): #find non-over
 
     seen=set()
 
-    if kmer != 0 and times == 0:
+    if (kmer != 0 and kmer != 1) and times == 0:
 
         my_regex = r'(.{'  + str(kmer) + r',})\1+' if not overlapping else r'(?=(.{'  + str(kmer) + r',})\1+)'
 
-    elif kmer == 0 and times != 0:
+    elif (kmer == 0 or kmer == 1) and times != 0:
 
         my_regex = r'(.+?)\1{' + str(times-1) + r',}' if not overlapping else r'(?=(.+?)\1{' + str(times-1) + r',})'
 
-    elif kmer != 0 and times != 0:
+    elif (kmer != 0 and kmer != 1) and times != 0:
 
         my_regex = r'(.{'  + str(kmer) + r',})\1{' + str(times-1) + r',}' if not overlapping else r'(?=(.{'  + str(kmer) + r',})\1{' + str(times-1) + r',})'
 
