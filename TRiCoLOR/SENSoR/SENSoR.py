@@ -200,6 +200,8 @@ def run(parser, args):
 
 					subprocess.check_call(['bedops', '-d', os.path.abspath(args.output + '/' + args.label + '.merged.bed'), os.path.abspath(args.output + '/exclude.srt.bed')],stdout=excludeout, stderr=open(os.devnull, 'wb'))
 
+
+				logging.info('Excluded regions from ' + args.exclude)
 				os.remove(os.path.abspath(args.output + '/' + args.label + '.merged.bed'))
 				os.rename(os.path.abspath(args.output + '/' + args.label + '.merged.bed.tmp'),os.path.abspath(args.output + '/' + args.label + '.merged.bed'))
 
