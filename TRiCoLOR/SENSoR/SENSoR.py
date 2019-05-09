@@ -9,7 +9,6 @@ import itertools
 from operator import itemgetter
 from multiprocessing import Process
 from shutil import which
-import timeit
 import logging
 import subprocess
 
@@ -24,7 +23,7 @@ import numpy as np
 def run(parser, args):
 
 
-	if not os.path.exists(os.path.abspath(args.output)):
+	if not os.path.exists(os.path.abspath(args.output)): #folder does not exist
 
 		try:
 
@@ -32,144 +31,187 @@ def run(parser, args):
 
 		except:
 
-			print('It was not possible to create the results folder. Specify a path for which you have write permissions')
+			print('Cannot create the output folder') #no write permission, probably			
 			sys.exit(1)
 
 	else: #path already exists
 
-		if not os.access(os.path.abspath(args.output),os.W_OK): #path exists but no write permissions on that folder
+		if not os.access(os.path.abspath(args.output),os.W_OK): #folder exists but no write permissions
 
-			print('You do not have write permissions on the directory in which results will be stored. Specify a folder for which you have write permissions')
+			print('Missing write permissions on the output folder')			
 			sys.exit(1)
 			
-		elif os.listdir(os.path.abspath(args.output)): #path exists and is not empty
+		elif os.listdir(os.path.abspath(args.output)): #folder exists but isn't empty. Do not overwrite results.
 
-			print('Output folder is not empty. Specify another output folder or clean the chosen one.')
+			print('The output folder is not empry. Specify another output folder or clean the previsouly chosen')
 			sys.exit(1)
 			
+
 	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR_SENSoR.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-
 
 	external_tools=['samtools', 'bedops']
 
-	for tools in external_tools:
+	for tools in external_tools: #this tools are required
 
 		if which(tools) is None:
 
-			logging.error(tools + ' was not found as an executable command. Install ' + tools + ' and re-run TRiCoLOR SENSoR')
+			logging.error(tools + ' cannot be executed. Install ' + tools + ' and re-run TRiCoLOR SENSoR')
 			sys.exit(1)
 
-	#check inputs validity
+	#check all inputs
 
-	try:
+	bams=args.bamfile[0]
 
-		subprocess.check_call(['samtools','quickcheck', os.path.abspath(args.bamfile1)],stderr=open(os.devnull, 'wb'))
+	if len(bams) > 2:
 
-	except:
-
-		logging.error('.bam file 1 does not exist, is not readable or is not a valid .bam file')
-		sys.exit(1)
+		logging.error('TRiCoLOR supports haploid and diploid genomes only')
 
 
-	try:
-
-		subprocess.check_call(['samtools','quickcheck',os.path.abspath(args.bamfile2)],stderr=open(os.devnull, 'wb'))
-		
-
-	except:
-
-		logging.error('.bam file 2 does not exist, is not readable or is not a valid .bam file')
-		sys.exit(1)
-
-
-	if not os.path.exists(os.path.abspath(args.bamfile1 + '.bai')):
-
-		logging.info('Creating index for .bam file 1, as it was not found in folder...')
+	for bam in bams:
 
 		try:
 
-			subprocess.check_call(['samtools', 'index', os.path.abspath(args.bamfile1)])
+			subprocess.check_call(['samtools','quickcheck', os.path.abspath(bam)],stderr=open(os.devnull, 'wb'))
 
 		except:
 
-			logging.error('.bam file 1 could not be indexed')
+			logging.error('BAM ' + bam + ' does not exist, is not readable or is not a valid BAM')
 			sys.exit(1)
 
 
-	if not os.path.exists(os.path.abspath(args.bamfile2 + '.bai')):
+		if not os.path.exists(os.path.abspath(bam + '.bai')):
 
-		logging.info('Creating index for .bam file 2, as it was not found in folder...')
+			logging.warning('Missing index for BAM ' + bam + '. Creating ...')
 
-		try:
+			try:
 
-			subprocess.check_call(['samtools', 'index', os.path.abspath(args.bamfile2)])
+				subprocess.check_call(['samtools', 'index', os.path.abspath(args.bamfile1)], stderr=open(os.devnull, 'wb'))
 
-		except:
+			except:
 
-			logging.error('.bam file 2 could not be indexed')
-			sys.exit(1)
-
-	start=timeit.default_timer()
-	logging.info('Analysis starts now')
+				logging.error('BAM ' + bam + ' could not be indexed')
+				sys.exit(1)
 
 
-	try:
+	logging.info('Scansize: ' + str(args.scansize))
+	logging.info('Entropy treshold: ' + str(args.entropy))
+	logging.info('Call treshold: ' + str(args.call))
+	logging.info('Entropy drops treshold: ' + str(args.length))
+	logging.info('Ploidy: ' + str(len(bams)))
+	logging.info('Cores: ' + str(len(bams)))
 
-		runInParallel(BScanner, (args.bamfile1, os.path.abspath(args.output + '/' + args.label + '_hap1.bed'), args.scansize, args.entropytreshold, args.calltreshold, args.lengthtreshold),(args.bamfile2, os.path.abspath(args.output + '/' + args.label + '_hap2.bed'), args.scansize, args.entropytreshold, args.calltreshold,args.lengthtreshold))
+	if args.chromosomes is None:
 
-	except:
-
-		logging.exception('Something went wrong during the scanning process. Log is attached below')
-		sys.exit(1)
-
-
-	end=timeit.default_timer()
-	elapsed=(end-start)/60
-
-	logging.info('.bam files scanned in ' + str(elapsed) + ' minutes')
-
-
-	with open(os.path.abspath(args.output + '/' + args.label + '_hap1.srt.bed'), 'w') as srtbed1:
-	
-		subprocess.call(['sort-bed', os.path.abspath(args.output + '/' + args.label + '_hap1.bed')],stdout=srtbed1)
-
-
-	with open(os.path.abspath(args.output + '/' + args.label + '_hap2.srt.bed'), 'w') as srtbed2:
-	
-		subprocess.call(['sort-bed', os.path.abspath(args.output + '/' + args.label + '_hap2.bed')],stdout=srtbed2)
-
-
-	os.remove(os.path.abspath(args.output + '/' + args.label + '_hap1.bed')) #remove unsorted
-	os.remove(os.path.abspath(args.output + '/' + args.label + '_hap2.bed')) #remove unsorted
-
-
-	with open(os.path.abspath(args.output + '/' + args.label + '.merged.bed'), 'w') as bedout:
-
-		subprocess.call(['bedops', '-m', os.path.abspath(args.output + '/' + args.label + '_hap1.srt.bed'), os.path.abspath(args.output + '/' + args.label + '_hap2.srt.bed')], stdout=bedout)
-
-
-	os.remove(os.path.abspath(args.output + '/' + args.label + '_hap1.srt.bed')) #remove un-merged
-	os.remove(os.path.abspath(args.output + '/' + args.label + '_hap2.srt.bed')) #remove un-merged
-
-
-	if args.genometype is None:
-
-		logging.info('.bed file ready')
-		logging.info('Done')
+		logging.info('Chromosomes: all')
 
 	else:
 
-		data_path=os.path.abspath(os.path.dirname(__file__) + '/data') #path to data for filtering
+		logging.info('Chromosomes: ' + '-'.join(x for x in args.chromosomes[0]))
 
 
-		with open(os.path.abspath(args.output + '/' + args.label + '.filtered.merged.bed'), 'w') as bedout:
 
-			subprocess.call(['bedops', '-d', os.path.abspath(args.output + '/' + args.label + '.merged.bed'), os.path.abspath(data_path + '/' + args.genometype + '.srt.bed')], stdout=bedout)
 
-		os.remove(os.path.abspath(args.output + '/' + args.label + '.merged.bed'))
+	logging.info('Scanning ...')
 
-		logging.info('Filtered .bed file ready')
+
+	if len(bams) == 1:
+
+		try:
+
+			BScanner(bams[0], args.chromosomes, os.path.abspath(args.output + '/' + args.label + '.H1.bed'), args.scansize, args.entropy, args.call, args.length)
+
+		except:
+
+			logging.exception('Unexpected error while scanning. Log is below')
+			sys.exit(1)
+
 		logging.info('Done')
+
+		logging.info('Writing final BED to output folder')
+
+
+		with open(os.path.abspath(args.output + '/' + args.label + '.merged.srt.bed'), 'w') as srtbed1:
+		
+			subprocess.call(['sort-bed', os.path.abspath(args.output + '/' + args.label + '.H1.bed')],stdout=srtbed1, stderr=open(os.devnull, 'wb'))
+
+		os.remove(os.path.abspath(args.output + '/' + args.label + '.H1.bed')) #remove unsorted
+
+
+	else:
+
+
+		try:
+
+			runInParallel(BScanner, (bams[0], args.chromosomes, os.path.abspath(args.output + '/' + args.label + '.H1.bed'), args.scansize, args.entropy, args.call, args.length),(bams[1], args.chromosomes, os.path.abspath(args.output + '/' + args.label + '.H2.bed'), args.scansize, args.entropy, args.call,args.length))
+
+		except:
+
+			logging.exception('Unexpected error while scanning. Log is below')
+			sys.exit(1)
+
+
+		logging.info('Done')
+
+		logging.info('Writing final BED to output folder')
+
+
+		with open(os.path.abspath(args.output + '/' + args.label + '.H1.srt.bed'), 'w') as srtbed1:
+		
+			subprocess.call(['sort-bed', os.path.abspath(args.output + '/' + args.label + '.H1.bed')],stdout=srtbed1, stderr=open(os.devnull, 'wb'))
+
+
+		with open(os.path.abspath(args.output + '/' + args.label + '.H2.srt.bed'), 'w') as srtbed2:
+		
+			subprocess.call(['sort-bed', os.path.abspath(args.output + '/' + args.label + '.H2.bed')],stdout=srtbed2, stderr=open(os.devnull, 'wb'))
+
+
+		os.remove(os.path.abspath(args.output + '/' + args.label + '.H1.bed')) #remove unsorted
+		os.remove(os.path.abspath(args.output + '/' + args.label + '.H2.bed')) #remove unsorted
+
+
+		with open(os.path.abspath(args.output + '/' + args.label + '.merged.bed'), 'w') as bedout:
+
+			subprocess.call(['bedops', '-m', os.path.abspath(args.output + '/' + args.label + '.H1.srt.bed'), os.path.abspath(args.output + '/' + args.label + '.H2.srt.bed')], stderr=open(os.devnull, 'wb'), stdout=bedout)
+
+
+		os.remove(os.path.abspath(args.output + '/' + args.label + '.H1.srt.bed')) #remove unmerged
+		os.remove(os.path.abspath(args.output + '/' + args.label + '.H2.srt.bed')) #remove unmerged
+
+
+	if args.exclude is None:
+
+		logging.info('No region to exclude')
+
+	else:
+
+		if not os.path.exists(os.path.abspath(args.exclude)):
+
+			logging.warning('BED to -x/--exclude does not exists. No region excluded')
+
+		else:
+
+			try:
+
+				with open(os.path.abspath(args.output + '/exclude.srt.bed'), 'w') as ebedout:
+
+					subprocess.check_call(['sort-bed', os.path.abspath(args.exclude)],stdout=ebedout, stderr=open(os.devnull, 'wb'))
+
+				with open(os.path.abspath(args.output + '/' + args.label + '.merged.bed.tmp'), 'w') as excludeout:
+
+					subprocess.check_call(['bedops', '-d', os.path.abspath(args.output + '/' + args.label + '.merged.bed'), os.path.abspath(args.output + '/exclude.srt.bed')],stdout=excludeout, stderr=open(os.devnull, 'wb'))
+
+				os.remove(os.path.abspath(args.output + '/' + args.label + '.merged.bed'))
+				os.rename(os.path.abspath(args.output + '/' + args.label + '.merged.bed.tmp'),os.path.abspath(args.output + '/' + args.label + '.merged.bed'))
+
+
+			except:
+
+				logging.exception('Unexpected error while excluding regions from final BED. Log is below')
+				sys.exit(1)
+
+
+	logging.info('Done')
+
 
 
 
@@ -197,7 +239,8 @@ def entropy(string): #Shannon entropy scanner
 	return entropy
 
 
-def modifier(coordinates): #fast way to remove None and substitute with closest number in list. Mantain 0-based coordinates
+
+def modifier(coordinates): #fast way to remove None (soft-clipped coordinates) and substitute with closest number in list. Mantain 0-based coordinates
 
 	start = next(ele for ele in coordinates if ele is not None)
 
@@ -273,25 +316,26 @@ def merge_intervals(intervals): #merge overlapping tuples in the same list
 
 
 
-def BScanner(bamfilein,bedfileout,scansize,entropy_treshold,call_treshold, dist_treshold): #entropy treshold was trained for a scansize of 20 bp: call treshold is the number of supporting entropy drop to consider this drop as true
+def BScanner(bamfilein, chromosomes, bedfileout,scansize,entropy_treshold,call_treshold, dist_treshold):
 
-	bamfile=pysam.AlignmentFile(bamfilein,'rb') #open the bamfile
+
+	bamfile=pysam.AlignmentFile(bamfilein,'rb')
 	header=bamfile.header
 	chromosomes_info=list(header.items())[1][1]
-
-	with open (bedfileout, 'w') as fin:
-
-		fin.write('#Bed file with regions in which an entropy lower than ' + str(entropy_treshold) + ' was found at least ' + str(call_treshold) + ' times. Minimum size of repetitive region is ' + str(dist_treshold) + '. Intervals overlapping in +- 500 bp range are merged' + '\n')
-
-	classic_chrs = ['chr{}'.format(x) for x in list(range(1,23)) + ['X', 'Y']]
-
 	chrom_dict=dict()
 
 	for infos in chromosomes_info:
 
-		if infos['SN'] in classic_chrs:
+		if not chromosomes is None:
+
+			if infos['SN'] in chromosomes[0]:
+
+				chrom_dict[infos['SN']]=infos['LN']
+
+		else:
 
 			chrom_dict[infos['SN']]=infos['LN']
+
 
 	for chromosome in chrom_dict.keys():
 
@@ -299,7 +343,7 @@ def BScanner(bamfilein,bedfileout,scansize,entropy_treshold,call_treshold, dist_
 
 		for reads in bamfile.fetch(chromosome):
 
-			if not reads.is_unmapped and not reads.is_secondary and not reads.is_supplementary and reads.mapping_quality >= 10: #exclude reads with mapping quality really low
+			if not reads.is_unmapped and not reads.is_secondary and not reads.is_supplementary:
 
 				coordinates=modifier(reads.get_reference_positions(full_length=True))
 				hits=entropy_finder(reads.seq,coordinates,scansize,entropy_treshold)
@@ -325,7 +369,7 @@ def BScanner(bamfilein,bedfileout,scansize,entropy_treshold,call_treshold, dist_
 
 		intervals=merge_intervals(intervals)
 
-		with open (bedfileout, 'a') as fin:
+		with open (bedfileout, 'w') as fin:
 
 			for inter in intervals:
 
