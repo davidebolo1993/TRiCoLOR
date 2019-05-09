@@ -205,7 +205,6 @@ def runInParallel(function, *arguments):
 		p.join()
 
 
-
 def entropy(string): #Shannon entropy scanner
 
 	prob = [float(string.count(c)) / len(string) for c in dict.fromkeys(list(string))]
