@@ -108,9 +108,6 @@ def run(parser, args):
 
 		logging.info('Chromosomes: ' + '-'.join(x for x in args.chromosomes[0]))
 
-
-
-
 	logging.info('Scanning ...')
 
 
