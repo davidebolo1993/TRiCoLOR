@@ -12,7 +12,7 @@ from shutil import which
 import logging
 import subprocess
 
-# additional libraries
+# additional modules
 
 import pysam
 import numpy as np
