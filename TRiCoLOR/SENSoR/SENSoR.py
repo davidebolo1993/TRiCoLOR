@@ -196,20 +196,22 @@ def run(parser, args):
 
 					subprocess.check_call(['sort-bed', os.path.abspath(args.exclude)],stdout=ebedout, stderr=open(os.devnull, 'wb'))
 
+			except:
+
+				logging.warning('Incorrect format for BED to -x/--exclude. No region excluded')
+
+
+			if os.path.exists(os.path.abspath(args.output + '/exclude.srt.bed')):
+
 				with open(os.path.abspath(args.output + '/' + args.label + '.merged.bed.tmp'), 'w') as excludeout:
 
-					subprocess.check_call(['bedops', '-d', os.path.abspath(args.output + '/' + args.label + '.merged.bed'), os.path.abspath(args.output + '/exclude.srt.bed')],stdout=excludeout, stderr=open(os.devnull, 'wb'))
+					subprocess.call(['bedops', '-d', os.path.abspath(args.output + '/' + args.label + '.merged.bed'), os.path.abspath(args.output + '/exclude.srt.bed')],stdout=excludeout, stderr=open(os.devnull, 'wb'))
 
 
 				logging.info('Excluded regions from ' + args.exclude)
 				os.remove(os.path.abspath(args.output + '/' + args.label + '.merged.bed'))
 				os.rename(os.path.abspath(args.output + '/' + args.label + '.merged.bed.tmp'),os.path.abspath(args.output + '/' + args.label + '.merged.bed'))
 
-
-			except:
-
-				logging.exception('Unexpected error while excluding regions from final BED. Log is below')
-				sys.exit(1)
 
 
 	logging.info('Done')
