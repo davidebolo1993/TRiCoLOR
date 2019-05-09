@@ -24,7 +24,7 @@ def main():
 	algorithm.add_argument('-s', '--scansize', type=int, help='scansize (#bps) for BAM scanning [20]', metavar='',default=20)
 	algorithm.add_argument('-e', '--entropy', type=float, help='Shannon entropy treshold [1.3]', metavar='',default=1.3)
 	algorithm.add_argument('-c', '--call', type=int, help='minimum number of reads supporting each entropy drop [5]', metavar='',default=5)
-	algorithm.add_argument('-l', '--length', type=int, help='minimum number of consecutive entropy drops [20]', metavar='', default=20)
+	algorithm.add_argument('-l', '--length', type=int, help='minimum length of the entropy drops [20]', metavar='', default=20)
 
 	filters=parser_sensor.add_argument_group('BED for output filtering')
 
