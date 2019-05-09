@@ -95,8 +95,8 @@ def run(parser, args):
 
 	logging.info('Scansize: ' + str(args.scansize))
 	logging.info('Entropy treshold: ' + str(args.entropy))
-	logging.info('Call treshold: ' + str(args.call))
-	logging.info('Entropy drops treshold: ' + str(args.length))
+	logging.info('Minimum suppporting calls: ' + str(args.call))
+	logging.info('Minimum entropy drops length: ' + str(args.length))
 	logging.info('Ploidy: ' + str(len(bams)))
 	logging.info('Cores: ' + str(len(bams)))
 
