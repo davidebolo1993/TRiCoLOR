@@ -8,36 +8,35 @@ def main():
 
 	parser = argparse.ArgumentParser(prog='TRiCoLOR', description='''TRiCoLOR: Tandem Repeats Caller fOr LOng Reads''', epilog='''This program was developed by Davide Bolognini and Tobias Rausch at the European Molecular Biology Laboratory/European Bioinformatic Institute (EMBL/EBI)''', formatter_class=CustomFormat) 
 
-	subparsers = parser.add_subparsers(title='modules', dest='command', metavar='SENSoR, REFER') #two submodules
+	subparsers = parser.add_subparsers(title='modules', dest='command', metavar='SENSoR, REFER, ApP') #three submodules
 
-	## SENSoR ##Shannon Entropy scanner for haplotype-resolved .bam files
+	## SENSoR ##
 
-	parser_sensor = subparsers.add_parser('SENSoR', help='Shannon ENtropy ScanneR. Scan haplotype-resolved .bam files, calculate Shannon entropy along chromosomes and identify putative repetitive regions; output is a .bed file with putative repetitive regions')
+	parser_sensor = subparsers.add_parser('SENSoR', help='Shannon ENtropy ScanneR. Scan haplotype-resolved BAM, calculate Shannon entropy along chromosomes and output putative repetitive regions in BED')
 
 	required = parser_sensor.add_argument_group('Required I/O arguments')
 
-	required.add_argument('-bam1', '--bamfile1', help='haplotype-resolved .bam file, first haplotype',metavar='.bam',required=True)
-	required.add_argument('-bam2', '--bamfile2', help='haplotype-resolved .bam file, second haplotype', metavar='.bam',required=True)
-	required.add_argument('-O', '--output', metavar='folder', help='where the resulting .bed file will be saved',required=True)
+	required.add_argument('-b', '--bamfile', help='one or two haplotype-resolved BAM', metavar='BAM', nargs='+', action='append', required=True)
+	required.add_argument('-o', '--output', metavar='folder', help='output folder',required=True)
 
-	algorithm = parser_sensor.add_argument_group('Shannon entropy scanner parameters')
+	algorithm = parser_sensor.add_argument_group('Parameters for BAM scanning')
 
-	algorithm.add_argument('-s', '--scansize', type=int, help='scansize (bps) to use when scanning .bamfiles. Lower the scansize, higher the resolution,more it takes to scan [20]', metavar='',default=20)
-	algorithm.add_argument('-et', '--entropytreshold', type=int, help='entropy treshold to call for repetition [1.3]', metavar='',default=1.3)
-	algorithm.add_argument('-ct', '--calltreshold', type=float, help='number of entropy drops needed to call for putative repetitions in final .bed [5]', metavar='',default=5)
-	algorithm.add_argument('-lt', '--lengthtreshold', type=int, help='minimum length for the putative repetitive region to be called in final .bed. Use 0 for any [10]', metavar='', default=10)
+	algorithm.add_argument('-s', '--scansize', type=int, help='scansize (#bps) for BAM scanning [20]', metavar='',default=20)
+	algorithm.add_argument('-e', '--entropy', type=float, help='Shannon entropy treshold [1.3]', metavar='',default=1.3)
+	algorithm.add_argument('-c', '--call', type=int, help='minimum number of reads supporting each entropy drop [5]', metavar='',default=5)
+	algorithm.add_argument('-l', '--length', type=int, help='minimum number of consecutive entropy drops [20]', metavar='', default=20)
 
-	genome = parser_sensor.add_argument_group('Filter out centromeres and telomeres from final .bed file')
+	filters=parser_sensor.add_argument_group('BED for output filtering')
 
-	genome.add_argument('-gt', '--genometype', help='Filter regions based on hg38 or hg19. If not provided, do not filter [None]', metavar='',default=None, choices=['hg38', 'hg19', None])  
+	filters.add_argument('-x', '--exclude', help='BED with propietary regions to exclude from SENSoR BED [None]', metavar='',default=None)  
 
-	additionals = parser_sensor.add_argument_group('Additional arguments')
+	additionals = parser_sensor.add_argument_group('Additional parameters')
 
-
-	additionals.add_argument('-l','--label', help='label to identify the output',metavar='',default='Sample')
-
+	additionals.add_argument('--label', help='label to identify the output [sample]',metavar='',default='sample')
+	additionals.add_argument('-chrs', '--chromosomes', help='scan BAM only for chromosomes provided by user. If None, scan BAM using chromosomes in BAM header.', metavar='',nargs='+', action='append', default=None)
 
 	parser_sensor.set_defaults(func=run_subtool)
+
 
 	## REFER ## #REpeats FindER
 
