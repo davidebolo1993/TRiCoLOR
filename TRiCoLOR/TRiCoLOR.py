@@ -1,5 +1,7 @@
 #!/usr/bin/python env
 
+#python 3 standard library
+
 import argparse
 from argparse import HelpFormatter
 
@@ -10,6 +12,7 @@ def main():
 
 	subparsers = parser.add_subparsers(title='modules', dest='command', metavar='SENSoR, REFER, ApP') #three submodules
 
+	
 	## SENSoR ##
 
 	parser_sensor = subparsers.add_parser('SENSoR', help='Shannon ENtropy ScanneR. Scan haplotype-resolved BAM, calculate Shannon entropy along chromosomes and output putative repetitive regions in BED')
@@ -37,7 +40,7 @@ def main():
 
 	parser_sensor.set_defaults(func=run_subtool)
 
-
+	
 	## REFER ## #REpeats FindER
 
 	parser_finder = subparsers.add_parser('REFER', help='REpeats FindER. Search repetitions in regions from .bed file using a regular-expression approach modified to allow errors; outputs are .bed files with repetitions for each haplotype and reference and a standard .vcf file')
