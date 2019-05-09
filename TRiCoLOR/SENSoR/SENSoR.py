@@ -37,11 +37,16 @@ def run(parser, args):
 
 	else: #path already exists
 
-		if not os.access(os.path.dirname(os.path.abspath(args.output)),os.W_OK): #path exists but no write permissions on that folder
+		if not os.access(os.path.abspath(args.output),os.W_OK): #path exists but no write permissions on that folder
 
 			print('You do not have write permissions on the directory in which results will be stored. Specify a folder for which you have write permissions')
 			sys.exit(1)
+			
+		elif os.listdir(os.path.abspath(args.output)): #path exists and is not empty
 
+			print('Output folder is not empty. Specify another output folder or clean the chosen one.')
+			sys.exit(1)
+			
 	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR_SENSoR.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
 
