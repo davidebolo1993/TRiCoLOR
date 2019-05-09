@@ -369,7 +369,7 @@ def BScanner(bamfilein, chromosomes, bedfileout,scansize,entropy_treshold,call_t
 
 		intervals=merge_intervals(intervals)
 
-		with open (bedfileout, 'w') as fin:
+		with open (bedfileout, 'a') as fin:
 
 			for inter in intervals:
 
