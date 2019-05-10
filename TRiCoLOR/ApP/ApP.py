@@ -8,17 +8,15 @@ import math
 import logging
 from collections import defaultdict
 from shutil import which
-import timeit
 import sys
 import subprocess
 import csv
 
-# additional libraries
+# additional modules
 
 import pyfaidx
 import pysam
 import pandas as pd
-
 import plotly.plotly as py
 import plotly.graph_objs as go
 from plotly.offline import plot
@@ -34,15 +32,22 @@ def run(parser, args):
 
 		except:
 
-			print('It was not possible to create the results folder. Specify a path for which you have write permissions')
+			print('Cannot create the output folder')
 			sys.exit(1)
 
 	else: #path already exists
 
 		if not os.access(os.path.dirname(os.path.abspath(args.output)),os.W_OK): #path exists but no write permissions on that folder
 
-			print('You do not have write permissions on the directory in which results will be stored. Specify a folder for which you have write permissions')
+			print('Missing write permissions on the output folder')
 			sys.exit(1)
+
+
+		elif os.listdir(os.path.abspath(args.output)): #folder exists but isn't empty. Do not overwrite results.
+
+			print('The output folder is not empty. Specify another output folder or clean the previsouly chosen')
+			sys.exit(1)
+
 
 
 	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR_ApP.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -59,75 +64,54 @@ def run(parser, args):
 
 	except:
 
-		logging.error('Reference file does not exist, is not readable or is not a valid .fasta file')
+		logging.error('Reference file does not exist, is not readable or is not a valid FASTA')
 		sys.exit(1)
 
 
 	if which('samtools') is None:
 
-		logging.error('samtools was not found as an executable command. Install samtools and re-run TRiCoLOR ApP')
+		logging.error('samtools cannot be executed. Install samtools and re-run TRiCoLOR ApP')
 		sys.exit(1)
 
 
+	bams=args.bamfile[0]
 
-	#check if the two .bam files exist, are readable and are valid .bam files
+	if len(bams) > 2:
 
-
-	try:
-
-		subprocess.call(['samtools','quickcheck',os.path.abspath(args.mergedbamfile1)],stderr=open(os.devnull, 'wb'))
-
-	except:
-
-		logging.error('merged.bam file 1 does not exist, is not readable or is not a valid .bam file')
-		sys.exit(1)
+		logging.error('TRiCoLOR supports haploid and diploid genomes only')
 
 
-	try:
-
-		subprocess.check_call(['samtools','quickcheck',os.path.abspath(args.mergedbamfile2)],stderr=open(os.devnull, 'wb'))
-		
-	except:
-
-		logging.error('merged.bam file 2 does not exist, is not readable or is not a valid .bam file')
-		sys.exit(1)
-
-
-	if not os.path.exists(os.path.abspath(args.mergedbamfile1 + '.bai')):
-
-		logging.info('Creating index for merged.bam file 1, as it was not found in folder...')
+	for bam in bams:
 
 		try:
 
-			subprocess.check_call(['samtools', 'index', os.path.abspath(args.mergedbamfile1)],stderr=open(os.devnull, 'wb'))
+			subprocess.check_call(['samtools','quickcheck', os.path.abspath(bam)],stderr=open(os.devnull, 'wb'))
 
 		except:
 
-			logging.error('merged.bam1 file could not be indexed')
+			logging.error('BAM ' + bam + ' does not exist, is not readable or is not a valid BAM')
 			sys.exit(1)
 
 
-	if not os.path.exists(os.path.abspath(args.mergedbamfile2 + '.bai')):
+		if not os.path.exists(os.path.abspath(bam + '.bai')):
 
-		logging.info('Creating index for merged.bam file 2, as it was not found in folder...')
-
-		try:
-
-			subprocess.check_call(['samtools', 'index', os.path.abspath(args.mergedbamfile2)],stderr=open(os.devnull, 'wb'))
-
-		except:
-
-			logging.error('merged.bam2 file could not be indexed')
+			logging.error('Missing index for BAM ' + bam + '. Not a BAM generated with REFER')
 			sys.exit(1)
 
-	start_t=timeit.default_timer()
 
-	logging.info('Analysis starts now')
+	logging.info('Ploidy: ' + str(len(bams)))
 
 
 	b_in=Bed_Reader(args.bedfile)
 	it_ = iter(b_in)
 	labels_set=set()
+
+
+	logging.info('Analyzing ...')
+	logging.info('Regions in BED: ' + str(b_in.length()))
+
+	skippedlabel=0
+	skippederror=0
 
 	for i in range(b_in.length()):
 
@@ -135,23 +119,23 @@ def run(parser, args):
 
 		if label in labels_set:
 
-			logging.warning('Cannot over-write a plot with the same label ' + label + '. Skipped')
-			continue
-
+			logging.warning('Skipped region with duplicated label')
+			skippedlabel+=1
+			
 		else:
 
 			try:
 
-				Generate_Alignment_ToPlot(args.genome,args.mergedbamfile1,args.mergedbamfile2,chromosome,start,end,args.genomebed,args.hap1bed,args.hap2bed,label,args.output)
+				Generate_Alignment_ToPlot(args.genome,bams,chromosome,start,end,args.genomebed,args.haplotypebed,args.output)
 
 			except:
 
-				logging.exception('Something went wrong for region ' + chromosome + ':' + str(start) + '-' +str(end) + ". Log is attached below:")
+				logging.exception('Unexpected error while analyzing region ' + chromosome + ':' + str(start) + '-' +str(end) + ". Log is below")
+				skippederror+=1
 
-	end_t=timeit.default_timer()
-	elapsed=(end_t-start_t)/60 #convert time to minutes
 
-	logging.info('Plots generated in ' + str(elapsed) + ' minutes')
+	logging.info('Regions with duplicated labels skipped: ' + str(skippedlabel))
+	logging.info('Regions with unexpected errors: ' + str(skippederror))
 	logging.info('Done')
 
 
@@ -173,7 +157,7 @@ class Bed_Reader():
 
 					if len(line) < 4:
 
-						logging.error('.bed given to TRiCoLOR ApP -bed/--bedfile must be a .bed file with at least 4 fields: chromosome, start, end, label')
+						logging.error('BED to TRiCoLOR ApP -bed/--bedfile must contain at least: chromosome, start, end, label (other fields are ignored)')
 						sys.exit(1)
 
 					else:
@@ -203,7 +187,7 @@ def Get_Alignment_Positions(bamfile,chromosome,start,end):
 		end=start+1
 
 
-	for read in BamFile.fetch(chromosome, start-1, end-1):
+	for read in BamFile.fetch(chromosome, start-1, end-1): #fetch on zero based positions
 
 		if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
 
@@ -211,6 +195,7 @@ def Get_Alignment_Positions(bamfile,chromosome,start,end):
 			seq=read.seq
 
 	return coords,seq
+
 
 
 def list_duplicates(list_of_seq):
@@ -299,11 +284,42 @@ def Modifier(list_of_coord,seq):
 
 
 
-def Generate_Alignment_ToPlot(reference_fasta,hap1_bam,hap2_bam,chromosome,start,end,ref_table,hap1_table,hap2_table,label,out):
+def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_table,hap_table,label,out):
 
-	# deal with Haplo1 and Haplo2
-	bam1_coords,bam1_seq=Get_Alignment_Positions(hap1_bam,chromosome,start,end)
-	bam2_coords,bam2_seq=Get_Alignment_Positions(hap2_bam,chromosome,start,end)
+
+
+	if len(hap_bam) == 1:
+
+		bam1_coords,bam1_seq=Get_Alignment_Positions(hap_bam[0],chromosome,start,end)
+		bam2_coords,bam2_seq=[],[]
+
+
+	else:
+
+		bam1_coords,bam1_seq=Get_Alignment_Positions(hap_bam[0],chromosome,start,end)
+		bam2_coords,bam2_seq=Get_Alignment_Positions(hap_bam[1],chromosome,start,end)
+
+
+
+	if hap_table is None:
+
+		hap1_table = None
+		hap2_table = None
+
+
+	else:
+
+		if len(hap_table[0]) == 1:
+
+			hap1_table = hap_table[0][0]
+			hap2_table = None
+
+		else:
+
+
+			hap1_table = hap_table[0][0]
+			hap2_table = hap_table[0][1]
+
 
 
 	if len(bam1_seq) == 0 and len(bam2_seq) == 0:
