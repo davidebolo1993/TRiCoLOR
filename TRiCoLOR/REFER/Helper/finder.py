@@ -64,7 +64,7 @@ def nestover(SortedIntervals, string, coords):
 							extended.remove(extended[-1])
 							extended.append((m2,new_s, new_e, count2))
 
-						else: #extending did not increase the number of repetitions, keep original
+						else: #extending did not increase the number of repetitions, keep original for second
 
 							extended.remove(extended[-1])
 							extended.append((m2,s_,e_, c2))
@@ -77,7 +77,7 @@ def nestover(SortedIntervals, string, coords):
 							extended.remove(extended[-1])
 							extended.append((m1,new_s, new_e, count1))
 
-						else: #extending did not increase the number of repetitions, keep original
+						else: #extending did not increase the number of repetitions, keep original interval for first
 
 							pass
 
