@@ -30,55 +30,88 @@ def nestover(SortedIntervals, string, coords):
             string_s,string_e = bisect_left(coords,s_), bisect_right(coords, e_)
             num=string[string_s:string_e].count(SortedIntervals[i][0])
             extended.append((SortedIntervals[i][0], s_, e_, num))
-
-            i+=1
         
 
         else:
 
+            c1=extended[-1][3]
+
             if extended[-1][2] >= SortedIntervals[i][1]: #the two intervals overlap
 
+                lenprevious=extended[-1][2]-extended[-1][1] #length previous interval
 
-                s1,e1=bisect_left(coords,extended[-1][1]), bisect_right(coords,extended[-1][2])
-                st1=string[s1:e1]
-                c1=st1.count(extended[-1][0])
+                if extended[-1][2] - SortedIntervals[i][1] >= round(lenprevious/2): #big overlap, check if we want to keep both or just one
 
-                m1=extended[-1][0]
-                m2=SortedIntervals[i][0]
+                    m1=extended[-1][0]
+                    m2=SortedIntervals[i][0]
 
-                new_s,new_e=min(extended[-1][1],SortedIntervals[i][1]), max(extended[-1][2],SortedIntervals[i][2])
-
-                string_s,string_e = bisect_left(coords,new_s), bisect_right(coords, new_e)
-
-                st_=string[string_s:string_e]
-
-                rank1,count1=Markovchain(m1,st_),st_.count(m1)
-                rank2,count2=Markovchain(m2,st_),st_.count(m2)
+                    new_s,new_e=min(extended[-1][1],SortedIntervals[i][1]), max(extended[-1][2],SortedIntervals[i][2])
+                    string_s,string_e = bisect_left(coords,new_s), bisect_right(coords, new_e)
+                    st_=string[string_s:string_e]
+                    
+                    rank1,count1=Markovchain(m1,st_),st_.count(m1)
+                    rank2,count2=Markovchain(m2,st_),st_.count(m2)
 
 
-                if rank2 > rank1:
-
-                    extended.remove(extended[-1])
-                    extended.append((m2,new_s, new_e, count2))
-
-
-                else:
-
-                    if c1 < count1:
+                    if rank2 > rank1: #rank2 higher
 
                         extended.remove(extended[-1])
-                        extended.append((m1,new_s, new_e, count1))
+                        extended.append((m2,SortedIntervals[i][1], SortedIntervals[i][2], count2))
 
-                    #else keep the existent
 
-                i+=1
+                    elif rank2 == rank1: #two ranks are the same.
 
+                        if m2 in m1*2: #if rep in second interval is the same of rep in first interval but simply rotated keep interval with more reps
+
+                            if count2 > count1:
+
+                                extended.remove(extended[-1])
+                                extended.append((m2,SortedIntervals[i][1], SortedIntervals[i][2], count2))
+
+                            elif count2 < count1:
+
+                                if c1==count1: #extending does not increment count, keep original:
+
+                                    pass
+
+                                else: #extending can lead only to increase, not deacrease:
+
+                                    extended.remove(extended[-1])
+                                    extended.append((m1,new_s,new_e,count1))
+
+                            else: #counts are equal, try to discriminate on region length;
+
+
+                                if extended[-1][2]-extended[-1][1] >= SortedIntervals[i][2]-SortedIntervals[i][1]:
+
+                                    pass
+
+                                else:
+
+                                    extended.remove(extended[-1])
+                                    extended.append((m2,SortedIntervals[i][1], SortedIntervals[i][2], count2))
+
+                        else: #different reps with same probability, keep both
+
+                            extended.append((m2,new_s, new_e, count2))
+
+
+                    else: #rank1 higher
+
+                        pass
+
+                else: #overlapping region is shorter than treshold. Keep both reps, they will be merged in VCF but motifs will be kept separated
+
+                    s_,e_=SortedIntervals[i][1], SortedIntervals[i][2]
+                    string_s,string_e = bisect_left(coords,s_), bisect_right(coords, e_)
+                    num = string[string_s:string_e].count(SortedIntervals[i][0])
+                    extended.append((SortedIntervals[i][0], s_, e_, num))
+                    
             else:
 
                 if extended[-1][1] <=  SortedIntervals[i][1] and extended[-1][2] >= SortedIntervals[i][2]: #following interval is smaller than previous
 
-                    i+=1     
-                   
+                    pass
 
                 elif extended[-1][2] < SortedIntervals[i][1]: #following does not overlap and is not nested
 
@@ -87,25 +120,26 @@ def nestover(SortedIntervals, string, coords):
                     num = string[string_s:string_e].count(SortedIntervals[i][0])
                     extended.append((SortedIntervals[i][0], s_, e_, num))
 
-                    i+=1
+        i+=1
+
 
     return extended
 
 
 
-def RepeatsFinder(string,kmer,times, maxkmerlength, overlapping): #find non-overlapping or overlapping repetitions in string using the RegEx approach. Times is the lower bound for the number of times a repetition must occur, Kmer is the minimum motif size
+def RepeatsFinder(string,kmer,times, maxkmerlength, overlapping): 
 
     seen=set()
 
-    if (kmer != 0 and kmer != 1) and times == 0:
+    if kmer != 0 and times == 0:
 
         my_regex = r'(.{'  + str(kmer) + r',})\1+' if not overlapping else r'(?=(.{'  + str(kmer) + r',})\1+)'
 
-    elif (kmer == 0 or kmer == 1) and times != 0:
+    elif kmer == 0 and times != 0:
 
         my_regex = r'(.+?)\1{' + str(times-1) + r',}' if not overlapping else r'(?=(.+?)\1{' + str(times-1) + r',})'
 
-    elif (kmer != 0 and kmer != 1) and times != 0:
+    elif kmer != 0 and times != 0:
 
         my_regex = r'(.{'  + str(kmer) + r',})\1{' + str(times-1) + r',}' if not overlapping else r'(?=(.{'  + str(kmer) + r',})\1{' + str(times-1) + r',})'
 
@@ -139,6 +173,11 @@ def Get_Alignment_Positions(bamfilein): #as the consensus sequence is supposed t
 
             coords = read.get_reference_positions(full_length=True)
             seq=read.seq
+
+        else:
+
+            bamfile.close()
+            return coords,seq
 
     bamfile.close()
 
@@ -226,29 +265,6 @@ def Markovchain(motif,string):
 def check_ref(string1, string2): #check if ref_string and test_string are different
 
     return string1 != string2
-
-
-#def not_occur_probability(string, motif): #crude approach to calculate not occuring probability
-
-    #if motif not in string:
-
-        #return 0
- 
-    #r=len(motif)
-    #n=len(string)
-    #occurence_prob=(1/4)**r #probability of k-mer occurence
-    #number_of_locations=n-r+1
-    #not_occurence_p=(1-occurence_prob)**number_of_locations
-
-    #return not_occurence_p
-
-
-#def rank(string,motif): #useful for rank reps in overlapping and clipped regions
-
-    #count=string.count(motif)
-    #reward=not_occur_probability(string, motif)
-
-    #return (count*len(motif))/len(string) + reward, count #rank longer patterns before others: if we see them, they are more likely to be there
 
 
 
