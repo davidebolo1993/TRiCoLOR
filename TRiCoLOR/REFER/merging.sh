@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#merging .bam files without exceeding limit of 1024 open files at time
+#merging .bam files without exceeding limit of 1024 open files at the same time
 
 cd $2
 
@@ -10,4 +10,3 @@ samtools view -bS $3'.merged.sam' > $3'.merged.bam' && rm $3'.merged.sam'
 samtools sort $3'.merged.bam' > $3'.merged.srt.bam'
 rm $3'.merged.bam' && samtools index $3'.merged.srt.bam'
 find . -type f -not -name '*.merged.srt.bam' -not -name '*.merged.srt.bam.bai' -not -name '*.bed' -delete
-
