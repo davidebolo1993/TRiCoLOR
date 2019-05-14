@@ -34,8 +34,7 @@ def main():
 
 	additionals = parser_sensor.add_argument_group('Additional parameters')
 
-	additionals.add_argument('--label', help='label to identify the output [sample]',metavar='',default='sample')
-	additionals.add_argument('-chrs', '--chromosomes', help='scan BAM only for chromosomes provided by user. If None, scan BAM using chromosomes in BAM header.', metavar='',nargs='+', action='append', default=None)
+	additionals.add_argument('-chrs', '--chromosomes', help='scan BAM only for chromosomes provided by user. If None, scan BAM using all chromosomes in BAM header [None]', metavar='',nargs='+', action='append', default=None)
 
 	parser_sensor.set_defaults(func=run_subtool)
 
@@ -49,16 +48,18 @@ def main():
 	required.add_argument('-g','--genome', help='reference genome', metavar='FASTA',required=True)
 	required.add_argument('-bed','--bedfile', help='BED generated with SENSoR or equivalent proprietary BED containing putative repetitive regions', metavar='BED',required=True)
 	required.add_argument('-bam','--bamfile', help='one or two haplotype-resolved BAM',metavar='BAM', nargs='+', action='append', required=True)
-	required.add_argument('-O','--output', help='output folder',metavar='folder',required=True)
+	required.add_argument('-o','--output', help='output folder',metavar='folder',required=True)
 
 	algorithm = parser_finder.add_argument_group('Regex-search parameters')
 
 	algorithm.add_argument('-m','--motif', type=int, help='minimum size of the repetition motif [1]',metavar='',default=1)
 	algorithm.add_argument('-mm','--maxmotif', type=int, help='exclude motifs which size is greater than value [6]',metavar='', default=6)
 	algorithm.add_argument('-t','--times', type=int, help='minimum number of consecutive times the motif must be repeated to be detected [3]',metavar='',default=3)
+	algorithm.add_argument('--overlapping', help='look for overlapping repeated motif', action='store_true')
+	algorithm.add_argument('--precisemotif', help='coherce -m/--motif to find only repetitions with specified motif size', action='store_true')
+	algorithm.add_argument('--precisetimes', help='coherce -t/--times to find only repetitions occuring specified number of times', action='store_true')	
 	algorithm.add_argument('-s','--size', type=int, help='minimum size the repeated region must have to be called [15]',metavar='',default=15)
-	algorithm.add_argument('-o','--overlapping', help='check for overlapping repeated motif',metavar='', action='store_true')
-	algorithm.add_argument('-edit','--editdistance', type=int, help='allowed number of insertions, deletions or substitutions in repetitions [1]',metavar='',default=1)
+	algorithm.add_argument('-edit','--editdistance', type=int, help='allowed number of insertions, deletions or substitutions in repetition [1]',metavar='',default=1)
 
 	utilities = parser_finder.add_argument_group('Coverage treshold')
 
@@ -66,12 +67,13 @@ def main():
 	
 	additionals = parser_finder.add_argument_group('Additional parameters')
 
-	additionals.add_argument('--samplename', help='sample name [sample]',metavar='',default='sample')
+	additionals.add_argument('--samplename', help='sample name in VCF header [sample]',metavar='',default='sample')
 
 	parser_finder.set_defaults(func=run_subtool)
 
 
-	## ApP
+	## ApP ##
+
 
 	parser_plotter = subparsers.add_parser('ApP', help='Alignment Plotter. Generate an interactive plot that highlights repetitions and alignments in region; output HTML')
 
@@ -80,7 +82,8 @@ def main():
 	required.add_argument('-g', '--genome', metavar='FASTA', help='reference genome', required=True)
 	required.add_argument('-bam','--bamfile', help='one or two consensus BAM generated with REFER',metavar='BAM', nargs='+', action='append', required=True)
 	required.add_argument('-bed','--bedfile', metavar='BED', help='propietary BED (CHROM,START,END,LABEL) with regions to plot',required=True)	
-	required.add_argument('-O', '--output', metavar='folder', help='output folder',required=True)
+	required.add_argument('-o', '--output', metavar='folder', help='output folder',required=True)
+
 
 	tables = parser_plotter.add_argument_group('BED with repetitions to highlight')
 
