@@ -8,6 +8,7 @@ from argparse import HelpFormatter
 
 def main():
 
+	
 	parser = argparse.ArgumentParser(prog='TRiCoLOR', description='''TRiCoLOR: Tandem Repeats Caller fOr LOng Reads''', epilog='''This program was developed by Davide Bolognini and Tobias Rausch at the European Molecular Biology Laboratory/European Bioinformatic Institute (EMBL/EBI)''', formatter_class=CustomFormat) 
 
 	subparsers = parser.add_subparsers(title='modules', dest='command', metavar='SENSoR, REFER, ApP') #three submodules
@@ -99,6 +100,7 @@ def main():
 
 class CustomFormat(HelpFormatter):
 
+
 	def _format_action_invocation(self, action):
 
 		if not action.option_strings:
@@ -137,6 +139,7 @@ class CustomFormat(HelpFormatter):
 
 def run_subtool(parser, args):
 
+
 	if args.command == 'SENSoR': #Shannon ENtropy ScanneR
 
 		from .SENSoR import SENSoR as submodule
@@ -157,5 +160,6 @@ def run_subtool(parser, args):
 
 
 if __name__ =='__main__':
+
 
 	main()
