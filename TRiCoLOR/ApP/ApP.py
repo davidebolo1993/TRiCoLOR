@@ -24,7 +24,8 @@ from plotly.offline import plot
 
 def run(parser, args):
 
-	if not os.path.exists(os.path.abspath(args.output)): #check output folder validity
+
+	if not os.path.exists(os.path.abspath(args.output)): #folder does not exist
 
 		try:
 
@@ -32,27 +33,34 @@ def run(parser, args):
 
 		except:
 
-			print('Cannot create the output folder')
+			print('Cannot create the output folder') #no write permission, probably			
 			sys.exit(1)
 
 	else: #path already exists
 
-		if not os.access(os.path.dirname(os.path.abspath(args.output)),os.W_OK): #path exists but no write permissions on that folder
+		if not os.access(os.path.abspath(args.output),os.W_OK): #folder exists but no write permissions
 
-			print('Missing write permissions on the output folder')
+			print('Missing write permissions on the output folder')			
 			sys.exit(1)
-
-
+			
 		elif os.listdir(os.path.abspath(args.output)): #folder exists but isn't empty. Do not overwrite results.
 
 			print('The output folder is not empty. Specify another output folder or clean the previsouly chosen')
 			sys.exit(1)
 
-
+	command_dict= vars(args)
+	
+	notkey=['func']
+	command_string= ' '.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey)
 
 	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR_ApP.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
+	logging.info('main=TRiCoLOR ' + command_string)
 
+	if which('samtools') is None:
+
+		logging.error('samtools cannot be executed. Install samtools and re-run TRiCoLOR ApP')
+		sys.exit(1)
 
 	#check if the genome file exists, is readable and is in .fasta format
 
@@ -67,19 +75,11 @@ def run(parser, args):
 		logging.error('Reference file does not exist, is not readable or is not a valid FASTA')
 		sys.exit(1)
 
-
-	if which('samtools') is None:
-
-		logging.error('samtools cannot be executed. Install samtools and re-run TRiCoLOR ApP')
-		sys.exit(1)
-
-
 	bams=args.bamfile[0]
 
 	if len(bams) > 2:
 
 		logging.error('TRiCoLOR supports haploid and diploid genomes only')
-
 
 	for bam in bams:
 
@@ -98,14 +98,11 @@ def run(parser, args):
 			logging.error('Missing index for BAM ' + bam + '. Not a BAM generated with REFER')
 			sys.exit(1)
 
-
 	logging.info('Ploidy: ' + str(len(bams)))
-
 
 	b_in=Bed_Reader(args.bedfile)
 	it_ = iter(b_in)
 	labels_set=set()
-
 
 	logging.info('Analyzing ...')
 	logging.info('Regions in BED: ' + str(b_in.length()))
@@ -126,22 +123,20 @@ def run(parser, args):
 
 			try:
 
-				Generate_Alignment_ToPlot(args.genome,bams,chromosome,start,end,args.genomebed,args.haplotypebed,args.output)
+				Generate_Alignment_ToPlot(args.genome,bams,chromosome,start,end,args.genomebed,args.haplotypebed,label,args.output)
 
 			except:
 
 				logging.exception('Unexpected error while analyzing region ' + chromosome + ':' + str(start) + '-' +str(end) + ". Log is below")
 				skippederror+=1
 
-
 	logging.info('Regions with duplicated labels skipped: ' + str(skippedlabel))
 	logging.info('Regions with unexpected errors: ' + str(skippederror))
 	logging.info('Done')
 
 
-
-
 class Bed_Reader():
+
 
 	def __init__(self,bedfile):
 
@@ -173,9 +168,8 @@ class Bed_Reader():
 			return size
 
 
-
-
 def Get_Alignment_Positions(bamfile,chromosome,start,end):
+
 
 	coords=[]
 	seq=[]
@@ -197,8 +191,8 @@ def Get_Alignment_Positions(bamfile,chromosome,start,end):
 	return coords,seq
 
 
-
 def list_duplicates(list_of_seq):
+
 
 	a_=defaultdict(list)
 
@@ -207,7 +201,6 @@ def list_duplicates(list_of_seq):
 		a_[item].append(i)
 
 	return ((key,locs) for key,locs in a_.items() if len(locs) > 1)
-
 
 
 def modifier(coordinates): #fast way to remove None and substitute with closest number in list
@@ -228,7 +221,6 @@ def modifier(coordinates): #fast way to remove None and substitute with closest 
             start = ele
 
     return coordinates
-
 
 
 def Modifier(list_of_coord,seq):
@@ -283,9 +275,7 @@ def Modifier(list_of_coord,seq):
 	return coords_purified,NewSeq
 
 
-
 def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_table,hap_table,label,out):
-
 
 
 	if len(hap_bam) == 1:
@@ -311,11 +301,19 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 
 		if len(hap_table[0]) == 1:
 
-			hap1_table = hap_table[0][0]
-			hap2_table = None
+			if len(hap_bam) == 1:
+
+				hap1_table = hap_table[0][0]
+				hap2_table = None
+
+			else: #len is 2 and cannot be sure which one the BED refers to
+
+				logging.warning('Double input to -bam/--bamfile and single input to -hb/--haplotypebed: cannot say to which BAM BED refers. Skipped repetitions highlighting.')
+
+				hap1_table = None
+				hap2_table = None
 
 		else:
-
 
 			hap1_table = hap_table[0][0]
 			hap2_table = hap_table[0][1]
