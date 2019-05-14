@@ -19,7 +19,6 @@ import pysam
 import numpy as np
 
 
-
 def run(parser, args):
 
 
@@ -114,8 +113,6 @@ def run(parser, args):
 	else:
 
 		logging.info('Chromosomes: ' + '-'.join(x for x in args.chromosomes[0]))
-
-
 
 
 	logging.info('Scanning ...')
@@ -225,9 +222,8 @@ def run(parser, args):
 	logging.info('Done')
 
 
-
-
 def runInParallel(function, *arguments):
+
 
 	proc = []
 
@@ -242,8 +238,8 @@ def runInParallel(function, *arguments):
 		p.join()
 
 
-
 def entropy(string): #Shannon entropy scanner
+
 
 	prob = [float(string.count(c)) / len(string) for c in dict.fromkeys(list(string))]
 	entropy = - sum([p * math.log(p) / math.log(2.0) for p in prob])
@@ -251,8 +247,8 @@ def entropy(string): #Shannon entropy scanner
 	return entropy
 
 
-
 def modifier(coordinates): #fast way to remove None (soft-clipped coordinates) and substitute with closest number in list. Mantain 0-based coordinates
+
 
 	start = next(ele for ele in coordinates if ele is not None)
 
@@ -269,8 +265,8 @@ def modifier(coordinates): #fast way to remove None (soft-clipped coordinates) a
 	return coordinates
 
 
-
 def entropy_finder(sequence,coordinates,scansize,entropy_treshold): # get coordinates for intervals of certain scansize in a sequence in which entropy is lower than treshold 
+
 
 	ind_start=0
 	ind_end=scansize
@@ -278,7 +274,6 @@ def entropy_finder(sequence,coordinates,scansize,entropy_treshold): # get coordi
 	terminal_ind=len(sequence)-1
 
 	hit=[]
-
 
 	while terminal_ind > ind_end:
 
@@ -298,8 +293,8 @@ def entropy_finder(sequence,coordinates,scansize,entropy_treshold): # get coordi
 	return hit
 
 
-
 def merge_intervals(intervals): #merge overlapping tuples in the same list
+
 
 	sorted_by_lower_bound = sorted(intervals, key=itemgetter(0))
 	merged = []
@@ -326,8 +321,6 @@ def merge_intervals(intervals): #merge overlapping tuples in the same list
 	return merged
 
 
-
-
 def BScanner(bamfilein, chromosomes, bedfileout,scansize,entropy_treshold,call_treshold, dist_treshold):
 
 
@@ -348,7 +341,6 @@ def BScanner(bamfilein, chromosomes, bedfileout,scansize,entropy_treshold,call_t
 
 			chrom_dict[infos['SN']]=infos['LN']
 
-
 	for chromosome in chrom_dict.keys():
 
 		chr_array=np.zeros(chrom_dict[chromosome])
@@ -363,7 +355,6 @@ def BScanner(bamfilein, chromosomes, bedfileout,scansize,entropy_treshold,call_t
 				for hit in hits:
 
 					chr_array[hit[0]:hit[1]+1]+=1
-
 
 		to_get= np.concatenate(np.where(chr_array>=call_treshold)).tolist() #at least the number of entropy drop specified in call_treshold must support the entropy drop in that point
 		intervals=[]
@@ -386,6 +377,5 @@ def BScanner(bamfilein, chromosomes, bedfileout,scansize,entropy_treshold,call_t
 			for inter in intervals:
 
 					fin.write(chromosome + '\t' +  str(inter[0]) + '\t' + str(inter[1]) + '\n') 
-
 
 	bamfile.close()
