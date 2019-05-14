@@ -26,7 +26,7 @@ def main():
 	algorithm.add_argument('-s', '--scansize', type=int, help='scansize (#bps) for BAM scanning [20]', metavar='',default=20)
 	algorithm.add_argument('-e', '--entropy', type=float, help='Shannon entropy treshold [1.3]', metavar='',default=1.3)
 	algorithm.add_argument('-c', '--call', type=int, help='minimum number of reads supporting the entropy drops [5]', metavar='',default=5)
-	algorithm.add_argument('-l', '--length', type=int, help='minimum length of the entropy drops [20]', metavar='', default=20)
+	algorithm.add_argument('-l', '--length', type=int, help='minimum length of the entropy drops [30]', metavar='', default=30)
 
 	filters=parser_sensor.add_argument_group('BED for output filtering')
 
@@ -72,7 +72,7 @@ def main():
 	parser_finder.set_defaults(func=run_subtool)
 
 
-	## ApP ##
+	## ApP ## Alignment Plotter ##
 
 
 	parser_plotter = subparsers.add_parser('ApP', help='Alignment Plotter. Generate an interactive plot that highlights repetitions and alignments in region; output HTML')
