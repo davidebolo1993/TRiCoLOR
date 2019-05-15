@@ -1,5 +1,6 @@
 #!/usr/bin/python env
 
+
 #python 3 standard library
 
 import os
@@ -8,18 +9,19 @@ import math
 import subprocess
 
 
-# additional libraries
+# additional modules
 
 import pysam
 
 
-
 def sub_none(list_of_coord):
+
 
 	return [-999999 if v is None else v for v in list_of_coord] #return a very small number so that it won't be take into account
 
 
 def check_coverage(pysam_AlignmentFile, chromosome, start, end, coverage): #check if we have at least the wanted coverage for the interval
+
 
 	counter = 0
 
@@ -50,8 +52,8 @@ def fastagen(header,sequence,iteration,out):
 		fastaout.write('>' + header + '\n' + sequence + '\n')
 
 
-
 def split_equal(value, parts):
+
 
 	value = float(value)
 	
@@ -59,6 +61,7 @@ def split_equal(value, parts):
 
 
 def sizechecker(start, end): #adjust size of interval so that we don't have sequences too short and they can me mapped with more accuracy
+
 
 	if end-start <= 2000:
 
@@ -73,14 +76,11 @@ def sizechecker(start, end): #adjust size of interval so that we don't have sequ
 
 def Bamfile_Analyzer(bamfilein,chromosome,start,end, coverage, fastaout):
 
-	bamfile=pysam.AlignmentFile(bamfilein,'rb')
-	
+
+	bamfile=pysam.AlignmentFile(bamfilein,'rb')	
 	start,end,size=sizechecker(start,end) #split the period in sub-period of equal length
-
 	next_=start+size
-
 	iteration=0
-
 	final=False
 
 	while not final:
@@ -105,7 +105,6 @@ def Bamfile_Analyzer(bamfilein,chromosome,start,end, coverage, fastaout):
 
 						fastagen(header,sequence[s_i:e_i+1],iteration,fastaout)
 
-
 		iteration+=1
 
 		if end-next_ >= size:
@@ -116,15 +115,11 @@ def Bamfile_Analyzer(bamfilein,chromosome,start,end, coverage, fastaout):
 		else:
 
 			final=True
-
 	
 	bamfile.close()
 
 
-
-
-
-def MSA(alfred_path,out,mmi_ref): #MSA function that uses Alfred consensus as it is much faster than a MSA python implementation.
+def MSA(alfred_path,out,mmi_ref):
 
 
 	fafile=glob.glob(os.path.abspath(out)+'/*.unaligned.fa')
@@ -161,7 +156,6 @@ def MSA(alfred_path,out,mmi_ref): #MSA function that uses Alfred consensus as it
 	for files in types:
 
 		tokeep.extend(glob.glob(os.path.abspath(out)+files))
-
 
 	for dirpath,_,filenames in os.walk(os.path.abspath(out)):
 
