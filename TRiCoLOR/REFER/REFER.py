@@ -17,10 +17,9 @@ from bisect import bisect_left,bisect_right
 from shutil import which
 import logging
 import datetime
-import timeit
 
 
-# additional libraries
+# additional modules
 
 import pyfaidx
 import pysam
@@ -37,7 +36,8 @@ from .Helper import writer
 
 def run(parser, args):
 
-	if not os.path.exists(os.path.abspath(args.output)):
+	
+	if not os.path.exists(os.path.abspath(args.output)): #folder does not exist
 
 		try:
 
@@ -45,134 +45,158 @@ def run(parser, args):
 
 		except:
 
-			print('It was not possible to create the results folder. Specify a path for which you have write permissions')
+			print('Cannot create the output folder') #no write permission, probably			
 			sys.exit(1)
 
 	else: #path already exists
 
-		if not os.access(os.path.dirname(os.path.abspath(args.output)),os.W_OK): #path exists but no write permissions on that folder
+		if not os.access(os.path.abspath(args.output),os.W_OK): #folder exists but no write permissions
 
-			print('You do not have write permissions on the directory in which results will be stored. Specify a folder for which you have write permissions')
+			print('Missing write permissions on the output folder')			
 			sys.exit(1)
+			
+		elif os.listdir(os.path.abspath(args.output)): #folder exists but isn't empty. Do not overwrite results.
 
-		elif os.listdir(os.path.abspath(args.output)):
-
-			print('Output folder is not empty. Clean the folder and re-run TRiCoLOR REFER')
+			print('The output folder is not empty. Specify another output folder or clean the previsouly chosen')
 			sys.exit(1)
 	
-	
+
 	command_dict= vars(args)
-	command_string= ','.join(("{}={}".format(*i) for i in command_dict.items())) 
-
-	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR_REFER.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 	
+	notkey=['func']
+	command_string= ' '.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey)
+	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR_REFER.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')	
+	logging.info('main=TRiCoLOR ' + command_string)
 
 	#check the presence of needed external tools
 
-	external_tools=['minimap2', 'samtools', 'bgzip', 'tabix', 'vcftools', 'bcftools']
+	external_tools=['minimap2', 'samtools', 'bcftools']
 
-	for tools in external_tools:
+	for tools in external_tools: 
 
 		if which(tools) is None:
 
-			logging.error(tools + ' was not found as an executable command. Install ' + tools + ' and re-run TRiCoLOR REFER')
+			logging.error(tools + ' cannot be executed. Install ' + tools + ' and re-run TRiCoLOR REFER')
 			sys.exit(1)
-
-
-	## validate all inputs
-
-	#check if the genome file exists, is readable and is in .fasta format
 
 	try:
 
 		with open(os.path.abspath(args.genome),'r') as file:
 
-			assert(file.readline().startswith('>')) #genome .file starts with '>'
+			assert(file.readline().startswith('>'))
 
 	except:
 
-		logging.error('Reference file does not exist, is not readable or is not a valid .fasta file')
+		logging.error('Reference file does not exist, is not readable or is not a valid FASTA')
 		sys.exit(1)
-
-
-	#check if the two .bam files exist, are readable and are valid .bam files
-
-
-	try:
-
-		subprocess.check_call(['samtools','quickcheck',os.path.abspath(args.bamfile1)],stderr=open(os.devnull, 'wb'))
-
-	except:
-
-		logging.error('.bam file 1 does not exist, is not readable or is not a valid .bam file')
-		sys.exit(1)
-
-
-	try:
-
-		subprocess.check_call(['samtools','quickcheck',os.path.abspath(args.bamfile2)],stderr=open(os.devnull, 'wb'))
-		
-	except:
-
-		logging.error('.bam file 2 does not exist, is not readable or is not a valid .bam file')
-		sys.exit(1)
-
-	
-	#look for the index of the  two .bam files
-
-	if not os.path.exists(os.path.abspath(args.bamfile1 + '.bai')):
-
-		logging.info('Creating index for .bam file 1, as it was not found in folder...')
-
-		try:
-
-			subprocess.check_call(['samtools', 'index', os.path.abspath(args.bamfile1)],stderr=open(os.devnull, 'wb'))
-
-		except:
-
-			logging.error('.bam file 1 could not be indexed')
-			sys.exit(1)
-
-
-	if not os.path.exists(os.path.abspath(args.bamfile2 + '.bai')):
-
-		logging.info('Creating index for .bam file 2, as it was not found in folder...')
-
-		try:
-
-			subprocess.check_call(['samtools', 'index', os.path.abspath(args.bamfile2)],stderr=open(os.devnull, 'wb'))
-
-		except:
-
-			logging.error('.bam file 2 could not be indexed')
-			sys.exit(1)
-
-
 
 	mmi_abspath=os.path.abspath(os.path.dirname(args.genome))
+	bams=args.bamfile[0]
 
-	alfred_path=os.path.abspath(os.path.dirname(__file__) + '/alfred/bin/alfred')
+	if len(bams) > 2:
 
+		logging.error('TRiCoLOR supports haploid and diploid genomes only')
+
+	for bam in bams:
+
+		try:
+
+			subprocess.check_call(['samtools','quickcheck', os.path.abspath(bam)],stderr=open(os.devnull, 'wb'))
+
+		except:
+
+			logging.error('BAM ' + bam + ' does not exist, is not readable or is not a valid BAM')
+			sys.exit(1)
+
+		if not os.path.exists(os.path.abspath(bam + '.bai')):
+
+			logging.warning('Missing index for BAM ' + bam + '. Creating ...')
+
+			try:
+
+				subprocess.check_call(['samtools', 'index', os.path.abspath(bam)], stderr=open(os.devnull, 'wb'))
+
+			except:
+
+				logging.error('BAM ' + bam + ' could not be indexed')
+				sys.exit(1)
+
+	#external tools/scripts included
+
+	alfred_path=os.path.abspath(os.path.dirname(__file__) + '/alfred/bin/alfred') #ask for a stand-alone consensus script
 	merging_path=os.path.abspath(os.path.dirname(__file__) + '/merging.sh')
 
-	start_t=timeit.default_timer()
+	#write infos for debugging
 
-	logging.info('Analysis starts now')
+	if not args.precisemotif:
 
+		if args.motif == 0 or args.motif == 1:
 
-	#write VCF header
+			logging.info('Repetition motif length: any')
 
-	writer.VCF_headerwriter(args.bamfile1, args.bamfile2, args.samplename, command_string, os.path.abspath(args.output))
+		else:
 
+			logging.info('Repetition motif length: at least ' + str(args.motif))
+
+	else:
+
+		if args.motif == 0:
+
+			logging.info('Repetition motif length: any')
+
+		else:
+
+			logging.info('Repetition motif length: ' + str(args.motif))
+
+	if not args.precisetimes:
+
+		if args.times == 0 or args.times == 1:
+
+			logging.info('Number of repetitions: any')
+
+		else:
+
+			logging.info('Number of repetitions: at least ' + str(args.times))
+
+	else:
+
+		if args.times == 1:
+
+			logging.warning('--precisetimes is ignored if -t/--times is 1. Number of repetitions: any')
+
+		else:
+
+			logging.info('Number of repetitions: ' + str(args.times))
+	
+	logging.info('Check for overlapping repeated motif: ' + str(args.overlapping))
+
+	regex=finder.RegexBuilder(args.motif,args.times,args.overlapping, args.precisemotif, args.precisetimes)		
+
+	logging.info('Regex built: ' + regex)
+	logging.info('Maximum repeated motif length: ' + str(args.maxmotif))
+	logging.info('Allowed edit distance: ' + str(args.editdistance))
+	logging.info('Minimum repeated region size: ' + str(args.size))
+	logging.info('Ploidy: ' + str(len(bams)))
+	logging.info('Cores: ' + str(len(bams)))
+
+	if len(bams) == 2: #double ploidy
+
+		writer.VCF_headerwriter(os.path.abspath(bams[0]), os.path.abspath(bams[1]), args.samplename, ','.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey), os.path.abspath(args.output))
+
+	else: #single ploidy
+
+		writer.VCF_headerwriter(os.path.abspath(bams[0]), None, args.samplename, ','.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey), os.path.abspath(args.output))
 
 	ref=pyfaidx.Fasta(args.genome)
 	b_in=Bed_Reader(args.bedfile)
 	chromosomes_seen=set()
 	it_ = iter(b_in)
-
+	
 	skipped=0
 	ambiguous=0
 	analyzed=0
+
+	logging.info('Finding repetitions ...')
 
 	for i in range(b_in.length()):
 
@@ -180,29 +204,35 @@ def run(parser, args):
 
 		if chromosome not in chromosomes_seen:
 
-			if chromosomes_seen: #set is not empty
+			if chromosomes_seen:
 
-				res=CleanResults(merging_path, list(chromosomes_seen)[-1], args.output, os.path.abspath(args.bamfile1), os.path.abspath(args.bamfile2)) #clean results for previous chromosome
+				if len(bams) == 2:
+
+					res=CleanResults(merging_path, list(chromosomes_seen)[-1], args.output, os.path.abspath(bams[0]), os.path.abspath(bams[1]))
+
+				else:
+
+					res=CleanResults(merging_path, list(chromosomes_seen)[-1], args.output, os.path.abspath(bams[0]), None)
 
 				if type(res) == str:
 
 					logging.error(res)
-				
+					sys.exit(1)
+							
+			chromosomes_seen.add(chromosome)			
 			chrom=ref[chromosome]
-			ref_seq=chrom[:len(chrom)].seq
-			chromosomes_seen.add(chromosome)
-
-			#check if the .mmi reference exists, otherwise create it for the wanted chromosome
+			ref_seq=chrom[:len(chrom)].seq			
+			
+			logging.info('Analyzing ' + str(chromosome))
 
 			if not os.path.exists(os.path.abspath(mmi_abspath + '/' + chromosome + '.mmi')):
 
-				if not os.access(mmi_abspath, os.W_OK): #check if we have write permissions on the directory
+				if not os.access(mmi_abspath, os.W_OK):
 
-					logging.error('You do not have write permissions on the referene genome folder. This is necessary to create .mmi indexes')
+					logging.error('Missing write permissions on the reference genome folder. This is necessary to store chromosomes .mmi indexes')
 					sys.exit(1)
 
-
-				logging.info('Creating a .mmi index for ' + chromosome)
+				logging.info('Creating .mmi index for ' + chromosome)
 
 				try:
 
@@ -210,27 +240,33 @@ def run(parser, args):
 
 				except:
 
-					logging.error('Something went wrong with the creation of the .mmi chromosome index. Does your reference genome contain informations for ' + chromosome + ' ?')
+					logging.error('Unexpected error while creating .mmi index for current chromosome. Does your reference genome contain informations for this chromosome?')
 					sys.exit(1)
 
 				subprocess.call(['minimap2','-d', os.path.abspath(mmi_abspath + '/' + chromosome + '.mmi'),os.path.abspath(mmi_abspath + '/' + chromosome + '.fa')]) #must work as everything has been checked
 			
 			mmi_ref=os.path.abspath(mmi_abspath + '/' + chromosome + '.mmi')
 
-
 		try:
 
-			further = Ref_Repeats(ref_seq, chromosome, start, end, args.motif, args.times, args.maxmotif, args.overlapping, args.size, args.output)
+			further = Ref_Repeats(ref_seq, chromosome, start, end, regex, args.maxmotif, args.size, args.output)
 
-			if further:
+			if further is not None:	
 
 				manager = Manager()
 
 				repetitions_h1 = manager.list()
 				repetitions_h2 = manager.list()
 
-				p1=Process(target=Haplo1_Repeats, args=(alfred_path, os.path.abspath(args.bamfile1), chromosome, start, end, args.coverage, args.motif, args.times,args.maxmotif, args.overlapping, args.size, args.editdistance, ref_seq, mmi_ref, args.output, i,repetitions_h1))
-				p2=Process(target=Haplo2_Repeats, args=(alfred_path, os.path.abspath(args.bamfile2), chromosome, start, end, args.coverage, args.motif, args.times, args.maxmotif, args.overlapping, args.size, args.editdistance, ref_seq, mmi_ref, args.output, i,repetitions_h2))
+				p1=Process(target=Haplo1_Repeats, args=(alfred_path, os.path.abspath(bams[0]), chromosome, start, end, args.coverage, regex, args.maxmotif, args.size, args.editdistance, ref_seq, mmi_ref, args.output, i,repetitions_h1))
+
+				if len(bams) == 2:
+
+					p2=Process(target=Haplo2_Repeats, args=(alfred_path, os.path.abspath(bams[1]), chromosome, start, end, args.coverage, regex, args.maxmotif, args.size, args.editdistance, ref_seq, mmi_ref, args.output, i,repetitions_h2))
+
+				else:
+
+					p2=Process(target=Haplo2_Repeats, args=(alfred_path, None, chromosome, start, end, args.coverage, args.maxmotif, args.size, regex, args.editdistance, ref_seq, mmi_ref, args.output, i,repetitions_h2))
 
 				p1.start()
 				p2.start()
@@ -238,13 +274,14 @@ def run(parser, args):
 				p1.join()
 				p2.join()
 
+				#VCF
+
 				writer.VCF_writer(chromosome, further, ref_seq, repetitions_h1, os.path.abspath(args.output + '/haplotype1/' + str(i+1) + '.srt.bam'), repetitions_h2, os.path.abspath(args.output + '/haplotype2/' + str(i+1) + '.srt.bam'), os.path.abspath(args.output))
 
 				if os.stat(os.path.abspath(args.output + '/haplotype1/' + str(i+1) + '.srt.bam')).st_size == 0:
 
 					os.remove(os.path.abspath(args.output + '/haplotype1/' + str(i+1) + '.srt.bam'))
 					os.remove(os.path.abspath(args.output + '/haplotype1/' + str(i+1) + '.srt.bam.bai'))
-
 
 				if os.stat(os.path.abspath(args.output + '/haplotype2/' + str(i+1) + '.srt.bam')).st_size == 0:
 
@@ -263,51 +300,48 @@ def run(parser, args):
 
 		except:
 
-			logging.exception('Something went wrong for region ' + chromosome + ':' + str(start) + '-' +str(end) + ". Log is attached below:")
+			logging.exception('Unexpected error for region ' + chromosome + ':' + str(start) + '-' +str(end) + ". Log is below")
 			skipped +=1
 
 
-	res=CleanResults(merging_path, list(chromosomes_seen)[-1], args.output, os.path.abspath(args.bamfile1), os.path.abspath(args.bamfile2)) #clean results at the end of the process
+	if len(bams) == 2:
 
-	if type(res) == str: #function is not supposed to return a message unless something unexpected happened
+		res=CleanResults(merging_path, list(chromosomes_seen)[-1], args.output, os.path.abspath(bams[0]), os.path.abspath(bams[1])) #clean results at the end of the process
+
+	else:
+
+		res=CleanResults(merging_path, list(chromosomes_seen)[-1], args.output, os.path.abspath(bams[0]), None) #clean results at the end of the process
+		os.rmdir(os.path.abspath(args.output + '/haplotype2'))
+
+	if type(res) == str:
 
 		logging.error(res)
+		sys.exit(1)
 
-	#.vcf file post-processing
+	#VCF post-processing
 
 	try:
 
-		with open(os.path.abspath(args.output + '/TRiCoLOR.srt.vcf'), 'w') as srtvcfout:
-
-			subprocess.check_call(['vcf-sort', os.path.abspath(args.output + '/TRiCoLOR.vcf')],stderr=open(os.devnull, 'wb'),stdout=srtvcfout) #outputted .vcf file is supposed to be sorted but sort, just in case
+		subprocess.check_call(['bcftools', 'sort', '-o', os.path.abspath(args.output + '/TRiCoLOR.bcf'), '-O', 'b', os.path.abspath(args.output + '/TRiCoLOR.vcf')],stderr=open(os.devnull, 'wb'))		
+		subprocess.check_call(['bcftools', 'index', os.path.abspath(args.output + '/TRiCoLOR.bcf')],stderr=open(os.devnull, 'wb'))
 
 		os.remove(os.path.abspath(args.output + '/TRiCoLOR.vcf'))
 
-		subprocess.check_call(['bgzip', os.path.abspath(args.output + '/TRiCoLOR.srt.vcf')])
-		subprocess.check_call(['tabix', os.path.abspath(args.output + '/TRiCoLOR.srt.vcf.gz')])
-
-		#also normalize
-
-		subprocess.check_call(['bcftools', 'norm', '-f', os.path.abspath(args.genome), '-o', os.path.abspath(args.output + '/TRiCoLOR.norm.bcf'), '-O', 'b', os.path.abspath(args.output + '/TRiCoLOR.srt.vcf.gz')],stderr=open(os.devnull, 'wb'))
-		subprocess.check_call(['tabix', os.path.abspath(args.output + '/TRiCoLOR.norm.bcf')])
 
 	except:
 
-		logging.exception('Something went wrong during .vcf processing. Log is attached below:')
+		logging.exception('Unexpected error while processing VCF. Log is below')
 
-	end_t=timeit.default_timer()
-	elapsed=(end_t-start_t)/60 #convert time to minutes
 
-	logging.info('Analysis completed in ' + str(elapsed) + ' minutes')
 	logging.info('Total regions: ' + str(b_in.length()))
 	logging.info('Regions analyzed: ' + str(analyzed))
 	logging.info('Ambiguous regions skipped: ' + str(ambiguous))
 	logging.info('Regions not analyzed: ' + str(skipped))
 
-
-
+	logging.info('Done')
 
 class Bed_Reader():
+
 
 	def __init__(self,bedfile):
 
@@ -323,7 +357,7 @@ class Bed_Reader():
 
 					if len(line) < 3:
 
-						logging.error('.bed given to TRiCoLOR REFER -bed/--bedfile must be a .bed file with at least 3 fields: chromosome, start and end')
+						logging.error('BED to TRiCoLOR REFER -bed/--bedfile must contain at least: chromosome, start, end (other fields are ignored)')
 						sys.exit(1)
 
 					else:
@@ -339,8 +373,8 @@ class Bed_Reader():
 			return size
 
 
-
 def isEmpty(list_obj): #recursive function to check for empty list
+
 
 	if list_obj == []:
 
@@ -351,8 +385,8 @@ def isEmpty(list_obj): #recursive function to check for empty list
 		return all((isinstance(sli, list) and isEmpty(sli)) for sli in list_obj)
 
 
-	
-def TableWriter(chromosome,repetitions_with_coord, out): #Table is in .bed (chromosome, start, end) format with header. Append to the existing table, so that we don't have to merge at the end, saving time
+def TableWriter(chromosome,repetitions_with_coord, out):
+
 
 	seq=[el[0] for el in repetitions_with_coord]
 	start=[el[1] for el in repetitions_with_coord]
@@ -375,38 +409,38 @@ def TableWriter(chromosome,repetitions_with_coord, out): #Table is in .bed (chro
 			Table.to_csv(refout ,sep='\t',index=False)
 
 
+def SolveNestedR(SortedIntervals): #for reference, keep simply largest between nested
 
-def ref_nestover(SortedIntervals, string): #for reference, consider largest between nested repetitions
 
 	extended=[]
-	extended.append(SortedIntervals[0])
 
-	i=1
+	i=0
 
 	while i < len(SortedIntervals):
 
-		if extended[-1][2] > SortedIntervals[i][1]: #the two intervals overlap
+		if extended==[]:
 
-			if SortedIntervals[i][2] - SortedIntervals[i][1] > extended[-1][2] - extended[-1][1]:
-
-				extended.remove(extended[-1])
-				extended.append(SortedIntervals[i])
-				i+=1
-
-			else:
-
-				i+=1
+			extended.append(SortedIntervals[i])
 
 		else:
 
-			extended.append(SortedIntervals[i])
-			i+=1
+			if extended[-1][2] >= SortedIntervals[i][1]: #the two intervals overlap
+
+				if SortedIntervals[i][2] - SortedIntervals[i][1] > extended[-1][2] - extended[-1][1]:
+
+					extended.remove(extended[-1])
+					extended.append(SortedIntervals[i])
+			else:
+
+				extended.append(SortedIntervals[i])
+		
+		i+=1
 	
 	return extended
 
 
+def ReferenceFilter(reference_reps,wanted,size,start): 
 
-def Reference_Filter(reference_reps,wanted,size,start): 
 
 	corr_=[]
 
@@ -440,17 +474,20 @@ def Reference_Filter(reference_reps,wanted,size,start):
 
 		if len(result) !=0:
 
-			new_reps=[(reps,val[0], val[-1]+len(reps)-1, len(val)) for val in list(result.values())]
+			new_reps=[(reps, start+val[0], start+val[-1]+len(reps)-1, len(val)) for val in list(result.values()) if val[-1]+len(reps)-val[0] >= size]
 			corr_.extend(new_reps)
 
 
+
 	s_corr_=sorted(corr_, key=itemgetter(1,2))
-	mod_int=ref_nestover(s_corr_, wanted)
+	mod_int=SolveNestedR(s_corr_)
 
-	return [(a,start+b, start+c, d) for (a,b,c,d) in mod_int if len(a)*d >= size]
+	return mod_int
 
 
-def Ref_Repeats(reference_seq, chromosome, start, end, kmer, times, maxmotif, overlapping, size, out):
+
+def Ref_Repeats(reference_seq, chromosome, start, end, regex, maxmotif, size, out):
+
 
 	out_=os.path.abspath(out+'/reference')
 
@@ -458,18 +495,16 @@ def Ref_Repeats(reference_seq, chromosome, start, end, kmer, times, maxmotif, ov
 
 		os.makedirs(out_)
 
-	wanted=reference_seq[start-1:end] #pyfaidx way to get start-end
+	wanted=reference_seq[start-1:end]
 
+	if 'N' in wanted: #skip ambiguous
 
-	if 'N' in wanted: #region with ambiguous bases
-
-		return False
+		return None
 
 	else:
 
-		repetitions=list(finder.RepeatsFinder(wanted,kmer,times, maxmotif, overlapping))
-
-		filtered=Reference_Filter(repetitions,wanted,size,start)
+		repetitions=list(finder.RepeatsFinder(wanted,regex,maxmotif))
+		filtered=ReferenceFilter(repetitions,wanted,size,start)
 
 		if not isEmpty(filtered):
 
@@ -478,7 +513,8 @@ def Ref_Repeats(reference_seq, chromosome, start, end, kmer, times, maxmotif, ov
 		return filtered
 
 
-def Haplo1_Repeats(alfred_path, bamfile1, chromosome, start, end, coverage, kmer, times, maxmotif, overlapping, size, allowed, ref_seq, mmi_ref, out, iteration,repetitions_h1):
+def Haplo1_Repeats(alfred_path, bamfile1, chromosome, start, end, coverage, regex, maxmotif, size, allowed, ref_seq, mmi_ref, out, iteration,repetitions_h1):
+
 
 	out_=os.path.abspath(out+'/haplotype1')
 
@@ -510,7 +546,7 @@ def Haplo1_Repeats(alfred_path, bamfile1, chromosome, start, end, coverage, kmer
 
 			else:
 
-				repetitions=list(finder.RepeatsFinder(seq,kmer,times, maxmotif, overlapping))
+				repetitions=list(finder.RepeatsFinder(seq,regex,maxmotif))
 
 				if not isEmpty(repetitions): #no repetitions found in the region
 
@@ -537,6 +573,8 @@ def Haplo1_Repeats(alfred_path, bamfile1, chromosome, start, end, coverage, kmer
 					fin.write(file + '\n')
 
 			subprocess.call(['samtools', 'merge', '-b', os.path.abspath(out_ + '/FileToMerge.txt'), os.path.abspath(out_+'/'+str(iteration+1) + '.srt.bam')])
+			subprocess.call(['samtools', 'index', os.path.abspath(out_+'/'+str(iteration+1) + '.srt.bam')])
+			
 			os.remove(os.path.abspath(out_ + '/FileToMerge.txt'))
 
 			for bams in consensus_bams:
@@ -545,8 +583,7 @@ def Haplo1_Repeats(alfred_path, bamfile1, chromosome, start, end, coverage, kmer
 				os.remove(bams + '.bai')
 
 
-
-def Haplo2_Repeats(alfred_path, bamfile2, chromosome, start, end, coverage, kmer, times, maxmotif, overlapping, size,allowed, ref_seq, mmi_ref, out, iteration,repetitions_h2):
+def Haplo2_Repeats(alfred_path, bamfile2, chromosome, start, end, coverage, regex, maxmotif, size, allowed, ref_seq, mmi_ref, out, iteration,repetitions_h2):
 
 
 	out_=os.path.abspath(out+'/haplotype2')
@@ -554,6 +591,14 @@ def Haplo2_Repeats(alfred_path, bamfile2, chromosome, start, end, coverage, kmer
 	if not os.path.exists(out_):
 
 		os.makedirs(out_)
+
+
+	if bamfile2 is None:
+
+		open(os.path.abspath(out_ +'/' + str(iteration +1) + '.srt.bam'), 'w').close() #create empty
+		open(os.path.abspath(out_ +'/' + str(iteration +1) + '.srt.bam.bai'), 'w').close() #create empty
+
+		return
 
 	parser.Bamfile_Analyzer(bamfile2,chromosome,start,end, coverage, out_)
 
@@ -579,7 +624,7 @@ def Haplo2_Repeats(alfred_path, bamfile2, chromosome, start, end, coverage, kmer
 
 			else:
 
-				repetitions=list(finder.RepeatsFinder(seq,kmer,times, maxmotif, overlapping))
+				repetitions=list(finder.RepeatsFinder(seq,regex,maxmotif))
 
 				if not isEmpty(repetitions): #no repetitions found in the region
 
@@ -607,6 +652,8 @@ def Haplo2_Repeats(alfred_path, bamfile2, chromosome, start, end, coverage, kmer
 					fin.write(file + '\n')
 
 			subprocess.call(['samtools', 'merge', '-b', os.path.abspath(out_ + '/FileToMerge.txt'), os.path.abspath(out_+'/'+str(iteration+1) + '.srt.bam')])
+			subprocess.call(['samtools', 'index', os.path.abspath(out_+'/'+str(iteration+1) + '.srt.bam')])
+			
 			os.remove(os.path.abspath(out_ + '/FileToMerge.txt'))
 
 			for bams in consensus_bams:
@@ -615,17 +662,22 @@ def Haplo2_Repeats(alfred_path, bamfile2, chromosome, start, end, coverage, kmer
 				os.remove(bams + '.bai')
 
 
-
 def CleanResults(merging_path, chromosome, out, bam1, bam2):
 
-	#merge all the .srt.bam files for the two haplotypes
 
-	out_=[os.path.abspath(out+j) for j in ['/haplotype1', '/haplotype2']]
+	out_=[os.path.abspath(out+j) for j in ['/haplotype1', '/haplotype2', '/reference']]
 
 
-	if not os.listdir(out_[0]): #directory is empty
+	if not os.listdir(out_[2]):
 
-		return
+		open(os.path.abspath(out_[2] +'/' + chromosome + '.repetitions.empty.bed'), 'w').close()
+
+
+	if not os.listdir(out_[0]):
+
+		open(os.path.abspath(out_[0] +'/' + chromosome + '.repetitions.empty.bed'), 'w').close() 
+		open(os.path.abspath(out_[0] +'/' + chromosome + '.empty.bam'), 'w').close() 
+		open(os.path.abspath(out_[0] +'/' + chromosome + '.empty.bam.bai'), 'w').close() 
 
 	else:
 
@@ -635,21 +687,28 @@ def CleanResults(merging_path, chromosome, out, bam1, bam2):
 
 		except BaseException as be:
 
-			message= 'Something wrong while mergning .bam files for haplotype 1:' + '\n' + be
+			message= 'Unexpected error while merging BAM for haplotype 1:' + '\n' + be
+			
 			return message
 
 
-	if not os.listdir(out_[1]): #directory is empty
+	if bam2 is not None:
 
-		return
+		if not os.listdir(out_[1]): #directory is empty
 
-	else:
+			open(os.path.abspath(out_[1] +'/' + chromosome + '.repetitions.empty.bed'), 'w').close()
+			open(os.path.abspath(out_[1] +'/' + chromosome + '.empty.bam'), 'w').close() 
+			open(os.path.abspath(out_[1] +'/' + chromosome + '.empty.bam.bai'), 'w').close() 
 
-		try:
+		else:
 
-			subprocess.check_call(['bash', merging_path, bam2, os.path.abspath(out_[1]),chromosome],stderr=open(os.devnull, 'wb'))
+			try:
 
-		except BaseException as be:
+				subprocess.check_call(['bash', merging_path, bam2, os.path.abspath(out_[1]),chromosome],stderr=open(os.devnull, 'wb'))
 
-			message= 'Something wrong while mergning .bam files for haplotype 2:' + '\n' + be
-			return message
+			except BaseException as be:
+
+				message= 'Unexpected error while merging BAM for haplotype 2:' + '\n' + be
+				
+				return message
+				
