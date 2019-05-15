@@ -477,8 +477,6 @@ def ReferenceFilter(reference_reps,wanted,size,start):
 			new_reps=[(reps, start+val[0], start+val[-1]+len(reps)-1, len(val)) for val in list(result.values()) if val[-1]+len(reps)-val[0] >= size]
 			corr_.extend(new_reps)
 
-
-
 	s_corr_=sorted(corr_, key=itemgetter(1,2))
 	mod_int=SolveNestedR(s_corr_)
 
@@ -711,4 +709,3 @@ def CleanResults(merging_path, chromosome, out, bam1, bam2):
 				message= 'Unexpected error while merging BAM for haplotype 2:' + '\n' + be
 				
 				return message
-				
