@@ -1,5 +1,6 @@
 #!/usr/bin/python env
 
+
 #python 3 standard library
 
 import datetime
@@ -15,31 +16,31 @@ import subprocess
 import pysam
 
 
-
 def VCF_headerwriter(bamfile1, bamfile2, samplename, commandline, out):
 
-	#Header built following instructions at 'https://samtools.github.io/hts-specs/VCFv4.2.pdf'
 
 	bam1=pysam.AlignmentFile(bamfile1,'rb')
 	header1=bam1.header
-	bam2=pysam.AlignmentFile(bamfile2,'rb')
-	header2=bam2.header
-
 	chromosomes_info1=list(header1.items())[1][1]
-	chromosomes_info2=list(header2.items())[1][1]
 
-	chromosomes_info = list({x['SN']:x for x in chromosomes_info1 + chromosomes_info2}.values()) #just in case one header misses a contig information
+	if bamfile2 is not None:
 
-	classic_chrs = ['chr{}'.format(x) for x in list(range(1,23)) + ['X', 'Y']]
+		bam2=pysam.AlignmentFile(bamfile2,'rb')
+		header2=bam2.header
+		chromosomes_info2=list(header2.items())[1][1]
+		chromosomes_info = list({x['SN']:x for x in chromosomes_info1 + chromosomes_info2}.values()) #just in case one header misses a contig information
+
+	else:
+
+		chromosomes_info = list({x['SN']:x for x in chromosomes_info1}.values())
+
 	chromosomes=[]
 	sizes=[]
 
 	for infos in chromosomes_info:
 
-		if infos['SN'] in classic_chrs:
-
-			chromosomes.append(infos['SN'])
-			sizes.append(infos['LN'])
+		chromosomes.append(infos['SN'])
+		sizes.append(infos['LN'])
 
 	vcf_format='##fileformat=VCFv4.2'
 
@@ -65,11 +66,9 @@ def VCF_headerwriter(bamfile1, bamfile2, samplename, commandline, out):
 
 			vcfout.write('##contig=<ID='+str(a)+',length='+str(b)+'>'+'\n')
 
-
 		vcfout.write(END + '\n' + H1M + '\n' + H1N + '\n' + H2M + '\n' + H2N + '\n')
 		vcfout.write(FORMAT + '\n')
 		vcfout.write('##SAMPLE=<ID=' + samplename +'>' + '\n' + classic_header + '\n')
-
 
 
 def VCF_variantwriter(chrom, pos, ref, alt, info, form, out):
@@ -85,10 +84,6 @@ def VCF_variantwriter(chrom, pos, ref, alt, info, form, out):
 	ALT=alt
 	INFO_END=str(info['END'])
 
-
-	#deal with possible multiple numbers/motifs, as we can have overlapping ones
-
-	
 	INFO_H1M=info['H1M']
 
 	if type(INFO_H1M) == list:
@@ -143,10 +138,7 @@ def modifier(coordinates): #fast way to remove None and substitute with closest 
 def Modifier(list_of_coord,seq,reps):
 
 
-	coords_without_insertions=modifier(list_of_coord)
-
-	#Modify deletions
-	
+	coords_without_insertions=modifier(list_of_coord)	
 	NewSeq=''
 	coords_purified=[]
 
@@ -167,9 +159,7 @@ def Modifier(list_of_coord,seq,reps):
 	coords_purified.append(coords_without_insertions[-1])
 	NewSeq+=seq[-1]
 
-
 	if not reps[0] >= coords_purified[0]: #add fake positions that will be removed 
-
 
 		number=reps[0]
 		how_many=coords_purified[0]-reps[0]
@@ -184,9 +174,7 @@ def Modifier(list_of_coord,seq,reps):
 		coords_purified = coords_purified + [number]*how_many 
 		NewSeq= NewSeq + '-'* how_many
 
-
 	return coords_purified,NewSeq
-
 
 
 def Get_Seq_Pos(bamfilein,chromosome, start,end): #as the consensus sequence is supposed to generate just one sequence aligned to the reference, all other alignments are removes
@@ -194,7 +182,6 @@ def Get_Seq_Pos(bamfilein,chromosome, start,end): #as the consensus sequence is 
 
 	seq=[]
 	coords=[]
-
 	
 	if os.stat(os.path.abspath(bamfilein)).st_size == 0: #if is empty, return empty seqs
 
@@ -215,20 +202,20 @@ def Get_Seq_Pos(bamfilein,chromosome, start,end): #as the consensus sequence is 
 				coords = read.get_reference_positions(full_length=True)
 				seq=read.seq
 
-
 	return seq,coords
-
 
 
 def GetIndex(start, end, coordinates):
 
+
 	si=bisect_left(coordinates, start)
-	ei=bisect_right(coordinates, end) -1
+	ei=bisect_right(coordinates, end)-1
 
 	return si,ei
 
 
 def recursive_merge(sorted_int, list_, i):
+
 
 	new_=(min(list_, key=itemgetter(1)), max(list_,key=itemgetter(2))) #get extended range
 	new_range=(new_[0][1], new_[-1][2])
@@ -241,9 +228,8 @@ def recursive_merge(sorted_int, list_, i):
 			recursive_merge(sorted_int, list_, i+1)
 
 
-
-
 def Merger(sorted_int, refreps, h1reps, h2reps): #return non overlapping-ranges and dictionaries that keeps the original infos for the ranges.
+
 
 	sorted_ranges=[]
 
@@ -374,19 +360,7 @@ def Merger(sorted_int, refreps, h1reps, h2reps): #return non overlapping-ranges 
 	return sorted_ranges,ref_dict_number,ref_dict_motif,hap1_dict_number,hap1_dict_motif,hap2_dict_number,hap2_dict_motif
 
 
-
-
 def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1_repetitions, bamfile1, haplotype2_repetitions, bamfile2, out):
-
-
-	if not os.path.exists(os.path.abspath(bamfile1 + '.bai')):
-
-		subprocess.call(['samtools', 'index', os.path.abspath(bamfile1)],stderr=open(os.devnull, 'wb'))
-	
-
-	if not os.path.exists(os.path.abspath(bamfile2 + '.bai')):
-
-		subprocess.call(['samtools', 'index', os.path.abspath(bamfile2)],stderr=open(os.devnull, 'wb'))
 
 
 	repref=reference_repetitions
