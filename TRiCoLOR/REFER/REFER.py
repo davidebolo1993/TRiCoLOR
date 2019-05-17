@@ -340,6 +340,7 @@ def run(parser, args):
 
 	logging.info('Done')
 
+
 class Bed_Reader():
 
 
@@ -497,7 +498,7 @@ def Ref_Repeats(reference_seq, chromosome, start, end, regex, maxmotif, size, ou
 
 	if 'N' in wanted: #skip ambiguous
 
-		return None
+		return
 
 	else:
 
@@ -589,7 +590,6 @@ def Haplo2_Repeats(alfred_path, bamfile2, chromosome, start, end, coverage, rege
 	if not os.path.exists(out_):
 
 		os.makedirs(out_)
-
 
 	if bamfile2 is None:
 
