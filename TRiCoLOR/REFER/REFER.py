@@ -234,16 +234,18 @@ def run(parser, args):
 
 				logging.info('Creating .mmi index for ' + chromosome)
 
-				try:
+				if not os.path.exists(os.path.abspath(mmi_abspath + '/' + chromosome + '.fa')):
 
-					with open(os.path.abspath(mmi_abspath + '/' + chromosome + '.fa'), 'w') as chromout:
+					try:
 
-						subprocess.check_call(['samtools','faidx', os.path.abspath(args.genome),chromosome],stderr=open(os.devnull, 'wb'),stdout=chromout)
+						with open(os.path.abspath(mmi_abspath + '/' + chromosome + '.fa'), 'w') as chromout:
 
-				except:
+							subprocess.check_call(['samtools','faidx', os.path.abspath(args.genome),chromosome],stderr=open(os.devnull, 'wb'),stdout=chromout)
 
-					logging.error('Unexpected error while creating .mmi index for current chromosome. Does your reference genome contain informations for this chromosome?')
-					sys.exit(1)
+					except:
+
+						logging.error('Unexpected error while creating .mmi index for current chromosome. Does your reference genome contain informations for this chromosome?')
+						sys.exit(1)
 
 				subprocess.call(['minimap2','-d', os.path.abspath(mmi_abspath + '/' + chromosome + '.mmi'),os.path.abspath(mmi_abspath + '/' + chromosome + '.fa')],stderr=open(os.devnull, 'wb'), stdout=open(os.devnull, 'wb')) #must work as everything has been checked
 			
