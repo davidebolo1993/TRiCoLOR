@@ -558,28 +558,22 @@ def Haplo1_Repeats(alfred_path, bamfile1, chromosome, start, end, coverage, rege
 
 		#merge and clean
 
-		if len(consensus_bams) == 1:
 
-			os.rename(consensus_bams[0], consensus_bams[0].replace('.'.join(consensus_bams[0].split('.',2)[:2]),os.path.abspath(out_+"/" +str(iteration+1))))
-			os.remove(consensus_bams[0].replace('.bam', '.bam.bai'))
+		with open(os.path.abspath(out_ + '/FileToMerge.txt'), 'a') as fin:
 
-		else:
+			for file in consensus_bams:
 
-			with open(os.path.abspath(out_ + '/FileToMerge.txt'), 'a') as fin:
+				fin.write(file + '\n')
 
-				for file in consensus_bams:
-
-					fin.write(file + '\n')
-
-			subprocess.call(['samtools', 'merge', '-b', os.path.abspath(out_ + '/FileToMerge.txt'), os.path.abspath(out_+'/'+str(iteration+1) + '.srt.bam')])
-			subprocess.call(['samtools', 'index', os.path.abspath(out_+'/'+str(iteration+1) + '.srt.bam')])
+		subprocess.call(['samtools', 'merge', '-b', os.path.abspath(out_ + '/FileToMerge.txt'), os.path.abspath(out_+'/'+str(iteration+1) + '.srt.bam')])
+		subprocess.call(['samtools', 'index', os.path.abspath(out_+'/'+str(iteration+1) + '.srt.bam')])
 			
-			os.remove(os.path.abspath(out_ + '/FileToMerge.txt'))
+		os.remove(os.path.abspath(out_ + '/FileToMerge.txt'))
 
-			for bams in consensus_bams:
+		for bams in consensus_bams:
 
-				os.remove(bams)
-				os.remove(bams + '.bai')
+			os.remove(bams)
+			os.remove(bams + '.bai')
 
 
 def Haplo2_Repeats(alfred_path, bamfile2, chromosome, start, end, coverage, regex, maxmotif, size, allowed, ref_seq, mmi_ref, out, iteration,repetitions_h2):
@@ -636,28 +630,21 @@ def Haplo2_Repeats(alfred_path, bamfile2, chromosome, start, end, coverage, rege
 
 		#merge and clean
 
-		if len(consensus_bams) == 1:
+		with open(os.path.abspath(out_ + '/FileToMerge.txt'), 'a') as fin:
 
-			os.rename(consensus_bams[0], consensus_bams[0].replace('.'.join(consensus_bams[0].split('.',2)[:2]),os.path.abspath(out_+"/" +str(iteration+1))))
-			os.remove(consensus_bams[0].replace('.bam', '.bam.bai'))
+			for file in consensus_bams:
 
-		else:
+				fin.write(file + '\n')
 
-			with open(os.path.abspath(out_ + '/FileToMerge.txt'), 'a') as fin:
-
-				for file in consensus_bams:
-
-					fin.write(file + '\n')
-
-			subprocess.call(['samtools', 'merge', '-b', os.path.abspath(out_ + '/FileToMerge.txt'), os.path.abspath(out_+'/'+str(iteration+1) + '.srt.bam')])
-			subprocess.call(['samtools', 'index', os.path.abspath(out_+'/'+str(iteration+1) + '.srt.bam')])
+		subprocess.call(['samtools', 'merge', '-b', os.path.abspath(out_ + '/FileToMerge.txt'), os.path.abspath(out_+'/'+str(iteration+1) + '.srt.bam')])
+		subprocess.call(['samtools', 'index', os.path.abspath(out_+'/'+str(iteration+1) + '.srt.bam')])
 			
-			os.remove(os.path.abspath(out_ + '/FileToMerge.txt'))
+		os.remove(os.path.abspath(out_ + '/FileToMerge.txt'))
 
-			for bams in consensus_bams:
+		for bams in consensus_bams:
 
-				os.remove(bams)
-				os.remove(bams + '.bai')
+			os.remove(bams)
+			os.remove(bams + '.bai')
 
 
 def CleanResults(merging_path, chromosome, out, bam1, bam2):
