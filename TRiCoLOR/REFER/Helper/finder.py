@@ -238,11 +238,6 @@ def Get_Alignment_Positions(bamfilein): #as the consensus sequence is supposed t
             coords = read.get_reference_positions(full_length=True)
             seq=read.seq
 
-        else:
-
-            bamfile.close()
-            return coords,seq
-
     bamfile.close()
 
     return coords,seq
@@ -399,6 +394,7 @@ def corrector(reference, string, repetitions, coordinates, size, allowed): # cor
         return corr_
 
     s_corr_=sorted(corr_, key=itemgetter(1,2))
+
     mod_int=SolveNestedH(s_corr_, string, coords)
 
     return mod_int
