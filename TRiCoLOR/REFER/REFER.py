@@ -238,7 +238,7 @@ def run(parser, args):
 
 					with open(os.path.abspath(mmi_abspath + '/' + chromosome + '.fa'), 'w') as chromout:
 
-						subprocess.check_call(['samtools','faidx',os.path.abspath(args.genome),chromosome],stderr=open(os.devnull, 'wb'),stdout=chromout)
+						subprocess.check_call(['samtools','faidx',chromosome, os.path.abspath(args.genome)],stderr=open(os.devnull, 'wb'),stdout=chromout)
 
 				except:
 
