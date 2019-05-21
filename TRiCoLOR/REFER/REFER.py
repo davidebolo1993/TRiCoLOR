@@ -125,7 +125,7 @@ def run(parser, args):
 
 	alfred_path=os.path.abspath(os.path.dirname(__file__) + '/alfred/bin/alfred') #ask for a stand-alone consensus script
 	merging_path=os.path.abspath(os.path.dirname(__file__) + '/merging.sh')
-
+	consensus_path=os.path.abspath(os.path.dirname(__file__) + '/consensus.sh')
 	#write infos for debugging
 
 	if not args.precisemotif:
@@ -262,15 +262,15 @@ def run(parser, args):
 				repetitions_h1 = manager.list()
 				repetitions_h2 = manager.list()
 
-				p1=Process(target=Haplo1_Repeats, args=(alfred_path, os.path.abspath(bams[0]), chromosome, start, end, args.coverage, regex, args.maxmotif, args.size, args.editdistance, ref_seq, mmi_ref, args.output, i,repetitions_h1))
+				p1=Process(target=Haplo1_Repeats, args=(consensus_path, alfred_path, os.path.abspath(bams[0]), chromosome, start, end, args.coverage, regex, args.maxmotif, args.size, args.editdistance, ref_seq, mmi_ref, args.output, i,repetitions_h1))
 
 				if len(bams) == 2:
 
-					p2=Process(target=Haplo2_Repeats, args=(alfred_path, os.path.abspath(bams[1]), chromosome, start, end, args.coverage, regex, args.maxmotif, args.size, args.editdistance, ref_seq, mmi_ref, args.output, i,repetitions_h2))
+					p2=Process(target=Haplo2_Repeats, args=(consensus_path, alfred_path, os.path.abspath(bams[1]), chromosome, start, end, args.coverage, regex, args.maxmotif, args.size, args.editdistance, ref_seq, mmi_ref, args.output, i,repetitions_h2))
 
 				else:
 
-					p2=Process(target=Haplo2_Repeats, args=(alfred_path, None, chromosome, start, end, args.coverage, args.maxmotif, args.size, regex, args.editdistance, ref_seq, mmi_ref, args.output, i,repetitions_h2))
+					p2=Process(target=Haplo2_Repeats, args=(consensus_path, alfred_path, None, chromosome, start, end, args.coverage, args.maxmotif, args.size, regex, args.editdistance, ref_seq, mmi_ref, args.output, i,repetitions_h2))
 
 				p1.start()
 				p2.start()
@@ -482,17 +482,10 @@ def ReferenceFilter(reference_reps,wanted,size,start):
 			new_reps=[(reps, start+val[0], start+val[-1]+len(reps)-1, len(val)) for val in list(result.values()) if val[-1]+len(reps)-val[0] >= size]
 			corr_.extend(new_reps)
 
-	if corr_==[]:
+	s_corr_=sorted(corr_, key=itemgetter(1,2))
+	mod_int=SolveNestedR(s_corr_)
 
-		return corr_
-
-	else:
-
-		s_corr_=sorted(corr_, key=itemgetter(1,2))
-
-		mod_int=SolveNestedR(s_corr_)
-
-		return mod_int
+	return mod_int
 
 
 
@@ -523,7 +516,7 @@ def Ref_Repeats(reference_seq, chromosome, start, end, regex, maxmotif, size, ou
 		return filtered
 
 
-def Haplo1_Repeats(alfred_path, bamfile1, chromosome, start, end, coverage, regex, maxmotif, size, allowed, ref_seq, mmi_ref, out, iteration,repetitions_h1):
+def Haplo1_Repeats(consensus_path, alfred_path, bamfile1, chromosome, start, end, coverage, regex, maxmotif, size, allowed, ref_seq, mmi_ref, out, iteration,repetitions_h1):
 
 
 	out_=os.path.abspath(out+'/haplotype1')
@@ -543,7 +536,7 @@ def Haplo1_Repeats(alfred_path, bamfile1, chromosome, start, end, coverage, rege
 
 	else:
 
-		parser.MSA(alfred_path, out_,mmi_ref)
+		subprocess.call(['bash', consensus_path, alfred_path, out_, mmi_ref])
 		consensus_bams=glob.glob(os.path.abspath(out_+'/*consensus.srt.bam'))
 
 		for bam in consensus_bams:
@@ -587,7 +580,7 @@ def Haplo1_Repeats(alfred_path, bamfile1, chromosome, start, end, coverage, rege
 			os.remove(bams + '.bai')
 
 
-def Haplo2_Repeats(alfred_path, bamfile2, chromosome, start, end, coverage, regex, maxmotif, size, allowed, ref_seq, mmi_ref, out, iteration,repetitions_h2):
+def Haplo2_Repeats(consensus_path,alfred_path, bamfile2, chromosome, start, end, coverage, regex, maxmotif, size, allowed, ref_seq, mmi_ref, out, iteration,repetitions_h2):
 
 
 	out_=os.path.abspath(out+'/haplotype2')
@@ -614,7 +607,7 @@ def Haplo2_Repeats(alfred_path, bamfile2, chromosome, start, end, coverage, rege
 
 	else:
 
-		parser.MSA(alfred_path, out_,mmi_ref)
+		subprocess.call(['bash', consensus_path, alfred_path, out_, mmi_ref])
 		consensus_bams=glob.glob(os.path.abspath(out_+'/*consensus.srt.bam'))
 
 		for bam in consensus_bams:
