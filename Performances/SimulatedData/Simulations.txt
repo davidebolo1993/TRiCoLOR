@@ -1,6 +1,6 @@
 We randomly chose a region containing tandem repetitions (microsatellites) from KnownRepetitions.bed (microsatellites for GRCh38 genome).
 For each region randomly chosen we generated one haplotype containing either a contraction or an expansion of the known microsatellite and another containing no contraction or expansion.
-Contractions and expansions had a size of 7 and were generated using VISOR (https://github.com/davidebolo1993/VISOR).
+Contractions and expansions had a size of 7 and were generated using VISOR (https://github.com/davidebolo1993/VISOR). Mean coverage for simulation is double the value of -c/--coveragemin in the Simulator.py script.
 We run TRiCoLOR REFER on the diploid sample using -m/--motif equal to the length of the known repeated motif and --precisemotif parameters.
 We simulated 100 times both for contractions and expansions.
 We then evaluated TRiCoLOR Sensitivity and Specificity, Precision and Recall and the capability to discriminate the correct repeated motif of the microsatellite.
