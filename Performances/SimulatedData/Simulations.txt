@@ -7,7 +7,6 @@ We then evaluated TRiCoLOR Sensitivity and Specificity, Precision and Recall and
 
 The simulator we used is included in the directory (Simulator.py) and can be run in a python 3.6 environment with VISOR, TRiCoLOR and all their dependencies installed.
 
-
 The results we got were:
 
 - For Sequence accuracy = 0.9 and Coverage >= 5 and <= 10:
@@ -35,6 +34,33 @@ The results we got were:
 --- Sensitivity and Specificity: 0.99,0.95
 --- Precision and Recall: 0.9519, 0.99
 --- Core (correct motif, shifted motif, wrong motif ratios): 0.935,0.065,0.0 #same as before, obviously
+
+- For Sequence accuracy = 0.9 and Coverage >= 10 and <= 20:
+
+-- Exact Expansion +- 1:
+
+--- Sensitivity and Specificity:
+--- Precision and Recall:
+--- Core (correct motif, shifted motif, wrong motif ratios):
+
+-- Exact Expansion +- 2:
+
+--- Sensitivity and Specificity:
+--- Precision and Recall:
+--- Core (correct motif, shifted motif, wrong motif ratios):
+
+-- Exact Contraction +-1:
+
+--- Sensitivity and Specificity:
+--- Precision and Recall:
+--- Core (correct motif, shifted motif, wrong motif ratios):
+
+-- Exact Contraction +-2:
+
+--- Sensitivity and Specificity:
+--- Precision and Recall:
+--- Core (correct motif, shifted motif, wrong motif ratios):
+
 
 
 
