@@ -170,11 +170,11 @@ def check_coverage(pysam_AlignmentFile, chromosome, start, end, coveragemin, cov
 
 	if counter >= coveragemin and counter <= coveragemax:
 
-		return True
+		return counter, True
 
 	else:
 
-		return False
+		return counter, False
 
 
 
@@ -257,8 +257,15 @@ def Simulate(reference, number_of_simulations, accuracy, coveragemin, coveragema
 				outtest.write(chromosome + '\t' + str(start-500) + '\t' + str(start + 500) + '\n')
 
 
-			bam1=check_coverage(pysam.AlignmentFile(os.path.abspath(out + '/simbam' + str(i) + '/h1/sim.srt.bam')), chromosome, start-500, start+500, coveragemin, coveragemax)
-			bam2=check_coverage(pysam.AlignmentFile(os.path.abspath(out + '/simbam' + str(i) + '/h2/sim.srt.bam')), chromosome, start-500, start+500, coveragemin, coveragemax)
+			counter1,bam1=check_coverage(pysam.AlignmentFile(os.path.abspath(out + '/simbam' + str(i) + '/h1/sim.srt.bam')), chromosome, start-500, start+500, coveragemin, coveragemax)
+			counter2,bam2=check_coverage(pysam.AlignmentFile(os.path.abspath(out + '/simbam' + str(i) + '/h2/sim.srt.bam')), chromosome, start-500, start+500, coveragemin, coveragemax)
+
+			
+			if counter1==0 or counter2 == 0:
+
+				done=True
+				continue
+
 
 			if bam1 and bam2:
 
@@ -268,6 +275,14 @@ def Simulate(reference, number_of_simulations, accuracy, coveragemin, coveragema
 
 				subprocess.call(['rm', '-r', os.path.abspath(out + '/simbam' + str(i))])
 				logging.info('Coverage outside wanted range for current iteration. Repeat')
+
+
+		if counter1==0 or counter2 == 0:
+
+			subprocess.call(['rm', '-r', os.path.abspath(out + '/simfasta' + str(i))])
+			subprocess.call(['rm', '-r', os.path.abspath(out + '/simbam' + str(i))])
+			continue
+
 
 
 		totlen=len(motif)*(number-size-2)
@@ -413,8 +428,15 @@ def Simulate(reference, number_of_simulations, accuracy, coveragemin, coveragema
 				outtest.write(chromosome + '\t' + str(start-500) + '\t' + str(start + 500) + '\n')
 
 
-			bam1=check_coverage(pysam.AlignmentFile(os.path.abspath(out + '/simbam' + str(i) + '/h1/sim.srt.bam')), chromosome, start-500, start+500, coveragemin, coveragemax)
-			bam2=check_coverage(pysam.AlignmentFile(os.path.abspath(out + '/simbam' + str(i) + '/h2/sim.srt.bam')), chromosome, start-500, start+500, coveragemin, coveragemax)
+			counter1,bam1=check_coverage(pysam.AlignmentFile(os.path.abspath(out + '/simbam' + str(i) + '/h1/sim.srt.bam')), chromosome, start-500, start+500, coveragemin, coveragemax)
+			counter2,bam2=check_coverage(pysam.AlignmentFile(os.path.abspath(out + '/simbam' + str(i) + '/h2/sim.srt.bam')), chromosome, start-500, start+500, coveragemin, coveragemax)
+
+
+			if counter1==0 or counter2 == 0:
+
+				done=True
+				continue
+
 
 			if bam1 and bam2:
 
@@ -424,6 +446,12 @@ def Simulate(reference, number_of_simulations, accuracy, coveragemin, coveragema
 
 				subprocess.call(['rm', '-r', os.path.abspath(out + '/simbam' + str(i))])
 				logging.info('Coverage outside wanted range for current iteration. Repeat')
+
+		if counter1==0 or counter2 == 0:
+
+			subprocess.call(['rm', '-r', os.path.abspath(out + '/simfasta' + str(i))])
+			subprocess.call(['rm', '-r', os.path.abspath(out + '/simbam' + str(i))])
+			continue
 
 
 		totlen=len(motif)*(number-2)
