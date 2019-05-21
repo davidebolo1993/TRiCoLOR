@@ -1,2 +1,3 @@
 include TRiCoLOR/REFER/alfred/bin/alfred
 include TRiCoLOR/REFER/merging.sh
+include TRiCoLOR/REFER/consensus.sh
