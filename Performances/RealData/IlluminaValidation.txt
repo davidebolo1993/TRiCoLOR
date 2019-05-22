@@ -23,9 +23,7 @@ ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR903/ERR903031/ERR903031_1.fastq.gz
 ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR903/ERR903031/ERR903031_2.fastq.gz
 
 For each FASTQ file and the FASTA reference, a FMI index has been created using the fmindexer.cpp which has been made available in this repository. A statically-linked binary for Linux has been also made available in the staticversions folder.
-
 We run TRiCoLOR SENSoR and REFER on chr20 of the HG00733 ONT BAM generated and we validated all the tandem repeated variants discovered in the final BCF file using the validator.cpp which has been made available in this repository. A statically-linked binary for Linux has been also made available in the staticversions folder. 
-
 Briefly, each VARIANT in the final BCF is extended until it is not found in reference. Once a VARIANT that is not in reference has been produced, this is searched in the Illumina FASTQ, allowing an edit-distance of 1. If the VARIANT (or one of its 1d neighbours) is found in Illumina FASTQ, is considered valid. If it is not possible to extend the VARIANT so that it is not present in REFERENCE or the VARIANT is shorter than Illumina FASTQ read but not found, it is considered not valid. If the VARIANT is longer then Illumina FASTQ read, it is impossible to validate with this approach and it's skipped.
 
 
