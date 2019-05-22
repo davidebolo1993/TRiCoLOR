@@ -5,6 +5,8 @@ We run TRiCoLOR REFER on the diploid sample using -m/--motif equal to the length
 We simulated 100 heteroziogous samples for both contractions and expansions (one haplotype with contraction/expansion the other without contraction/expansion) for 2 levels of haplotype-coverage (5<=x<=10 and 10<=x<=20).
 We then evaluated TRiCoLOR Sensitivity and Specificity, Precision and Recall and the capability to discriminate the correct repeated motif of the microsatellite.
 The simulator we used is included in the directory (Simulator.py) and can be run in a python 3.6 environment with VISOR, TRiCoLOR and all their dependencies installed.
+A python script to train different scansizes on data simulated with Simulator.py and generate plots and summaries to compute optimal entropy treshold for data with user-defined coverages and error-rates is also included in the directory (Trainer.py) 
+
 
 The results we got were:
 
