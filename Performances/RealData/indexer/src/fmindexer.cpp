@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
 	generic.add_options()
 
 		("help,?", "show help message")
-		("output,o", boost::program_options::value<boost::filesystem::path>(&container.outfile)->default_value("file.fm9"), "output file")
+		("output,o", boost::program_options::value<boost::filesystem::path>(&container.outfile)->default_value("file.fmi"), "output file")
 		("type,t", boost::program_options::value<std::string>(&container.type), "type of sequence [fasta,fastq]")
 		;
 	
