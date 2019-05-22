@@ -34,3 +34,12 @@ This reference-free variant identification approach has already been described i
 
 - Dolle DD, Liu Z, Cotten M, Simpson J, Iqbal Z, Durbin R, McCarthy SA, Keane TM. Using reference-free compressed data structures to analyze sequencing reads from thousands of human genomes. 2017. Genome Res. 2017 Feb;27(2):300-309.
 
+
+Here is the result we get:
+
+
+Total variants identified by TRiCoLOR REFER: 15451
+Validated variants: 14926
+Variants too long for illumina sequences: 53
+
+TPR = Variants validated/ All variants = 14926/(15451-53) = 0.9693467
