@@ -63,5 +63,5 @@ The results we got were:
 --- Core (correct motif, shifted motif, wrong motif ratios):0.955,0.045,0.0 #same as before, obviously
 
 
-
+We trained TRiCoLOR entropy treshold on simulated data and we derived, for a 20 bps scansize, an optimal entropy treshold (mean of distributions - 3 sds) of 1.24.
 
