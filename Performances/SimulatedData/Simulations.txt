@@ -1,10 +1,9 @@
-We randomly chose a region containing tandem repetitions (microsatellites) from KnownRepetitions.bed (microsatellites for GRCh38 genome).
+We randomly chose a region containing tandem repetitions (microsatellites) from KnownRepetitions.bed (microsatellites for GRCh38 genome), included in this directory. 
 For each region randomly chosen we generated one haplotype containing either a contraction or an expansion of the known microsatellite and another containing no contraction or expansion.
-Contractions and expansions had a size of 7 and were generated using VISOR (https://github.com/davidebolo1993/VISOR). Mean coverage for simulation is double the value of -c/--coveragemin in the Simulator.py script.
-We run TRiCoLOR REFER on the diploid sample using -m/--motif equal to the length of the known repeated motif and --precisemotif parameters.
-We simulated 100 times both for contractions and expansions.
+Contractions and expansions had a size of 7 and modified haplotypes were generated using VISOR HACk (https://github.com/davidebolo1993/VISOR). Long reads simulation has been performed with VISOR LASeR: mean coverage for each haplotype is double the value of -c/--coveragemin in the Simulator.py script, accuracy is the mean accuracy for ONT data (0.9).
+We run TRiCoLOR REFER on the diploid sample using -m/--motif equal to the length of the known repeated motif and --precisemotif parameter.
+We simulated 100 heteroziogous samples for both contractions and expansions (one haplotype with contraction/expansion the other without contraction/expansion) for 2 levels of haplotype-coverage (5<=x<=10 and 10<=x<=20).
 We then evaluated TRiCoLOR Sensitivity and Specificity, Precision and Recall and the capability to discriminate the correct repeated motif of the microsatellite.
-
 The simulator we used is included in the directory (Simulator.py) and can be run in a python 3.6 environment with VISOR, TRiCoLOR and all their dependencies installed.
 
 The results we got were:
@@ -39,27 +38,27 @@ The results we got were:
 
 -- Exact Expansion +- 1:
 
---- Sensitivity and Specificity:
---- Precision and Recall:
---- Core (correct motif, shifted motif, wrong motif ratios):
+--- Sensitivity and Specificity:0.99,0.95
+--- Precision and Recall:0.9519,0.99
+--- Core (correct motif, shifted motif, wrong motif ratios): 0.92,0.08,0.0
 
 -- Exact Expansion +- 2:
 
---- Sensitivity and Specificity:
---- Precision and Recall:
+--- Sensitivity and Specificity:1.0,1.0
+--- Precision and Recall:1.0,1.0
 --- Core (correct motif, shifted motif, wrong motif ratios):
 
 -- Exact Contraction +-1:
 
---- Sensitivity and Specificity:
---- Precision and Recall:
---- Core (correct motif, shifted motif, wrong motif ratios):
+--- Sensitivity and Specificity:0.98,0.95
+--- Precision and Recall:0.9514,0.98
+--- Core (correct motif, shifted motif, wrong motif ratios):0.955,0.045,0.0
 
 -- Exact Contraction +-2:
 
---- Sensitivity and Specificity:
---- Precision and Recall:
---- Core (correct motif, shifted motif, wrong motif ratios):
+--- Sensitivity and Specificity:1.0,1.0
+--- Precision and Recall:1.0,1.0
+--- Core (correct motif, shifted motif, wrong motif ratios):0.955,0.045,0.0 #same as before, obviously
 
 
 
