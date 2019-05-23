@@ -366,7 +366,7 @@ def BScanner(bamfilein, chromosomes, bedfileout,scansize,entropy_treshold,call_t
 
 			if len(group) >= dist_treshold: #exclude intervals that are shorter than dist_treshold
 
-				intervals.append((group[0]-500,group[-1]+500)) # extend interval to the left and to the right, so that intervals in this range can be merged
+				intervals.append((group[0]-500,group[-1]+500)) # extend interval to the left and to the right, so that intervals overlapping in extended range can be merged
 
 		#merge overlapping intervals
 
