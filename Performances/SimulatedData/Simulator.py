@@ -20,6 +20,7 @@ def main():
 	required=parser.add_argument_group('Required I/O arguments')
 
 	required.add_argument('-g', '--genome', help='reference genome', metavar='.fa',required=True)	
+	required.add_argument('-o', '--output', help='output folder', metavar='folder',required=True)	
 
 	specific=parser.add_argument_group('Simulations parameters')
 
@@ -28,40 +29,50 @@ def main():
 	specific.add_argument('-C', '--coveragemax', help='maximum coverage for the simulation [10]', type=int, default=10, metavar='')
 	specific.add_argument('-a', '--accuracy', help='mean accuracy rate [0.9]', type=float, default=0.9, metavar='')
 	specific.add_argument('-s', '--size', help='size of contraction/expansion [7]', type=int, metavar='', default=7)
+	specific.add_argument('--skipTRiCoLOR', help='skip evaluation of TRiCoLOR performances; generate only BAM with microsatellites modifications', action='store_true')
+
 
 	args = parser.parse_args()
 
 
-	logging.basicConfig(filename=os.path.abspath(os.getcwd() + '/logfile.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+	if not os.path.exists(os.path.abspath(args.output)):
 
-	Simulate(args.genome,args.number, args.accuracy, args.coveragemin, args.coveragemax, args.size)
-
-	C1SS,C1PR,C1C=Collect(args.size,'contractions', allowed=1)
-
-	with open(os.path.abspath('contractions/SummaryC1.txt'), 'w') as textout:
-
-		textout.write('Sensitivity and Specificity: ' + str(C1SS[0]) + '-' +str(C1SS[1]) + '\n' + 'Precision and Recall: ' + str(C1PR[0]) + '-' + str(C1PR[1]) + '\n' + 'Core_ESW: ' + str(C1C[0]) + '-' + str(C1C[1]) + '-' + str(C1C[2]) + '\n') 
-
-	C2SS,C2PR,C2C=Collect(args.size,'contractions', allowed=2)
-
-	with open(os.path.abspath('contractions/SummaryC2.txt'), 'w') as textout:
-
-		textout.write('Sensitivity and Specificity: ' + str(C2SS[0]) + '-' +str(C2SS[1]) + '\n' + 'Precision and Recall: ' + str(C2PR[0]) + '-' + str(C2PR[1]) + '\n' + 'Core_ESW: ' + str(C2C[0]) + '-' + str(C2C[1]) + '-' + str(C2C[2]) + '\n') 
+		os.makedirs(os.path.abspath(args.output))
 
 
-	E1SS,E1PR,E1C=Collect(args.size,'expansions', allowed=1)
+	logging.basicConfig(filename=os.path.abspath(args.output + '/logfile.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+
+	Simulate(args.genome,args.number, args.accuracy, args.coveragemin, args.coveragemax, args.size,args.output, args.skipTRiCoLOR)
 
 
-	with open(os.path.abspath('expansions/SummaryE1.txt'), 'w') as textout:
+	if not args.skipTRiCoLOR:
 
-		textout.write('Sensitivity and Specificity: ' + str(E1SS[0]) + '-' +str(E1SS[1]) + '\n' + 'Precision and Recall: ' + str(E1PR[0]) + '-' + str(E1PR[1]) + '\n' + 'Core_ESW: ' + str(E1C[0]) + '-' + str(E1C[1]) + '-' + str(E1C[2]) + '\n') 
+		C1SS,C1PR,C1C=Collect(args.size,'contractions', allowed=1,output=args.output)
 
-	E2SS,E2PR,E2C=Collect(args.size,'expansions', allowed=2)
+		with open(os.path.abspath(args.output + '/contractions/SummaryC1.txt'), 'w') as textout:
+
+			textout.write('Sensitivity and Specificity: ' + str(C1SS[0]) + '-' +str(C1SS[1]) + '\n' + 'Precision and Recall: ' + str(C1PR[0]) + '-' + str(C1PR[1]) + '\n' + 'Core_ESW: ' + str(C1C[0]) + '-' + str(C1C[1]) + '-' + str(C1C[2]) + '\n') 
+
+		C2SS,C2PR,C2C=Collect(args.size,'contractions', allowed=2,output=args.output)
+
+		with open(os.path.abspath(args.output + '/contractions/SummaryC2.txt'), 'w') as textout:
+
+			textout.write('Sensitivity and Specificity: ' + str(C2SS[0]) + '-' +str(C2SS[1]) + '\n' + 'Precision and Recall: ' + str(C2PR[0]) + '-' + str(C2PR[1]) + '\n' + 'Core_ESW: ' + str(C2C[0]) + '-' + str(C2C[1]) + '-' + str(C2C[2]) + '\n') 
 
 
-	with open(os.path.abspath('expansions/SummaryE2.txt'), 'w') as textout:
+		E1SS,E1PR,E1C=Collect(args.size,'expansions', allowed=1,output=args.output)
 
-		textout.write('Sensitivity and Specificity: ' + str(E2SS[0]) + '-' +str(E2SS[1]) + '\n' + 'Precision and Recall: ' + str(E2PR[0]) + '-' + str(E2PR[1]) + '\n' + 'Core_ESW: ' + str(E2C[0]) + '-' + str(E2C[1]) + '-' + str(E2C[2]) + '\n') 
+
+		with open(os.path.abspath(args.output + '/expansions/SummaryE1.txt'), 'w') as textout:
+
+			textout.write('Sensitivity and Specificity: ' + str(E1SS[0]) + '-' +str(E1SS[1]) + '\n' + 'Precision and Recall: ' + str(E1PR[0]) + '-' + str(E1PR[1]) + '\n' + 'Core_ESW: ' + str(E1C[0]) + '-' + str(E1C[1]) + '-' + str(E1C[2]) + '\n') 
+
+		E2SS,E2PR,E2C=Collect(args.size,'expansions', allowed=2,output=args.output)
+
+
+		with open(os.path.abspath(args.output + '/expansions/SummaryE2.txt'), 'w') as textout:
+
+			textout.write('Sensitivity and Specificity: ' + str(E2SS[0]) + '-' +str(E2SS[1]) + '\n' + 'Precision and Recall: ' + str(E2PR[0]) + '-' + str(E2PR[1]) + '\n' + 'Core_ESW: ' + str(E2C[0]) + '-' + str(E2C[1]) + '-' + str(E2C[2]) + '\n') 
 
 
 
@@ -178,14 +189,15 @@ def check_coverage(pysam_AlignmentFile, chromosome, start, end, coveragemin, cov
 
 
 
-def Simulate(reference, number_of_simulations, accuracy, coveragemin, coveragemax, size):
+def Simulate(reference, number_of_simulations, accuracy, coveragemin, coveragemax, size, output, skip):
+
 
 	reference=os.path.abspath(reference)	
 	acceptable=5 #look for repetitions close to true coordinates +- 5bp
 
 	#contraction first
 
-	out=os.path.abspath('contractions')
+	out=os.path.abspath(output + '/contractions')
 
 	if not os.path.exists(out):
 
@@ -285,63 +297,7 @@ def Simulate(reference, number_of_simulations, accuracy, coveragemin, coveragema
 
 
 
-		totlen=len(motif)*(number-size-2)
-
-		if totlen > 15:
-
-			totlen=15
-
-		subprocess.call(['TRiCoLOR', 'REFER', '-g', os.path.abspath(os.path.dirname(reference) +'/' + chromosome + '.fa'), '-bed', os.path.abspath('test.bed'), '-bam', os.path.abspath(out + '/simbam' + str(i) + '/h1/sim.srt.bam'), os.path.abspath(out + '/simbam' + str(i) + '/h2/sim.srt.bam'), '-o', os.path.abspath(out + '/test' + str(i)), '-t', str(5), '-m', str(len(motif)), '--precisemotif', '-s', str(totlen)])
-
-
-
-		try:
-
-			tabh1=pd.read_csv(os.path.abspath(out + '/test' + str(i) + '/haplotype1/' + chromosome +'.repetitions.bed'), sep='\t')
-			tabh2=pd.read_csv(os.path.abspath(out + '/test' + str(i) + '/haplotype2/' + chromosome +'.repetitions.bed'), sep='\t')
-
-			m1=[]
-			n1=[]
-
-
-			for b1,b2,m,n in zip(tabh1['Start'], tabh1['End'], tabh1['Repeated Motif'], tabh1['Repetitions Number']):
-
-
-				if abs(b1-start) <= acceptable or abs(b2-(end-1))<= acceptable:
-
-					if m in possible_rotations(motif):
-
-						m1.append(m)
-
-					else:
-
-						m1.append('wrong')
-
-					n1.append(n)
-
-
-			m2=[]
-			n2=[]
-
-
-			for b1,b2,m,n in zip(tabh2['Start'], tabh2['End'], tabh2['Repeated Motif'], tabh2['Repetitions Number']):
-
-				if abs(b1-start) <= acceptable or abs(b2-(end-1)) <= acceptable:
-
-					if m in possible_rotations(motif):
-
-						m2.append(m)
-
-					else:
-
-						m2.append('wrong')
-					
-					n2.append(n)
-
-
-			outtab=pd.DataFrame({'H1N':n1,'H2N':n2, 'H1M': m1, 'H2M':m2, 'TN':[number], 'TM':[motif]})
-			outtab.to_csv(os.path.abspath(out+ '/test' + str(i) + '/result.tsv'),sep='\t',index=False)
-
+		if skip:
 
 			progress.current += 1
 
@@ -349,17 +305,84 @@ def Simulate(reference, number_of_simulations, accuracy, coveragemin, coveragema
 
 			i+=1
 
-		except:
+			continue
 
 
-			subprocess.call(['rm', '-r', os.path.abspath(out + '/simfasta' + str(i))])
-			subprocess.call(['rm', '-r', os.path.abspath(out + '/simbam' + str(i))])
-			subprocess.call(['rm', '-r', os.path.abspath(out + '/test' + str(i))])
+		else:
 
-			logging.info('Wrong minimap2 mapping or very few repetitions to detect. Repeat')
+			totlen=len(motif)*(number-size-2)
+
+			if totlen > 15:
+
+				totlen=15
+
+			subprocess.call(['TRiCoLOR', 'REFER', '-g', os.path.abspath(os.path.dirname(reference) +'/' + chromosome + '.fa'), '-bed', os.path.abspath('test.bed'), '-bam', os.path.abspath(out + '/simbam' + str(i) + '/h1/sim.srt.bam'), os.path.abspath(out + '/simbam' + str(i) + '/h2/sim.srt.bam'), '-o', os.path.abspath(out + '/test' + str(i)), '-t', str(5), '-m', str(len(motif)), '--precisemotif', '-s', str(totlen)])
+
+			try:
+
+				tabh1=pd.read_csv(os.path.abspath(out + '/test' + str(i) + '/haplotype1/' + chromosome +'.repetitions.bed'), sep='\t')
+				tabh2=pd.read_csv(os.path.abspath(out + '/test' + str(i) + '/haplotype2/' + chromosome +'.repetitions.bed'), sep='\t')
+
+				m1=[]
+				n1=[]
+
+
+				for b1,b2,m,n in zip(tabh1['Start'], tabh1['End'], tabh1['Repeated Motif'], tabh1['Repetitions Number']):
+
+
+					if abs(b1-start) <= acceptable or abs(b2-(end-1))<= acceptable:
+
+						if m in possible_rotations(motif):
+
+							m1.append(m)
+
+						else:
+
+							m1.append('wrong')
+
+						n1.append(n)
+
+
+				m2=[]
+				n2=[]
+
+
+				for b1,b2,m,n in zip(tabh2['Start'], tabh2['End'], tabh2['Repeated Motif'], tabh2['Repetitions Number']):
+
+					if abs(b1-start) <= acceptable or abs(b2-(end-1)) <= acceptable:
+
+						if m in possible_rotations(motif):
+
+							m2.append(m)
+
+						else:
+
+							m2.append('wrong')
+						
+						n2.append(n)
+
+
+				outtab=pd.DataFrame({'H1N':n1,'H2N':n2, 'H1M': m1, 'H2M':m2, 'TN':[number], 'TM':[motif]})
+				outtab.to_csv(os.path.abspath(out+ '/test' + str(i) + '/result.tsv'),sep='\t',index=False)
+
+
+				progress.current += 1
+
+				progress()
+
+				i+=1
+
+			except:
+
+
+				subprocess.call(['rm', '-r', os.path.abspath(out + '/simfasta' + str(i))])
+				subprocess.call(['rm', '-r', os.path.abspath(out + '/simbam' + str(i))])
+				subprocess.call(['rm', '-r', os.path.abspath(out + '/test' + str(i))])
+
+				logging.info('Wrong minimap2 mapping or very few repetitions to detect. Repeat')
 
 	
-	out=os.path.abspath('expansions')
+	out=os.path.abspath(output + '/expansions')
 
 
 	if not os.path.exists(out):
@@ -454,61 +477,7 @@ def Simulate(reference, number_of_simulations, accuracy, coveragemin, coveragema
 			continue
 
 
-		totlen=len(motif)*(number-2)
-
-		if totlen > 15:
-
-			totlen=15
-
-		subprocess.call(['TRiCoLOR', 'REFER', '-g', os.path.abspath(os.path.dirname(reference) +'/' + chromosome + '.fa'), '-bed', os.path.abspath('test.bed'), '-bam', os.path.abspath(out + '/simbam' + str(i) + '/h1/sim.srt.bam'), os.path.abspath(out + '/simbam' + str(i) + '/h2/sim.srt.bam'), '-o', os.path.abspath(out + '/test' + str(i)), '-t', str(3), '-m', str(len(motif)), '--precisemotif', '-s', str(totlen)])
-
-		try:
-
-			tabh1=pd.read_csv(os.path.abspath(out + '/test' + str(i) + '/haplotype1/' + chromosome +'.repetitions.bed'), sep='\t')
-			tabh2=pd.read_csv(os.path.abspath(out + '/test' + str(i) + '/haplotype2/' + chromosome +'.repetitions.bed'), sep='\t')
-
-			m1=[]
-			n1=[]
-
-
-			for b1,b2,m,n in zip(tabh1['Start'], tabh1['End'], tabh1['Repeated Motif'], tabh1['Repetitions Number']):
-
-
-				if abs(b1-start) <= acceptable or abs(b2-(end-1))<= acceptable:
-
-					if m in possible_rotations(motif):
-
-						m1.append(m)
-
-					else:
-
-						m1.append('wrong')
-
-					n1.append(n)
-
-
-			m2=[]
-			n2=[]
-
-
-			for b1,b2,m,n in zip(tabh2['Start'], tabh2['End'], tabh2['Repeated Motif'], tabh2['Repetitions Number']):
-
-				if abs(b1-start) <= acceptable or abs(b2-(end-1)) <= acceptable:
-
-					if m in possible_rotations(motif):
-
-						m2.append(m)
-
-					else:
-
-						m2.append('wrong')
-					
-					n2.append(n)
-
-
-			outtab=pd.DataFrame({'H1N':n1,'H2N':n2, 'H1M': m1, 'H2M':m2, 'TN':[number], 'TM':[motif]})
-			outtab.to_csv(os.path.abspath(out+ '/test' + str(i) + '/result.tsv'),sep='\t',index=False)
-
+		if skip:
 
 			progress.current += 1
 
@@ -516,14 +485,82 @@ def Simulate(reference, number_of_simulations, accuracy, coveragemin, coveragema
 
 			i+=1
 
-		except:
+			continue
 
 
-			subprocess.call(['rm', '-r', os.path.abspath(out + '/simfasta' + str(i))])
-			subprocess.call(['rm', '-r', os.path.abspath(out + '/simbam' + str(i))])
-			subprocess.call(['rm', '-r', os.path.abspath(out + '/test' + str(i))])
+		else:
 
-			logging.info('Wrong minimap2 mapping or very few repetitions to detect. Repeat')
+
+			totlen=len(motif)*(number-2)
+
+			if totlen > 15:
+
+				totlen=15
+
+			subprocess.call(['TRiCoLOR', 'REFER', '-g', os.path.abspath(os.path.dirname(reference) +'/' + chromosome + '.fa'), '-bed', os.path.abspath('test.bed'), '-bam', os.path.abspath(out + '/simbam' + str(i) + '/h1/sim.srt.bam'), os.path.abspath(out + '/simbam' + str(i) + '/h2/sim.srt.bam'), '-o', os.path.abspath(out + '/test' + str(i)), '-t', str(3), '-m', str(len(motif)), '--precisemotif', '-s', str(totlen)])
+
+			try:
+
+				tabh1=pd.read_csv(os.path.abspath(out + '/test' + str(i) + '/haplotype1/' + chromosome +'.repetitions.bed'), sep='\t')
+				tabh2=pd.read_csv(os.path.abspath(out + '/test' + str(i) + '/haplotype2/' + chromosome +'.repetitions.bed'), sep='\t')
+
+				m1=[]
+				n1=[]
+
+
+				for b1,b2,m,n in zip(tabh1['Start'], tabh1['End'], tabh1['Repeated Motif'], tabh1['Repetitions Number']):
+
+
+					if abs(b1-start) <= acceptable or abs(b2-(end-1))<= acceptable:
+
+						if m in possible_rotations(motif):
+
+							m1.append(m)
+
+						else:
+
+							m1.append('wrong')
+
+						n1.append(n)
+
+
+				m2=[]
+				n2=[]
+
+
+				for b1,b2,m,n in zip(tabh2['Start'], tabh2['End'], tabh2['Repeated Motif'], tabh2['Repetitions Number']):
+
+					if abs(b1-start) <= acceptable or abs(b2-(end-1)) <= acceptable:
+
+						if m in possible_rotations(motif):
+
+							m2.append(m)
+
+						else:
+
+							m2.append('wrong')
+						
+						n2.append(n)
+
+
+				outtab=pd.DataFrame({'H1N':n1,'H2N':n2, 'H1M': m1, 'H2M':m2, 'TN':[number], 'TM':[motif]})
+				outtab.to_csv(os.path.abspath(out+ '/test' + str(i) + '/result.tsv'),sep='\t',index=False)
+
+
+				progress.current += 1
+
+				progress()
+
+				i+=1
+
+			except:
+
+
+				subprocess.call(['rm', '-r', os.path.abspath(out + '/simfasta' + str(i))])
+				subprocess.call(['rm', '-r', os.path.abspath(out + '/simbam' + str(i))])
+				subprocess.call(['rm', '-r', os.path.abspath(out + '/test' + str(i))])
+
+				logging.info('Wrong minimap2 mapping or very few repetitions to detect. Repeat')
 
 	
 	os.remove(os.path.abspath('random.region.bed'))
@@ -535,10 +572,10 @@ def Simulate(reference, number_of_simulations, accuracy, coveragemin, coveragema
 
 
 
-def Collect(size,mode,allowed):
+def Collect(size,mode,allowed, output):
 
 
-	folders=glob.glob(os.path.abspath(mode) + '/test*')
+	folders=glob.glob(os.path.abspath(output + '/' + mode) + '/test*')
 
 	TP=0 #repetitions with expected contratction/expansion, calculated from h1
 	FP=0 #repetitions with unexpected contraction/expansion, calculated from h2
