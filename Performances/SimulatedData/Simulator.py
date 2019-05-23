@@ -15,7 +15,7 @@ from argparse import HelpFormatter
 
 def main():
 
-	parser = argparse.ArgumentParser(prog='TRiCoLOR', description='''Simulations for TRiCoLOR program''', epilog='''This program was developed by Davide Bolognini and Tobias Rausch at the European Molecular Biology Laboratory/European Bioinformatic Institute (EMBL/EBI)''', formatter_class=CustomFormat) 
+	parser = argparse.ArgumentParser(prog='TRiCoLOR', description='''Simulations for TRiCoLOR program''', epilog='''This program was developed by Davide Bolognini at the European Molecular Biology Laboratory/European Bioinformatic Institute (EMBL/EBI)''', formatter_class=CustomFormat) 
 	
 	required=parser.add_argument_group('Required I/O arguments')
 
@@ -28,7 +28,10 @@ def main():
 	specific.add_argument('-c', '--coveragemin', help='minimum coverage for the simulation [5]', type=int, default=5, metavar='')
 	specific.add_argument('-C', '--coveragemax', help='maximum coverage for the simulation [10]', type=int, default=10, metavar='')
 	specific.add_argument('-a', '--accuracy', help='mean accuracy rate [0.9]', type=float, default=0.9, metavar='')
+	specific.add_argument('-r', '--ratio', help='substitution:insertion:deletion ratio [30:30:40]', type=str, default='30:30:40', metavar='')
+	specific.add_argument('-l', '--length', help='mean length for simulated reads [8000]', metavar='', default=8000, type=int)	
 	specific.add_argument('-s', '--size', help='size of contraction/expansion [7]', type=int, metavar='', default=7)
+	specific.add_argument('-th', '--threads', help='number of cores to use for alignments [1]', metavar='', type=int, default=1)	
 	specific.add_argument('--skipTRiCoLOR', help='skip evaluation of TRiCoLOR performances; generate only BAM with microsatellites modifications', action='store_true')
 
 
@@ -42,7 +45,7 @@ def main():
 
 	logging.basicConfig(filename=os.path.abspath(args.output + '/logfile.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
-	Simulate(args.genome,args.number, args.accuracy, args.coveragemin, args.coveragemax, args.size,args.output, args.skipTRiCoLOR)
+	Simulate(args.genome,args.number, args.accuracy, args.coveragemin, args.coveragemax, args.ratio, args.length, args.size,args.output, args.skipTRiCoLOR, args.threads)
 
 
 	if not args.skipTRiCoLOR:
@@ -189,7 +192,7 @@ def check_coverage(pysam_AlignmentFile, chromosome, start, end, coveragemin, cov
 
 
 
-def Simulate(reference, number_of_simulations, accuracy, coveragemin, coveragemax, size, output, skip):
+def Simulate(reference, number_of_simulations, accuracy, coveragemin, coveragemax, ratio, length, size, output, skip,threads):
 
 
 	reference=os.path.abspath(reference)	
@@ -260,8 +263,8 @@ def Simulate(reference, number_of_simulations, accuracy, coveragemin, coveragema
 		while not done:
 
 		
-			subprocess.call(['VISOR', 'LASeR', '-g', os.path.abspath(os.path.dirname(reference) +'/' + chromosome + '.fa'), '-bed', os.path.abspath('sim.bed'), '-s', os.path.abspath(out + '/simfasta' + str(i) + '/h1'), '-c', str(coveragemin*2), '-th', str(7), '--noaddtag','-o', os.path.abspath(out + '/simbam' + str(i) + '/h1')])
-			subprocess.call(['VISOR', 'LASeR', '-g', os.path.abspath(os.path.dirname(reference) +'/' + chromosome + '.fa'), '-bed', os.path.abspath('sim.bed'), '-s', os.path.abspath(out + '/simfasta' + str(i) + '/h2'), '-c', str(coveragemin*2), '-th', str(7), '--noaddtag','-o', os.path.abspath(out + '/simbam' + str(i) + '/h2')])
+			subprocess.call(['VISOR', 'LASeR', '-g', os.path.abspath(os.path.dirname(reference) +'/' + chromosome + '.fa'), '-bed', os.path.abspath('sim.bed'), '-s', os.path.abspath(out + '/simfasta' + str(i) + '/h1'), '-c', str(coveragemin*2), '-th', str(threads), '--noaddtag','-o', os.path.abspath(out + '/simbam' + str(i) + '/h1'), '-r', ratio, '-l', str(length)])
+			subprocess.call(['VISOR', 'LASeR', '-g', os.path.abspath(os.path.dirname(reference) +'/' + chromosome + '.fa'), '-bed', os.path.abspath('sim.bed'), '-s', os.path.abspath(out + '/simfasta' + str(i) + '/h2'), '-c', str(coveragemin*2), '-th', str(threads), '--noaddtag','-o', os.path.abspath(out + '/simbam' + str(i) + '/h2'), '-r', ratio, '-l', str(length)])
 
 
 			with open(os.path.abspath('test.bed'), 'w') as outtest:
@@ -442,8 +445,8 @@ def Simulate(reference, number_of_simulations, accuracy, coveragemin, coveragema
 
 		while not done:
 		
-			subprocess.call(['VISOR', 'LASeR', '-g', os.path.abspath(os.path.dirname(reference) +'/' + chromosome + '.fa'), '-bed', os.path.abspath('sim.bed'), '-s', os.path.abspath(out + '/simfasta' + str(i) + '/h1'), '-c', str(coveragemin*2), '-th', str(7), '--noaddtag','-o', os.path.abspath(out + '/simbam' + str(i) + '/h1')])
-			subprocess.call(['VISOR', 'LASeR', '-g', os.path.abspath(os.path.dirname(reference) +'/' + chromosome + '.fa'), '-bed', os.path.abspath('sim.bed'), '-s', os.path.abspath(out + '/simfasta' + str(i) + '/h2'), '-c', str(coveragemin*2), '-th', str(7), '--noaddtag','-o', os.path.abspath(out + '/simbam' + str(i) + '/h2')])
+			subprocess.call(['VISOR', 'LASeR', '-g', os.path.abspath(os.path.dirname(reference) +'/' + chromosome + '.fa'), '-bed', os.path.abspath('sim.bed'), '-s', os.path.abspath(out + '/simfasta' + str(i) + '/h1'), '-c', str(coveragemin*2), '-th', str(threads), '--noaddtag','-o', os.path.abspath(out + '/simbam' + str(i) + '/h1'), '-r', ratio, '-l', str(length)])
+			subprocess.call(['VISOR', 'LASeR', '-g', os.path.abspath(os.path.dirname(reference) +'/' + chromosome + '.fa'), '-bed', os.path.abspath('sim.bed'), '-s', os.path.abspath(out + '/simfasta' + str(i) + '/h2'), '-c', str(coveragemin*2), '-th', str(threads), '--noaddtag','-o', os.path.abspath(out + '/simbam' + str(i) + '/h2'), '-r', ratio, '-l', str(length)])
 
 
 			with open(os.path.abspath('test.bed'), 'w') as outtest:
