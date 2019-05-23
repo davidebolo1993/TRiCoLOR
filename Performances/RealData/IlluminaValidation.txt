@@ -6,7 +6,6 @@ The alignment was performed using minimap2 and samtools.
 
 Final BAM was splitted by haplotype using Alfred (https://github.com/tobiasrausch/alfred) and the HG00733 phased SNPs, available at: ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/hgsv_sv_discovery/working/20170323_Strand-seq_phased_FB+GATK_VCFs/HG00732_StrandS_SNVsetFP+GATK_phased.vcf.gz
 
-
 FASTQ for ILLUMINA are available as described here: ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/hgsv_sv_discovery/illumina_wgs.sequence.index.
 
 Here are the direct links:
@@ -22,24 +21,22 @@ ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR899/ERR899726/ERR899726_2.fastq.gz
 ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR903/ERR903031/ERR903031_1.fastq.gz
 ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR903/ERR903031/ERR903031_2.fastq.gz
 
-For each FASTQ file and the FASTA reference, a FMI index has been created using the fmindexer.cpp which has been made available in this repository. A statically-linked binary for Linux has been also made available in the staticversions folder.
+For each FASTQ and the FASTA reference, a FMI index has been created using the fmindexer.cpp which has been made available in this repository. A statically-linked binary for Linux has been also made available in the staticversions folder.
 We run TRiCoLOR SENSoR and REFER on chr20 of the HG00733 ONT BAM generated and we validated all the tandem repeated variants discovered in the final BCF file using the validator.cpp which has been made available in this repository. A statically-linked binary for Linux has been also made available in the staticversions folder. 
-Briefly, each VARIANT in the final BCF is extended until it is not found in reference. Once a VARIANT that is not in reference has been produced, this is searched in the Illumina FASTQ, allowing an edit-distance of 1. If the VARIANT (or one of its 1d neighbours) is found in Illumina FASTQ, is considered valid. If it is not possible to extend the VARIANT so that it is not present in REFERENCE or the VARIANT is shorter than Illumina FASTQ read but not found, it is considered not valid. If the VARIANT is longer then Illumina FASTQ read, it is impossible to validate with this approach and it's skipped.
-
+Briefly, each VARIANT in the final BCF is extended until it is not found in reference. Once a VARIANT that is not in reference has been produced, this is searched in the Illumina FASTQ, allowing an edit distance of 1. If the VARIANT (or one of its 1d-neighbours) is found in Illumina FASTQ, is considered valid. If it is not possible to extend the VARIANT so that it is not present in REFERENCE or the VARIANT is shorter than Illumina FASTQ read but not found, it is considered not valid. If the VARIANT is longer then Illumina FASTQ read, it is impossible to validate with this approach and it's skipped.
 
 This reference-free variant identification approach has already been described in: 
-
 
 - Iqbal Z, Caccamo M, Turner I, Flicek P, McVean G. De novo assembly and genotyping of variants using colored de Bruijn graphs. Nat Genet. 2012 Jan 8;44(2):226-32.
 
 - Dolle DD, Liu Z, Cotten M, Simpson J, Iqbal Z, Durbin R, McCarthy SA, Keane TM. Using reference-free compressed data structures to analyze sequencing reads from thousands of human genomes. 2017. Genome Res. 2017 Feb;27(2):300-309.
 
 
-Here is the result we get:
+Here is the result we got:
 
 
 Total variants identified by TRiCoLOR REFER: 15451
 Validated variants: 14926
 Variants too long for illumina sequences: 53
 
-TPR = Variants validated/ All variants = 14926/(15451-53) = 0.9693467
+TPR = Variants validated/All variants = 14926/(15451-53) = 0.9693467
