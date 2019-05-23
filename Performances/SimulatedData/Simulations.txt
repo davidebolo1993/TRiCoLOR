@@ -76,6 +76,8 @@ The results we got were:
 
 ###Train entropy treshold for TRiCoLOR SENSoR
 
-Simulator.py is also suitable to generate simulated BAM with wanted error profiles that can be used to train a propietary entropy treshold for TRiCoLOR SENSoR. The default entropy treshold has been trained on BAM files with accuracy 0.9 (10% error rate),  substitution:insertion:deletion ratio of 30:30:40, and mean length 8000 bps, using a scansize of 20 bps and has been set as mean-3sd of the resulting entropy distributions.
-
-However, one can generate BAM with propietary error profiles and train different scansizes. Once simulated BAM have been generated (one can skip TRiCoLOR performances evaluation using the --skipTRiCoLOR parameter of the script), one can use the Trainer.py script to train different scansizes on simulated data. This will give, as results, some plots illustrating entropy distributions for BAM with microsatellites contractions and expansions and for normal BAM and Summary files with teir mean-3sd values.
+Simulator.py is also suitable to generate simulated BAM with wanted error profiles that can be used to train a propietary entropy treshold for TRiCoLOR SENSoR.
+The default entropy treshold has been trained on BAM files with accuracy 0.9 (10% error rate), substitution:insertion:deletion ratio of 30:30:40, and mean length 8000 bps, using a scansize of 20 bps and has been set as mean-3sd of the resulting entropy distributions.
+However, one can generate BAM with propietary error profiles and train different scansizes.
+Once simulated BAM have been generated (one can skip TRiCoLOR performances evaluation using the --skipTRiCoLOR parameter of the script), one can use the Trainer.py script to train different scansizes on simulated data.
+This will give, as results, some plots illustrating entropy distributions for BAM with microsatellites contractions and expansions and for normal BAM and Summary files with teir mean-3sd values.
