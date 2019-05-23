@@ -254,7 +254,7 @@ def Get_Entropy_From_Simulations(path,scansize):
 
 	ax=sns.distplot(C_dist_downsampled, rug=True, rug_kws={'color': 'red'}, kde_kws={'color': 'indianred', 'lw': 3}, hist_kws={'histtype': 'step', 'linewidth': 3,'alpha': 1, 'color': 'darkred'})
 	data_x, data_y = ax.lines[0].get_data()
-	Y_C_MS = np.interp(N_MS,data_x, data_y)
+	Y_C_MS = np.interp(C_MS,data_x, data_y)
 	plt.xlabel('Entropy')
 	plt.ylabel('Density')
 	plt.plot([C_MS],[Y_C_MS],marker='o',color='black',markersize=7)
@@ -274,7 +274,6 @@ def Get_Entropy_From_Simulations(path,scansize):
 	T_MS=mean(T) - 3 *stddev(T)
 
 	T_dist_downsampled=random.sample(T, 10000)
-
 
 	ax=sns.distplot(T_dist_downsampled, rug=True, rug_kws={'color': 'lightgray'}, kde_kws={'color': 'darkgray', 'lw': 3}, hist_kws={'histtype': 'step', 'linewidth': 3,'alpha': 1, 'color': 'dimgray'})
 	data_x, data_y = ax.lines[0].get_data()
