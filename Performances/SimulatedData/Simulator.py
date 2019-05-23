@@ -15,7 +15,7 @@ from argparse import HelpFormatter
 
 def main():
 
-	parser = argparse.ArgumentParser(prog='TRiCoLOR', description='''Simulations for TRiCoLOR program''', epilog='''This program was developed by Davide Bolognini at the European Molecular Biology Laboratory/European Bioinformatic Institute (EMBL/EBI)''', formatter_class=CustomFormat) 
+	parser = argparse.ArgumentParser(prog='TRiCoLOR', description='''Simulations for TRiCoLOR program''', epilog='''This script was developed by Davide Bolognini at the European Molecular Biology Laboratory/European Bioinformatic Institute (EMBL/EBI)''', formatter_class=CustomFormat) 
 	
 	required=parser.add_argument_group('Required I/O arguments')
 
