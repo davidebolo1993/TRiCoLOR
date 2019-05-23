@@ -17,11 +17,11 @@ import seaborn as sns
 def main():
 
 
-	parser = argparse.ArgumentParser(prog='TRiCoLOR', description='''Simulations for TRiCoLOR program''', epilog='''This program was developed by Davide Bolognini at the European Molecular Biology Laboratory/European Bioinformatic Institute (EMBL/EBI)''', formatter_class=CustomFormat) 
+	parser = argparse.ArgumentParser(prog='TRiCoLOR', description='''Simulations for TRiCoLOR program''', epilog='''This script was developed by Davide Bolognini at the European Molecular Biology Laboratory/European Bioinformatic Institute (EMBL/EBI)''', formatter_class=CustomFormat) 
 
 	parameters = parser.add_argument_group('Arguments')
 
-	parameters.add_argument('-f', '--folder', help='One folder containing simulations (folder containing expansions and contractions subfolders generated with the simulator)', metavar='folder', required=True)
+	parameters.add_argument('-f', '--folder', help='Folder generated with Simulator.py', metavar='folder', required=True)
 	parameters.add_argument('-s', '--size', help='Scansize to train on simulated data [20]', metavar='', default=20, type=int)
 
 	args = parser.parse_args()
@@ -29,7 +29,7 @@ def main():
 	path=os.path.abspath(args.folder)
 	size=args.size
 
-	Get_Entropy_From_Simulations(path,size)
+	Get_Consensus_Entropy_From_Simulations(path,size)
 
 
 
@@ -135,7 +135,7 @@ def BamScanner(bamfile,scansize):
 
 
 
-def Get_Entropy_From_Simulations(path,scansize):
+def Get_Consensus_Entropy_From_Simulations(path,scansize):
 
 
 	expansions=glob.glob(os.path.abspath(path + '/expansions') + '/simbam*')
@@ -159,10 +159,6 @@ def Get_Entropy_From_Simulations(path,scansize):
 		E.append(en_)
 
 
-	for a in E:
-
-		x=[el+1 for el,x in enumerate(a)]
-
 	E_dist=[]
 
 	for el in E:
@@ -171,7 +167,13 @@ def Get_Entropy_From_Simulations(path,scansize):
 
 	E_MS=mean(E_dist) - 3 *stddev(E_dist)
 
-	E_dist_downsampled=random.sample(E_dist, 10000)
+	if len(E_dist) <= 10000:
+
+		E_dist_downsampled=E_dist
+
+	else:
+
+		E_dist_downsampled=random.sample(E_dist, 10000)
 
 	ax=sns.distplot(E_dist_downsampled, rug=True, rug_kws={'color': 'green'}, kde_kws={'color': 'olive', 'lw': 3}, hist_kws={'histtype': 'step', 'linewidth': 3,'alpha': 1, 'color': 'darkgreen'})
 	data_x, data_y = ax.lines[0].get_data()
@@ -182,9 +184,7 @@ def Get_Entropy_From_Simulations(path,scansize):
 	plt.title('Entropy distplot for BAM with microsatellites expansions')
 	plt.savefig(os.path.abspath(path + '/Distplot_BAM_expansions.pdf'))
 	plt.savefig(os.path.abspath(path + '/Distplot_BAM_expansions.png'))
-	plt.show()
-
-
+	plt.close()
 
 	#Normals
 
@@ -196,12 +196,6 @@ def Get_Entropy_From_Simulations(path,scansize):
 					
 		N.append(en_)
 
-
-	for a in N:
-
-		x=[el+1 for el,x in enumerate(a)]
-
-
 	N_dist=[]
 
 	for el in N:
@@ -210,7 +204,13 @@ def Get_Entropy_From_Simulations(path,scansize):
 
 	N_MS=mean(N_dist) - 3 *stddev(N_dist)
 
-	N_dist_downsampled=random.sample(N_dist, 10000)
+	if len(N_dist) <= 10000:
+
+		N_dist_downsampled=N_dist
+
+	else:
+
+		N_dist_downsampled=random.sample(N_dist, 10000)
 
 
 	ax=sns.distplot(N_dist_downsampled, rug=True, rug_kws={'color': 'blue'}, kde_kws={'color': 'teal', 'lw': 3}, hist_kws={'histtype': 'step', 'linewidth': 3,'alpha': 1, 'color': 'darkblue'})
@@ -222,7 +222,7 @@ def Get_Entropy_From_Simulations(path,scansize):
 	plt.title('Entropy distplot for BAM without microsatellites modifications')
 	plt.savefig(os.path.abspath(path + '/Distplot_BAM_normals.pdf'))
 	plt.savefig(os.path.abspath(path + '/Distplot_BAM_normals.png'))
-	plt.show()
+	plt.close()
 
 
 
@@ -237,17 +237,20 @@ def Get_Entropy_From_Simulations(path,scansize):
 		C.append(en_)
 
 
-	for a in C:
-
-		x=[el+1 for el,x in enumerate(a)]
-
 	C_dist=[]
 
 	for el in C:
 
 		C_dist.extend(el[0:-1])
 
-	C_dist_downsampled=random.sample(C_dist, 10000)
+
+	if len(C_dist) <= 10000:
+
+		C_dist_downsampled=C_dist
+
+	else:
+
+		C_dist_downsampled=random.sample(C_dist, 10000)
 
 
 	C_MS=mean(C_dist) - 3 *stddev(C_dist)
@@ -261,7 +264,7 @@ def Get_Entropy_From_Simulations(path,scansize):
 	plt.title('Entropy distplot for BAM with microsatellites contractions')
 	plt.savefig(os.path.abspath(path + '/Distplot_BAM_contractions.pdf'))
 	plt.savefig(os.path.abspath(path + '/Distplot_BAM_contractions.png'))
-	plt.show()
+	plt.close()
 
 	#Total
 
@@ -273,7 +276,13 @@ def Get_Entropy_From_Simulations(path,scansize):
 
 	T_MS=mean(T) - 3 *stddev(T)
 
-	T_dist_downsampled=random.sample(T, 10000)
+	if len(T) <= 10000:
+
+		T_dist_downsampled=T
+
+	else:
+
+		T_dist_downsampled=random.sample(T, 10000)
 
 	ax=sns.distplot(T_dist_downsampled, rug=True, rug_kws={'color': 'lightgray'}, kde_kws={'color': 'darkgray', 'lw': 3}, hist_kws={'histtype': 'step', 'linewidth': 3,'alpha': 1, 'color': 'dimgray'})
 	data_x, data_y = ax.lines[0].get_data()
@@ -284,7 +293,7 @@ def Get_Entropy_From_Simulations(path,scansize):
 	plt.title('Entropy distplot for all BAM')
 	plt.savefig(os.path.abspath(path + '/Distplot_BAM_all.pdf'))
 	plt.savefig(os.path.abspath(path + '/Distplot_BAM_all.png'))
-	plt.show()
+	plt.close()
 
 
 	#write data
@@ -302,5 +311,6 @@ def Get_Entropy_From_Simulations(path,scansize):
 if __name__ == '__main__':
 
 	main()
+
 
 
