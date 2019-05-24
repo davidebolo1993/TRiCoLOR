@@ -4,7 +4,6 @@
 #python 3 standard library
 
 import re
-from bisect import bisect_left, bisect_right
 from collections import defaultdict, Counter
 from operator import itemgetter
 
@@ -16,18 +15,18 @@ import pysam
 import editdistance
 
 
-def SolveNestedH(SortedIntervals, string, coords):
+def SolveNestedH(SortedIntervals, string, size):
 
     extended=[]
+    
     i=0
 
     while i < len(SortedIntervals):
 
         if extended==[]:
 
-            s_,e_=SortedIntervals[i][1], SortedIntervals[i][2]
-            string_s,string_e = bisect_left(coords,s_), bisect_right(coords, e_)
-            num=string[string_s:string_e].count(SortedIntervals[i][0])
+            s_,e_=SortedIntervals[i][1],SortedIntervals[i][2]
+            num=string[s_:e_+1].count(SortedIntervals[i][0])
             extended.append((SortedIntervals[i][0], s_, e_, num))
         
 
@@ -35,26 +34,21 @@ def SolveNestedH(SortedIntervals, string, coords):
 
             if extended[-1][2] >= SortedIntervals[i][1] and extended[-1][2] < SortedIntervals[i][2]: #the two intervals overlap in end(1)/start(2)
 
-                if abs(extended[-1][2]-SortedIntervals[i][1]) >= round((extended[-1][2]-extended[-1][1])/2): #big overlap, check if we want to keep both or just one
+                if abs(extended[-1][2]-SortedIntervals[i][1]) >= round((extended[-1][2]-extended[-1][1])/2): #big overlap, keep one out of the 2 reps overlapping
 
-                    #count for the old interval
-                    c1=extended[-1][2]
 
-                    #count for the new interval
-                    s_,e_=SortedIntervals[i][1], SortedIntervals[i][2]
-                    ss__, se__=bisect_left(coords,s_), bisect_right(coords, e_)
-                    m2=SortedIntervals[i][0]
-                    c2=string[ss__:se__].count(SortedIntervals[i][0])
+                    c1=string[extended[-1][1]:extended[-1][2]+1].count(extended[-1][0])
+                    c2=string[SortedIntervals[i][1]:SortedIntervals[i][2]+1].count(SortedIntervals[i][0])
 
-                    #motifs
-                    m1=extended[-1][0]
 
                     #extend and rank
+
                     new_s,new_e=min(extended[-1][1],SortedIntervals[i][1]), max(extended[-1][2],SortedIntervals[i][2])
-                    string_s,string_e = bisect_left(coords,new_s), bisect_right(coords, new_e)
-                    st_=string[string_s:string_e]
-                    rank1,count1=Markovchain(m1,st_),st_.count(m1)
-                    rank2,count2=Markovchain(m2,st_),st_.count(m2)
+                    st_=string[new_s:new_e+1]
+                    m1=extended[-1][0]
+                    m2=SortedIntervals[i][0]
+                    rank1,count1=Markovchain(m1,st_)
+                    rank2,count2=Markovchain(m2,st_)
 
                     if rank2 > rank1: #rank2 higher
 
@@ -66,7 +60,7 @@ def SolveNestedH(SortedIntervals, string, coords):
                         else: #extending did not increase the number of repetitions, keep original for second
 
                             extended.remove(extended[-1])
-                            extended.append((m2,s_,e_, c2))
+                            extended.append((m2,SortedIntervals[i][1],SortedIntervals[i][2], c2))
 
 
                     elif rank2 < rank1: #rank1 higher
@@ -76,65 +70,46 @@ def SolveNestedH(SortedIntervals, string, coords):
                             extended.remove(extended[-1])
                             extended.append((m1,new_s, new_e, count1))
 
-                        else: #extending did not increase the number of repetitions, keep original interval for first
-
-                            pass
-
 
                     else: #two ranks are the same
 
-                        if m2 in m1*2: #if rep in second interval is the same of rep in first interval but simply rotated keep interval with higher count
+                        if m2 not in possible_rotations(m1): #if rep in second interval is not a rotation of the other
 
-                            if count2 > count1:
+                            if count2 > count1: 
 
-                                if count2 > c2:
-
-                                    extended.remove(extended[-1])
-                                    extended.append((m2,new_s, new_e, count2))
-
-                                else:
-
-                                    extended.remove(extended[-1])
-                                    extended.append((m2,s_,e_, count2))
+                                extended.append((m2,new_s, new_e, count2))
 
 
-                            else:
-
-                                if count1 > c1:
-
-                                    extended.remove(extended[-1])
-                                    extended.append((m1,new_s,new_e,count1))
-
-                                else:
-
-                                    pass
-
-                        else: #different reps with same probability, keep previous and new but separate. They will be merged in VCF but motifs will be kept separated
-
-                            extended.append((m2,s_, e_, c2))
-
-                else: #overlapping region is shorter than half the length of previous. Keep both reps, they will be merged in VCF but motifs will be kept separated
-
-                    s_,e_=SortedIntervals[i][1], SortedIntervals[i][2]
-                    string_s,string_e = bisect_left(coords,s_), bisect_right(coords, e_)
-                    num = string[string_s:string_e].count(SortedIntervals[i][0])
-                    extended.append((SortedIntervals[i][0], s_, e_, num))
+                else: #small overlap, resize and decide whether to keep new
                     
-            
-            elif extended[-1][1] <=  SortedIntervals[i][1] and extended[-1][2] >= SortedIntervals[i][2]:
+                    new_s,new_e=SortedIntervals[i][1]+1,SortedIntervals[i][2]
+                    st_=string[new_s:new_e+1]
 
-                pass
-            
-            elif extended[-1][2] < SortedIntervals[i][1]: #following does not overlap and is not nested
+                    if len(st_) >=size:
 
-                s_,e_=SortedIntervals[i][1], SortedIntervals[i][2]
-                string_s,string_e = bisect_left(coords,s_), bisect_right(coords, e_)
-                num = string[string_s:string_e].count(SortedIntervals[i][0])
+                        extended.append((SortedIntervals[i][0],new_s, new_e, st_.count(SortedIntervals[i][0])))
+
+                        
+            elif extended[-1][2] < SortedIntervals[i][1]: #following does not overlap
+
+                s_,e_=SortedIntervals[i][1],SortedIntervals[i][2]
+                num=string[s_:e_+1].count(SortedIntervals[i][0])
                 extended.append((SortedIntervals[i][0], s_, e_, num))
 
         i+=1
 
     return extended
+
+
+def possible_rotations(word):
+
+    p = []
+
+    for i in range(len(word)):
+
+        p.append(word[i:]+word[:i])
+        
+    return p
 
 
 def RegexBuilder(kmer,times,overlapping,strictmotif,strictimes):
@@ -265,7 +240,7 @@ def modifier(coordinates): #fast way to remove None and substitute with closest 
 def Get_Alignment_Coordinates(coord_list,repetitions):
 
 
-    rep_coord_list=[(a,b,c) for a,b,c in zip([repetition[0] for repetition in repetitions],[coord_list[repetition[1]] for repetition in repetitions],[coord_list[repetition[2]] for repetition in repetitions])]
+    rep_coord_list=[(a,b,c,d) for a,b,c,d in zip([repetition[0] for repetition in repetitions],[coord_list[repetition[1]] for repetition in repetitions],[coord_list[repetition[2]] for repetition in repetitions],[repetition[3] for repetition in repetitions])]
 
     return rep_coord_list
 
@@ -321,7 +296,7 @@ def Markovchain(motif,string):
 
     motif_probability=(model[motif][motif]/len(string))*len(motif) + len(motif)/len(string) #reward based on motif length
 
-    return motif_probability
+    return motif_probability, model[motif][motif]+1
 
 
 def check_ref(string1, string2): 
@@ -345,25 +320,18 @@ def corrector(reference, string, repetitions, coordinates, size, allowed): # cor
 
         for i in range(len(self_)-1):
 
-            if self__[i+1][1]-self__[i][1] <= len(reps): #coords are subsequent or in inserted region
+            if self_[i+1][1]-self_[i][1] == len(reps): #reps are subsequent in string
 
-                if check_edit(reps,string[self_[i][1]+len(reps):self_[i+1][1]], allowed): #reps are subsequent or separated by n-allowed chars or by a string with edit distance n from reps
+                ranges.append((self_[i][1],self_[i+1][1])) #accept as putative interval with reps
 
-                    ranges.append((self_[i][1],self_[i+1][1])) #accept as putative interval with reps
+            else: #reps are not subsequent
 
-                else:
+                if len(reps) > 1:
 
-                    continue
+                    if check_edit(reps,string[self_[i][1]+len(reps):self_[i+1][1]], allowed) and check_ref(reference[self__[i][1]-1:self__[i+1][1]],string[self_[i][1]: self_[i+1][1]+1]):
 
-            else: #coordinates are more distant than len reps
+                        ranges.append((self_[i][1],self_[i+1][1])) #allows same motifs separated by a string with edit distance n from the rep
 
-                if check_edit(reps,string[self_[i][1]+len(reps):self_[i+1][1]], allowed) and check_ref(reference[self__[i][1]-1:self__[i+1][1]],string[self_[i][1]: self_[i+1][1]+1]):
-
-                    ranges.append((self_[i][1],self_[i+1][1])) #allows same motifs separated by a string with edit distance n from the rep
-
-                else:
-
-                    continue
 
         collapsed_ranges= defaultdict(list)
       
@@ -383,7 +351,7 @@ def corrector(reference, string, repetitions, coordinates, size, allowed): # cor
 
         if len(result) != 0:
 
-            corr_.extend(Get_Alignment_Coordinates(coords,[(reps, interv[0], interv[-1]+(len(reps)-1)) for interv in result.values() if interv[-1]+len(reps)-interv[0] >= size]))
+            corr_.extend([(reps, interv[0], interv[-1]+(len(reps)-1)) for interv in result.values() if interv[-1]+len(reps)-interv[0] >= size])
 
         else:
 
@@ -395,6 +363,6 @@ def corrector(reference, string, repetitions, coordinates, size, allowed): # cor
 
     s_corr_=sorted(corr_, key=itemgetter(1,2))
 
-    mod_int=SolveNestedH(s_corr_, string, coords)
+    mod_int=SolveNestedH(s_corr_, string,size)
 
-    return mod_int
+    return Get_Alignment_Coordinates(coords,mod_int)
