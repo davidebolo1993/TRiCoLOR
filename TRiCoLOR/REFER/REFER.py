@@ -438,11 +438,11 @@ def Runner(processor,sli,refseq,regex,maxmotif,size,bamfile1,bamfile2,coverage,a
 
 		except BaseException as BE:
 
-			logging.exception('Processor ' + processor + ' generated an error for region ' + s[0] +  ':' + str(s[1]) '-' + str(s[2]) + '. Check TRiCoLOR.' + processor + '.unexpected.err.log in ' + os.path.abspath(output) + ' for details')
+			logging.exception('Processor ' + processor + ' generated an error for region ' + s[0] +  ':' + str(s[1]) + '-' + str(s[2]) + '. Check TRiCoLOR.' + processor + '.unexpected.err.log in ' + os.path.abspath(output) + ' for details')
 			
 			with open (os.path.abspath(output + '/TRiCoLOR.' + processor + '.unexpected.err.log'), 'a') as errorout:
 
-				errorout.write('Unexpected error in region '+ s[0] +  ':' + str(s[1]) '-' + str(s[2]) + '.' + '\n' + BE + '\n')
+				errorout.write('Unexpected error in region '+ s[0] +  ':' + str(s[1]) + '-' + str(s[2]) + '.' + '\n' + BE + '\n')
 
 
 	Rrep[processor] = Ritem
