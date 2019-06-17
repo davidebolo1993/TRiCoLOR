@@ -7,11 +7,10 @@ import sys
 import math
 import itertools
 import multiprocessing
-from operator import itemgetter
-from shutil import which
 import logging
 import subprocess
-
+from operator import itemgetter
+from shutil import which
 
 # additional modules
 
@@ -50,11 +49,8 @@ def run(parser, args):
 	
 	notkey=['func']
 	command_string= ' '.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey)
-
 	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR_SENSoR.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-
 	logging.info('main=TRiCoLOR ' + command_string)
-
 	external_tools=['samtools', 'bedops']
 
 	for tools in external_tools:
@@ -70,7 +66,6 @@ def run(parser, args):
 
 		logging.error('TRiCoLOR supports haploid and diploid genomes only')
 
-
 	for bam in bams:
 
 		try:
@@ -81,7 +76,6 @@ def run(parser, args):
 
 			logging.error('BAM ' + bam + ' does not exist, is not readable or is not a valid BAM')
 			sys.exit(1)
-
 
 		if not os.path.exists(os.path.abspath(bam + '.bai')):
 
@@ -95,7 +89,6 @@ def run(parser, args):
 
 				logging.error('BAM ' + bam + ' could not be indexed')
 				sys.exit(1)
-
 
 	logging.info('Scansize: ' + str(args.scansize))
 	logging.info('Entropy treshold: ' + str(args.entropy))
@@ -112,9 +105,7 @@ def run(parser, args):
 
 		logging.info('Chromosomes: ' + '-'.join(x for x in args.chromosomes[0]))
 
-
 	logging.info('Scanning ...')
-
 
 	if len(bams) == 1:
 
@@ -128,9 +119,7 @@ def run(parser, args):
 			sys.exit(1)
 
 		logging.info('Done')
-
 		logging.info('Writing final BED to output folder')
-
 
 		with open(os.path.abspath(args.output + '/TRiCoLOR.srt.bed'), 'w') as srtbed1:
 		
@@ -138,9 +127,7 @@ def run(parser, args):
 
 		os.remove(os.path.abspath(args.output + '/H1.bed'))
 
-
 	else:
-
 
 		try:
 
@@ -151,25 +138,19 @@ def run(parser, args):
 			logging.exception('Unexpected error while scanning. Log is below')
 			sys.exit(1)
 
-
 		logging.info('Done')
-
-		logging.info('Writing final BED to output folder')
-
+		logging.info('Writing final BED to output folder ...')
 
 		with open(os.path.abspath(args.output + '/H1.srt.bed'), 'w') as srtbed1:
 		
 			subprocess.call(['sort-bed', os.path.abspath(args.output + '/H1.bed')],stdout=srtbed1, stderr=open(os.devnull, 'wb'))
 
-
 		with open(os.path.abspath(args.output + '/H2.srt.bed'), 'w') as srtbed2:
 		
 			subprocess.call(['sort-bed', os.path.abspath(args.output + '/H2.bed')],stdout=srtbed2, stderr=open(os.devnull, 'wb'))
 
-
 		os.remove(os.path.abspath(args.output + '/H1.bed'))
 		os.remove(os.path.abspath(args.output + '/H2.bed'))
-
 
 		with open(os.path.abspath(args.output + '/TRiCoLOR.srt.bed'), 'w') as bedout:
 
@@ -177,7 +158,6 @@ def run(parser, args):
 
 		os.remove(os.path.abspath(args.output + '/H1.srt.bed'))
 		os.remove(os.path.abspath(args.output + '/H2.srt.bed'))
-
 
 	if args.exclude is None:
 
@@ -207,13 +187,11 @@ def run(parser, args):
 
 					subprocess.call(['bedops', '-d', os.path.abspath(args.output + '/TRiCoLOR.srt.bed'), os.path.abspath(args.output + '/exclude.srt.bed')],stdout=excludeout, stderr=open(os.devnull, 'wb'))
 
-				logging.info('Excluded regions from ' + args.exclude)
+				logging.info('Excluded regions from ' + os.path.abspath(args.exclude))
 				
-				os.remove(os.path.abspath(args.output + '/merged.bed'))
+				os.remove(os.path.abspath(args.output + '/exclude.srt.bed'))
 				os.remove(os.path.abspath(args.output + '/TRiCoLOR.srt.bed'))
 				os.rename(os.path.abspath(args.output + '/TRiCoLOR.srt.bed.tmp'),os.path.abspath(args.output + '/TRiCoLOR.srt.bed'))
-
-
 
 	logging.info('Done')
 
@@ -369,10 +347,10 @@ def BScanner(bamfilein, chromosomes, bedfileout,scansize,entropy_treshold,call_t
 
 		intervals=merge_intervals(intervals)
 
-		with open (bedfileout, 'a') as fin:
+		with open (bedfileout, 'a') as bedout:
 
 			for inter in intervals:
 
-					fin.write(chromosome + '\t' +  str(inter[0]) + '\t' + str(inter[1]) + '\n') 
+					bedout.write(chromosome + '\t' +  str(inter[0]) + '\t' + str(inter[1]) + '\n') 
 
 	bamfile.close()
