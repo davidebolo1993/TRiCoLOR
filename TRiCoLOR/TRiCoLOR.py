@@ -11,7 +11,7 @@ def main():
 	
 	parser = argparse.ArgumentParser(prog='TRiCoLOR', description='''TRiCoLOR: Tandem Repeats Caller fOr LOng Reads''', epilog='''This program was developed by Davide Bolognini and Tobias Rausch at the European Molecular Biology Laboratory/European Bioinformatic Institute (EMBL/EBI)''', formatter_class=CustomFormat) 
 
-	subparsers = parser.add_subparsers(title='modules', dest='command', metavar='SENSoR, REFER, ApP') #three submodules
+	subparsers = parser.add_subparsers(title='modules', dest='command', metavar='SENSoR, REFER, ApP')
 
 	## SENSoR ##
 
@@ -25,7 +25,7 @@ def main():
 	algorithm = parser_sensor.add_argument_group('Parameters for BAM scanning')
 
 	algorithm.add_argument('-s', '--scansize', type=int, help='scansize (#bps) for BAM scanning [20]', metavar='',default=20)
-	algorithm.add_argument('-e', '--entropy', type=float, help='Shannon entropy treshold [1.25]', metavar='',default=1.25)
+	algorithm.add_argument('-e', '--entropy', type=float, help='Shannon entropy treshold [1.25]', metavar='',default=1.25) #? HAS BEEN TRAINED
 	algorithm.add_argument('-c', '--call', type=int, help='minimum number of reads supporting the entropy drops [5]', metavar='',default=5)
 	algorithm.add_argument('-l', '--length', type=int, help='minimum length of the entropy drops [30]', metavar='', default=30)
 
@@ -35,7 +35,7 @@ def main():
 
 	additionals = parser_sensor.add_argument_group('Additional parameters')
 
-	additionals.add_argument('-chrs', '--chromosomes', help='scan BAM only for chromosomes provided by user. If None, scan BAM using all chromosomes in BAM header [None]', metavar='',nargs='+', action='append', default=None)
+	additionals.add_argument('-chrs', '--chromosomes', help='scan BAM only for chromosomes provided. If None, scan BAM using all chromosomes in BAM header [None]', metavar='',nargs='+', action='append', default=None)
 
 	parser_sensor.set_defaults(func=run_subtool)
 
@@ -72,7 +72,6 @@ def main():
 	additionals.add_argument('--readstype', help='long reads technology (ONT, PB) [ONT]',metavar='',default='ONT', choices=['ONT', 'PB'])
 	additionals.add_argument('-th', '--threads', help='number of cores to use [1]',metavar='',default=1, type=int)
 
-
 	parser_finder.set_defaults(func=run_subtool)
 
 
@@ -88,7 +87,6 @@ def main():
 	required.add_argument('-bed','--bedfile', metavar='BED', help='propietary BED (CHROM,START,END,LABEL) with regions to plot',required=True)	
 	required.add_argument('-o', '--output', metavar='folder', help='output folder',required=True)
 
-
 	tables = parser_plotter.add_argument_group('BED with repetitions to highlight')
 
 	tables.add_argument('-gb', '--genomebed', metavar='', default=None, help='BED for repetitions in reference [None]')
@@ -102,6 +100,7 @@ def main():
 
 
 ## CLASS
+
 
 class CustomFormat(HelpFormatter):
 
@@ -142,6 +141,7 @@ class CustomFormat(HelpFormatter):
 
 
 ## FUNCTION
+
 
 def run_subtool(parser, args):
 
