@@ -40,7 +40,7 @@ def run(parser, args):
 
 		if not os.access(os.path.abspath(args.output),os.W_OK):
 
-			print('Missing write permissions on the output folder')			
+			print('Missing write permissions on the output folder')
 			sys.exit(1)
 			
 		elif os.listdir(os.path.abspath(args.output)):
@@ -94,28 +94,33 @@ def run(parser, args):
 
 	logging.info('Haplotypes: ' + str(len(bams)))
 	b_in=Bed_Reader(args.bedfile)
-	it_ = iter(b_in)
+	b_chrom = set(iter(b_in))
 	labels_set=set()
 
 	logging.info('Generating plots ...')
 
-	for i in range(b_in.length()):
+	for chromosome in b_chrom:
 
-		chromosome, start, end,label = next(it_)
+		b_in2=Bed_Reader(args.bedfile,chromosome)
+		p_reg=list(iter(b_in2))
 
-		if label in labels_set:
+		for el in p_reg:
 
-			logging.warning('Skipped region with duplicated label')
-			
-		else:
+			start,end,label = el[1], el[2], el[3]
 
-			try:
+			if label in labels_set:
 
-				Generate_Alignment_ToPlot(args.genome,bams,chromosome,start,end,args.genomebed,args.haplotypebed,label,args.output)
+				logging.warning('Skipped region with duplicated label')
+				
+			else:
 
-			except:
+				try:
 
-				logging.exception('Unexpected error while analyzing region ' + chromosome + ':' + str(start) + '-' +str(end) + ". Log is below")
+					Generate_Alignment_ToPlot(args.genome,bams,chromosome,start,end,args.genomebed,args.haplotypebed,label,args.output)
+
+				except:
+
+					logging.exception('Unexpected error while analyzing region ' + chromosome + ':' + str(start) + '-' +str(end) + ". Log is below")
 
 	logging.info('Done')
 
@@ -139,9 +144,9 @@ class Bed_Reader():
 
 				if not line[0].startswith('#') and line !=[]: 
 
-					if len(line) < 3:
+					if len(line) < 4:
 
-						logging.error('BED to TRiCoLOR REFER -bed/--bedfile must contain at least: chromosome, start, end (other fields are ignored)')
+						logging.error('BED to TRiCoLOR ApP -bed/--bedfile must contain at least: chromosome, start, end, label (other fields are ignored)')
 						sys.exit(1)
 
 					else:
@@ -154,7 +159,7 @@ class Bed_Reader():
 
 							if line[0] == self.chromosome:
 
-								yield (line[0], int(line[1]), int(line[2]))
+								yield (line[0], int(line[1]), int(line[2]), line[3])
 
 
 #FUNCTIONS
