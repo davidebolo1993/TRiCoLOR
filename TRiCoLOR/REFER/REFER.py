@@ -11,13 +11,12 @@ import itertools
 import csv
 import math
 import multiprocessing
+import logging
+import datetime
 from collections import defaultdict, Counter
 from operator import itemgetter
 from bisect import bisect_left,bisect_right
 from shutil import which
-import logging
-import datetime
-
 
 # additional modules
 
@@ -193,12 +192,12 @@ def run(parser, args):
 
 	for b_chrom in b_chroms:
 
-		logging.info('Parsing input bed for chromosome ' + b_chrom)
+		logging.info('Parsing input bed for chromosome ' + b_chrom + ' ...')
 
 		b_in2=Bed_Reader(os.path.abspath(args.bedfile), chromosome=b_chrom)
 		p_reg=list(iter(b_in2))
 	
-		logging.info('Finding repetitions on chromosome ' + b_chrom)
+		logging.info('Finding repetitions on chromosome ' + b_chrom + ' ...')
 
 		chrom=ref[b_chrom]
 		refseq=chrom[:len(chrom)].seq
@@ -538,3 +537,4 @@ def CleanResults(SHMpath,chromosome, out, bamfile1, bamfile2,cores):
 	if bamfile2 is not None:
 
 		subprocess.call(['bash', SHMpath, os.path.abspath(out + '/haplotype2'), bamfile2,chromosome,str(cores-1)],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
+
