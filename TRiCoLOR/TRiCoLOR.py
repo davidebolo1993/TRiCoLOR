@@ -13,6 +13,7 @@ def main():
 
 	subparsers = parser.add_subparsers(title='modules', dest='command', metavar='SENSoR, REFER, ApP')
 
+
 	## SENSoR ##
 
 	parser_sensor = subparsers.add_parser('SENSoR', help='Shannon ENtropy ScanneR. Scan haplotype-resolved BAM, calculate Shannon entropy along chromosomes and output putative repetitive regions in BED')
