@@ -16,8 +16,10 @@ import subprocess
 import pysam
 
 
-def VCF_headerwriter(bamfile1, bamfile2, samplename, commandline, out):
+## FUNCTIONS
 
+
+def VCF_headerwriter(bamfile1, bamfile2, samplename, commandline, out, processor):
 
 	bam1=pysam.AlignmentFile(bamfile1,'rb')
 	header1=bam1.header
@@ -28,7 +30,7 @@ def VCF_headerwriter(bamfile1, bamfile2, samplename, commandline, out):
 		bam2=pysam.AlignmentFile(bamfile2,'rb')
 		header2=bam2.header
 		chromosomes_info2=list(header2.items())[1][1]
-		chromosomes_info = list({x['SN']:x for x in chromosomes_info1 + chromosomes_info2}.values()) #just in case one header misses a contig information
+		chromosomes_info = list({x['SN']:x for x in chromosomes_info1 + chromosomes_info2}.values())
 
 	else:
 
@@ -44,23 +46,17 @@ def VCF_headerwriter(bamfile1, bamfile2, samplename, commandline, out):
 
 	vcf_format='##fileformat=VCFv4.2'
 
-	#INFO field appear after CONTIG field
-
 	END='##INFO=<ID=END,Number=1,Type=Integer,Description="Repetition end">'
-	H1M='##INFO=<ID=H1M,Number=.,Type=String,Description="Haplotype1 Repeated Motif">' #it is possible to have multiple repetition motifs for the same region, if they were splitted
-	H1N='##INFO=<ID=H1N,Number=.,Type=String,Description="Haplotype1 Repetitions Number">' #it is possible to have multiple repetition numbers for the same region, if they were splitted
-	H2M='##INFO=<ID=H2M,Number=.,Type=String,Description="Haplotype2 Repeated Motif">' #it is possible to have multiple repetition motifs for the same region, if they were splitted
-	H2N='##INFO=<ID=H2N,Number=.,Type=String,Description="Haplotype2 Repetitions Number">' #it is possible to have multiple repetition numbers for the same region, if they were splitted
-
-	#FORMAT field appear after INFO field
-
+	H1M='##INFO=<ID=H1M,Number=.,Type=String,Description="Haplotype1 Repeated Motif">'
+	H1N='##INFO=<ID=H1N,Number=.,Type=String,Description="Haplotype1 Repetitions Number">'
+	H2M='##INFO=<ID=H2M,Number=.,Type=String,Description="Haplotype2 Repeated Motif">'
+	H2N='##INFO=<ID=H2N,Number=.,Type=String,Description="Haplotype2 Repetitions Number">'
 	FORMAT='##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">'
-
 	classic_header='#CHROM' + '\t' + 'POS' '\t' + 'ID' + '\t' + 'REF' + '\t' + 'ALT' + '\t' + 'QUAL' + '\t' + 'FILTER' + '\t' + 'INFO' + '\t' + 'FORMAT' + '\t' + samplename.upper()
 
-	with open(os.path.abspath(out + '/TRiCoLOR.vcf'), 'a') as vcfout:
+	with open(os.path.abspath(out + '/' + processor + '.TRiCoLOR.vcf'), 'w') as vcfout:
 
-		vcfout.write(vcf_format + '\n' + '##filedate=' + str(datetime.date.today()) +  '\n' + '##source=' + commandline + '\n') #filedate and source are not strictly required, but looks nice ! Adding command line to source can be also helpful
+		vcfout.write(vcf_format + '\n' + '##filedate=' + str(datetime.date.today()) +  '\n' + '##source=' + commandline + '\n')
 
 		for a,b in zip(chromosomes,sizes):
 
@@ -71,12 +67,12 @@ def VCF_headerwriter(bamfile1, bamfile2, samplename, commandline, out):
 		vcfout.write('##SAMPLE=<ID=' + samplename +'>' + '\n' + classic_header + '\n')
 
 
-def VCF_variantwriter(chrom, pos, ref, alt, info, form, out):
+def VCF_variantwriter(chrom, pos, ref, alt, info, form, out, processor):
 
 
-	ID='.' #this filed is by default missing
-	FILTER='.' #this filed is by default missing
-	QUAL='.' #this filed is by default missing
+	ID='.'
+	FILTER='.'
+	QUAL='.'
 	GEN='GT'
 	CHROM=chrom
 	POS=str(pos)
@@ -111,15 +107,15 @@ def VCF_variantwriter(chrom, pos, ref, alt, info, form, out):
 	FORMAT=form
 
 
-	with open(os.path.abspath(out + '/TRiCoLOR.vcf'), 'a') as vcfout:
+	with open(os.path.abspath(out + '/' + processor + '.TRiCoLOR.vcf'), 'a') as vcfout:
 
 		vcfout.write(CHROM + '\t' + POS + '\t' + ID + '\t' + REF + '\t' + ALT + '\t' + QUAL + '\t' + FILTER + '\t' + 'END='+INFO_END + ';'+ 'H1M='+INFO_H1M + ';' + 'H1N='+INFO_H1N + ';' + 'H2M='+INFO_H2M + ';' + 'H2N='+INFO_H2N + '\t' + GEN + '\t' + FORMAT + '\n')
 
 
-def modifier(coordinates): #fast way to remove None and substitute with closest number in list
+def modifier(coordinates):
 
 	
-	coordinates=[el+1 if el is not None else el for el in coordinates] #get true coordinates
+	coordinates=[el+1 if el is not None else el for el in coordinates]
 	start=next(ele for ele in coordinates if ele is not None)
 
 	for ind, ele in enumerate(coordinates):
@@ -159,7 +155,7 @@ def Modifier(list_of_coord,seq,reps):
 	coords_purified.append(coords_without_insertions[-1])
 	NewSeq+=seq[-1]
 
-	if not reps[0] >= coords_purified[0]: #add fake positions that will be removed 
+	if not reps[0] >= coords_purified[0]:
 
 		number=reps[0]
 		how_many=coords_purified[0]-reps[0]
@@ -167,7 +163,7 @@ def Modifier(list_of_coord,seq,reps):
 		NewSeq= '-'* how_many + NewSeq
 
 
-	if not reps[1] <= coords_purified[-1]: #add fake positions that will be removed
+	if not reps[1] <= coords_purified[-1]:
 
 		number=reps[1]
 		how_many=reps[1] - coords_purified[-1]
@@ -177,13 +173,13 @@ def Modifier(list_of_coord,seq,reps):
 	return coords_purified,NewSeq
 
 
-def Get_Seq_Pos(bamfilein,chromosome, start,end): #as the consensus sequence is supposed to generate just one sequence aligned to the reference, all other alignments are removes
+def Get_Seq_Pos(bamfilein,chromosome, start,end):
 	
 
 	seq=[]
 	coords=[]
 	
-	if os.stat(os.path.abspath(bamfilein)).st_size == 0: #if is empty, return empty seqs
+	if os.stat(os.path.abspath(bamfilein)).st_size == 0:
 
 		return seq,coords
 
@@ -195,7 +191,7 @@ def Get_Seq_Pos(bamfilein,chromosome, start,end): #as the consensus sequence is 
 
 		bamfile=pysam.AlignmentFile(bamfilein,'rb')
 
-		for read in bamfile.fetch(chromosome, start-1, end-1): #fetch on zero-based, as clipped regions many not be in coordinates
+		for read in bamfile.fetch(chromosome, start-1, end-1):
 
 			if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
 
@@ -217,7 +213,7 @@ def GetIndex(start, end, coordinates):
 def recursive_merge(sorted_int, list_, i):
 
 
-	new_=(min(list_, key=itemgetter(1)), max(list_,key=itemgetter(2))) #get extended range
+	new_=(min(list_, key=itemgetter(1)), max(list_,key=itemgetter(2)))
 	new_range=(new_[0][1], new_[-1][2])
 
 	if i < len(sorted_int) -1:
@@ -228,7 +224,7 @@ def recursive_merge(sorted_int, list_, i):
 			recursive_merge(sorted_int, list_, i+1)
 
 
-def Merger(sorted_int, refreps, h1reps, h2reps): #return non overlapping-ranges and dictionaries that keeps the original infos for the ranges.
+def Merger(sorted_int, refreps, h1reps, h2reps):
 
 
 	sorted_ranges=[]
@@ -263,10 +259,8 @@ def Merger(sorted_int, refreps, h1reps, h2reps): #return non overlapping-ranges 
 		if len(list_) != 0:
 
 			list_.append(reps)
-
-			recursive_merge(sorted_int, list_, i+len(list_)-1) #check if new interval overlaps other intervals
-
-			new_=(min(list_, key=itemgetter(1)), max(list_,key=itemgetter(2))) #get extended range
+			recursive_merge(sorted_int, list_, i+len(list_)-1) #? ANY BETTER IDEA THAN RECURSION? NOT PRIORITY.
+			new_=(min(list_, key=itemgetter(1)), max(list_,key=itemgetter(2)))
 			new_range=(new_[0][1], new_[-1][2])
 
 			for el_ in list_:
@@ -360,14 +354,10 @@ def Merger(sorted_int, refreps, h1reps, h2reps): #return non overlapping-ranges 
 	return sorted_ranges,ref_dict_number,ref_dict_motif,hap1_dict_number,hap1_dict_motif,hap2_dict_number,hap2_dict_motif
 
 
-def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1_repetitions, bamfile1, haplotype2_repetitions, bamfile2, out):
+def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2, bamfile2, out, processor):
 
 
-	repref=reference_repetitions
-	repsh1=list(haplotype1_repetitions)
-	repsh2=list(haplotype2_repetitions)
-
-	intersection=list(set(repref+ repsh1 + repsh2)) # get unique repetitions between the three lists
+	intersection=list(set(repref+ repsh1 + repsh2))
 
 	if len(intersection) == 0:
 
@@ -375,31 +365,29 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 	else:
 
-		sorted_intersection=sorted(intersection, key=itemgetter(1,2)) #sort repetitions by start and then by end
-
+		sorted_intersection=sorted(intersection, key=itemgetter(1,2))
 		sorted_ranges,ref_dict_number,ref_dict_motif,hap1_dict_number,hap1_dict_motif,hap2_dict_number,hap2_dict_motif=Merger(sorted_intersection, repref, repsh1, repsh2)
 
 		for reps in sorted_ranges:
 
 			if reps in ref_dict_number.keys() and reps in hap1_dict_number.keys() and reps in hap2_dict_number.keys():
 
-				if ref_dict_number[reps] == hap1_dict_number[reps] and ref_dict_number[reps] == hap2_dict_number[reps]: #all same number
+				if ref_dict_number[reps] == hap1_dict_number[reps] and ref_dict_number[reps] == hap2_dict_number[reps]: 
 
-					if  ref_dict_motif[reps] == hap1_dict_motif[reps] and ref_dict_motif[reps] == hap2_dict_motif[reps]: #all same motif
+					if  ref_dict_motif[reps] == hap1_dict_motif[reps] and ref_dict_motif[reps] == hap2_dict_motif[reps]: 
 
-						continue #write nothing, as there is no variant
+						continue 
 
-					elif ref_dict_motif[reps] == hap1_dict_motif[reps] and ref_dict_motif[reps] != hap2_dict_motif[reps]: #hap2 different motif 
+					elif ref_dict_motif[reps] == hap1_dict_motif[reps] and ref_dict_motif[reps] != hap2_dict_motif[reps]: 
 
 						pos=reps[0]
 						ref=reference_sequence[(reps[0]-1):reps[1]]
-
 						seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
+						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps)
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-						alt2=seq_h2[si_2:(ei_2+1)].replace('-','') #sequece where is supposed to be alteration
+						alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
 
-						if ref == alt2: #re-check if, for any reasons, the two sequences are the same. If so, skip to next iteration
+						if ref == alt2:
 
 							continue
 
@@ -411,25 +399,21 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info['H1M'] = hap1_dict_motif[reps]
 							info['H1N'] = hap1_dict_number[reps]
 							info['H2M'] = hap2_dict_motif[reps]
-							info['H2N'] = hap2_dict_number[reps]
-			
-							form='0|1' #second allele variant. Unique variant. The sequence is known. 
+							info['H2N'] = hap2_dict_number[reps]			
+							form='0|1' 
 
-							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
 
-
-					elif ref_dict_motif[reps] != hap1_dict_motif[reps] and ref_dict_motif[reps] == hap2_dict_motif[reps]: #hap1 different motif 
-
+					elif ref_dict_motif[reps] != hap1_dict_motif[reps] and ref_dict_motif[reps] == hap2_dict_motif[reps]: 
 
 						pos=reps[0]
 						ref=reference_sequence[(reps[0]-1):reps[1]]
-
 						seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1])
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
+						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps)
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
-						alt1=seq_h1[si_1:(ei_1+1)].replace('-','') #sequece where is supposed to be alteration
+						alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
 
-						if ref == alt1: #re-check if, for any reasons, the two sequences are the same. If so, skip to next.
+						if ref == alt1:
 
 							continue
 
@@ -441,33 +425,25 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info['H1M'] = hap1_dict_motif[reps]
 							info['H1N'] = hap1_dict_number[reps]
 							info['H2M'] = hap2_dict_motif[reps]
-							info['H2N'] = hap2_dict_number[reps]
-			
-							form='1|0' #first allele variant. Unique variant. The sequence is known
+							info['H2N'] = hap2_dict_number[reps]			
+							form='1|0' 
 
-							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
-
-					elif ref_dict_motif[reps] != hap1_dict_motif[reps] and ref_dict_motif[reps] != hap2_dict_motif[reps]: #haplos have both different motifs
-
+					elif ref_dict_motif[reps] != hap1_dict_motif[reps] and ref_dict_motif[reps] != hap2_dict_motif[reps]: 
 
 						pos=reps[0]
 						ref=reference_sequence[(reps[0]-1):reps[1]]
-
 						seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
 						seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) 
-
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
-
+						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps)
+						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps)
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
+						alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
+						alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
 
-						alt1=seq_h1[si_1:(ei_1+1)].replace('-','') #sequece where is supposed to be alteration
-						alt2=seq_h2[si_2:(ei_2+1)].replace('-','') #sequece where is supposed to be alteration
-
-
-						if ref == alt1 and ref == alt2: #re-check if, for any reasons, the three sequences are the same. If so, skip to next iteration
+						if ref == alt1 and ref == alt2:
 
 							continue
 
@@ -476,29 +452,26 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info=dict()
 			
 							info['END'] = reps[1]
-							info['H1M'] = ref_dict_motif[reps] ########## hap1 and ref are the same
-							info['H1N'] = ref_dict_number[reps] ########## hap1 and ref are the same
+							info['H1M'] = ref_dict_motif[reps] 
+							info['H1N'] = ref_dict_number[reps] 
 							info['H2M'] = hap2_dict_motif[reps]
-							info['H2N'] = hap2_dict_number[reps]
-			
-							form='0|1' #second allele variant. Unique variant. The sequence is known
+							info['H2N'] = hap2_dict_number[reps]			
+							form='0|1' 
 
-							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
 
 						elif ref != alt1 and ref == alt2:
 
-							info=dict()
-			
+							info=dict()			
+
 							info['END'] = reps[1]
 							info['H1M'] = hap1_dict_motif[reps]
 							info['H1N'] = hap1_dict_number[reps]
-							info['H2M'] = ref_dict_motif[reps] ########## hap2 and ref are the same
-							info['H2N'] = ref_dict_number[reps] ########## hap2 and ref are the same
-			
-							form='1|0' #first allele variant. Unique variant. The sequence is known
+							info['H2M'] = ref_dict_motif[reps] 
+							info['H2N'] = ref_dict_number[reps] 
+							form='1|0' 
 
-							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
-
+							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 						elif ref != alt1 and ref != alt2:
 
@@ -510,11 +483,10 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								info['H1M'] = hap1_dict_motif[reps]
 								info['H1N'] = hap1_dict_number[reps]
 								info['H2M'] = hap2_dict_motif[reps]
-								info['H2N'] = hap2_dict_number[reps]
-			
-								form='1|2' #both alleles variant. Double variant. The sequence is known
+								info['H2N'] = hap2_dict_number[reps]			
+								form='1|2' 
 
-								VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
 
 							else:
 
@@ -524,26 +496,23 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								info['H1M'] = hap1_dict_motif[reps]
 								info['H1N'] = hap1_dict_number[reps]
 								info['H2M'] = hap2_dict_motif[reps]
-								info['H2N'] = hap2_dict_number[reps]
-			
-								form='1|1' #both alleles variant. Unique variant. The sequence is known
+								info['H2N'] = hap2_dict_number[reps]			
+								form='1|1' 
 
-								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
+				elif ref_dict_number[reps] == hap1_dict_number[reps] and ref_dict_number[reps] != hap2_dict_number[reps]: 
 
-				elif ref_dict_number[reps] == hap1_dict_number[reps] and ref_dict_number[reps] != hap2_dict_number[reps]: # h2 different number, already alteration
-
-					if ref_dict_motif[reps] == hap1_dict_motif[reps]: #only h2 is a variant
+					if ref_dict_motif[reps] == hap1_dict_motif[reps]:
 
 						pos=reps[0]
 						ref=reference_sequence[(reps[0]-1):reps[1]]
-
 						seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
+						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps)
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-						alt2=seq_h2[si_2:(ei_2+1)].replace('-','') #sequece where is supposed to be alteration
+						alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
 
-						if ref == alt2: #re-check if, for any reasons, the two sequences are the same. If so, skip to next iteration
+						if ref == alt2:
 
 							continue
 
@@ -555,32 +524,25 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info['H1M'] = hap1_dict_motif[reps]
 							info['H1N'] = hap1_dict_number[reps]
 							info['H2M'] = hap2_dict_motif[reps]
-							info['H2N'] = hap2_dict_number[reps]
-			
-							form='0|1' #second allele variant. Unique variant. The sequence is known
+							info['H2N'] = hap2_dict_number[reps]			
+							form='0|1'
 
-							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
 
-					else: #motif is different, even h1 is a variant
-
+					else:
 
 						pos=reps[0]
 						ref=reference_sequence[(reps[0]-1):reps[1]]
-
 						seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
 						seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) 
-
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
-
+						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps)
+						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps)
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
+						alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
+						alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
 
-						alt1=seq_h1[si_1:(ei_1+1)].replace('-','') #sequece where is supposed to be alteration
-						alt2=seq_h2[si_2:(ei_2+1)].replace('-','') #sequece where is supposed to be alteration
-
-
-						if ref == alt1 and ref == alt2: #re-check if, for any reasons, the three sequences are the same. If so, skip to next.
+						if ref == alt1 and ref == alt2:
 
 							continue
 
@@ -589,14 +551,13 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info=dict()
 			
 							info['END'] = reps[1]
-							info['H1M'] = ref_dict_motif[reps] ### hap1 and ref are the same
-							info['H1N'] = ref_dict_number[reps] ### hap1 and ref are the same
+							info['H1M'] = ref_dict_motif[reps] 
+							info['H1N'] = ref_dict_number[reps] 
 							info['H2M'] = hap2_dict_motif[reps]
-							info['H2N'] = hap2_dict_number[reps]
-			
-							form='0|1' #second allele variant. Unique variant. The sequence is known
+							info['H2N'] = hap2_dict_number[reps]			
+							form='0|1' 
 
-							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
 
 						elif ref != alt1 and ref == alt2:
 
@@ -605,13 +566,11 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info['END'] = reps[1]
 							info['H1M'] = hap1_dict_motif[reps]
 							info['H1N'] = hap1_dict_number[reps]
-							info['H2M'] = ref_dict_motif[reps] ### hap2 and ref are the same
-							info['H2N'] = ref_dict_number[reps] ### hap2 and ref are the same
-			
-							form='1|0' #first allele variant. Unique variant. The sequence is known
+							info['H2M'] = ref_dict_motif[reps]  
+							info['H2N'] = ref_dict_number[reps] 
+							form='1|0' 
 
-							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
-
+							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 						
 						elif ref != alt1 and ref != alt2:
 
@@ -625,9 +584,9 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								info['H2M'] = hap2_dict_motif[reps]
 								info['H2N'] = hap2_dict_number[reps]
 			
-								form='1|2' #both alleles variant. Double variant. The sequence is known
+								form='1|2' 
 
-								VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
 
 							else:
 
@@ -639,25 +598,25 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								info['H2M'] = hap2_dict_motif[reps]
 								info['H2N'] = hap2_dict_number[reps]
 			
-								form='1|1' #both alleles variant. Unique variant. The sequence is known
+								form='1|1' 
 
-								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 
-				elif ref_dict_number[reps] != hap1_dict_number[reps] and ref_dict_number[reps] == hap2_dict_number[reps]: # h1 different number, already alteration
+				elif ref_dict_number[reps] != hap1_dict_number[reps] and ref_dict_number[reps] == hap2_dict_number[reps]: 
 
-					if ref_dict_motif[reps] == hap2_dict_motif[reps]: #only h1 is a variant
+					if ref_dict_motif[reps] == hap2_dict_motif[reps]: 
 
 						pos=reps[0]
 						ref=reference_sequence[(reps[0]-1):reps[1]]
 
 						seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1])
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
+						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
 						alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
 
 
-						if ref == alt1: #re-check if, for any reasons, the two sequences are the same. If so, skip to next.
+						if ref == alt1: 
 
 							continue
 
@@ -671,11 +630,11 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info['H2M'] = hap2_dict_motif[reps]
 							info['H2N'] = hap2_dict_number[reps]
 			
-							form='1|0' #first allele variant. Unique variant. The sequence is known
+							form='1|0' 
 
-							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
-					else: #motif is different, even h2 is a variant
+					else: 
 
 
 						pos=reps[0]
@@ -684,18 +643,18 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
 						seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])
 
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
+						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
+						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 
 
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 
-						alt1=seq_h1[si_1:(ei_1+1)].replace('-','') #sequece where is supposed to be alteration
-						alt2=seq_h2[si_2:(ei_2+1)].replace('-','') #sequece where is supposed to be alteration
+						alt1=seq_h1[si_1:(ei_1+1)].replace('-','') 
+						alt2=seq_h2[si_2:(ei_2+1)].replace('-','') 
 
 
-						if ref == alt1 and ref == alt2: #re-check if, for any reasons, the three sequences are the same. If so, skip to next.
+						if ref == alt1 and ref == alt2: 
 
 							continue
 
@@ -704,14 +663,14 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info=dict()
 			
 							info['END'] = reps[1]
-							info['H1M'] = ref_dict_motif[reps] ### hap1 and ref are the same
-							info['H1N'] = ref_dict_number[reps] ### hap1 and ref are the same
+							info['H1M'] = ref_dict_motif[reps] 
+							info['H1N'] = ref_dict_number[reps] 
 							info['H2M'] = hap2_dict_motif[reps]
 							info['H2N'] = hap2_dict_number[reps]
 			
-							form='0|1' #second allele variant. Unique variant. The sequence is known
+							form='0|1' 
 
-							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
 
 						elif ref != alt1 and ref == alt2:
 
@@ -720,12 +679,12 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info['END'] = reps[1]
 							info['H1M'] = hap1_dict_motif[reps]
 							info['H1N'] = hap1_dict_number[reps]
-							info['H2M'] = ref_dict_motif[reps] ### hap2 and ref are the same
-							info['H2N'] = ref_dict_number[reps] ### hap2 and ref are the same
+							info['H2M'] = ref_dict_motif[reps] 
+							info['H2N'] = ref_dict_number[reps] 
 			
-							form='1|0' #first allele variant. Unique variant. The sequence is known
+							form='1|0' 
 
-							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 						elif ref != alt1 and ref != alt2:
 
@@ -739,9 +698,9 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								info['H2M'] = hap2_dict_motif[reps]
 								info['H2N'] = hap2_dict_number[reps]
 			
-								form='1|2' #both alleles variant. Double variant. The sequence is known
+								form='1|2' 
 
-								VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
 
 							else:
 
@@ -753,12 +712,12 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								info['H2M'] = hap2_dict_motif[reps]
 								info['H2N'] = hap2_dict_number[reps]
 			
-								form='1|1' #both alleles variant. Single variant. The sequence is known
+								form='1|1' 
 
-								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 
-				else: # h1 and h2 different number, alterations
+				else: 
 
 					pos=reps[0]
 					ref=reference_sequence[(reps[0]-1):reps[1]]
@@ -767,17 +726,17 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 					seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])
 
 
-					coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
-					coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
+					coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
+					coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 
 					si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
 					si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 
-					alt1=seq_h1[si_1:(ei_1+1)].replace('-','') #sequece where is supposed to be alteration
-					alt2=seq_h2[si_2:(ei_2+1)].replace('-','') #sequece where is supposed to be alteration
+					alt1=seq_h1[si_1:(ei_1+1)].replace('-','') 
+					alt2=seq_h2[si_2:(ei_2+1)].replace('-','') 
 
 
-					if ref == alt1 and ref == alt2: #re-check if, for any reasons, the three sequences are the same. If so, skip to next.
+					if ref == alt1 and ref == alt2: 
 
 						continue
 
@@ -786,14 +745,14 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						info=dict()
 			
 						info['END'] = reps[1]
-						info['H1M'] = ref_dict_motif[reps] ### hap1 and ref are the same
-						info['H1N'] = ref_dict_number[reps] ### hap1 and ref are the same
+						info['H1M'] = ref_dict_motif[reps] 
+						info['H1N'] = ref_dict_number[reps] 
 						info['H2M'] = hap2_dict_motif[reps]
 						info['H2N'] = hap2_dict_number[reps]
 			
-						form='0|1' #second allele variant. Unique variant. The sequence is known
+						form='0|1' 
 
-						VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
+						VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
 
 					elif ref != alt1 and ref == alt2:
 
@@ -802,12 +761,12 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						info['END'] = reps[1]
 						info['H1M'] = hap1_dict_motif[reps]
 						info['H1N'] = hap1_dict_number[reps]
-						info['H2M'] = ref_dict_motif[reps] ### hap2 and ref are the same
-						info['H2N'] = ref_dict_number[reps] ### hap2 and ref are the same
+						info['H2M'] = ref_dict_motif[reps] 
+						info['H2N'] = ref_dict_number[reps] 
 			
-						form='1|0' #first allele variant. Unique variant. The sequence is known
+						form='1|0' 
 
-						VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+						VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 					elif ref != alt1 and ref != alt2:
 
@@ -821,9 +780,9 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info['H2M'] = hap2_dict_motif[reps]
 							info['H2N'] = hap2_dict_number[reps]
 			
-							form='1|2' #both alleles variant. Double variant. The sequence is known
+							form='1|2' 
 
-							VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
 
 						else:
 
@@ -835,21 +794,21 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info['H2M'] = hap2_dict_motif[reps]
 							info['H2N'] = hap2_dict_number[reps]
 			
-							form='1|1' #both alleles variant. Unique variant. The sequence is known
+							form='1|1' 
 
-							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 
-			elif reps in ref_dict_number.keys() and reps in hap1_dict_number.keys() and reps not in hap2_dict_number.keys(): #range not present in hap2, can be a difference
+			elif reps in ref_dict_number.keys() and reps in hap1_dict_number.keys() and reps not in hap2_dict_number.keys(): 
 
-				if ref_dict_number[reps] == hap1_dict_number[reps] and ref_dict_motif[reps] == hap1_dict_motif[reps]: #only hap2 can be variant
+				if ref_dict_number[reps] == hap1_dict_number[reps] and ref_dict_motif[reps] == hap1_dict_motif[reps]: 
 
 					pos=reps[0]
 					ref=reference_sequence[(reps[0]-1):reps[1]]
 
-					seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) #this coordinates may not exist
+					seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) 
 
-					if len(seq_h2) == 0: #we don't have coverage on that region
+					if len(seq_h2) == 0: 
 
 						info=dict()
 			
@@ -859,15 +818,15 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						info['H2M'] = '.'
 						info['H2N'] = '.'
 			
-						form='0|.'  #first allele not variant. Second allele not known
+						form='0|.'  
 
-						VCF_variantwriter(chromosome, pos, ref, '.', info, form, out)
+						VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
 
-					else: #we have coverage
+					else: 
 
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
+						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)						
-						alt2=seq_h2[si_2:(ei_2+1)].replace('-','') #sequece where is supposed to be alteration
+						alt2=seq_h2[si_2:(ei_2+1)].replace('-','') 
 
 						if alt2 == '':
 
@@ -879,15 +838,15 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info['H2M'] = '.'
 							info['H2N'] = '.'
 			
-							form='0|.' #first allele not variant. Second allele not known
+							form='0|.' 
 
-							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
 
 						else:
 
 							if ref==alt2:
 
-								continue #skip to next iteration
+								continue 
 
 							else:
 
@@ -899,42 +858,42 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								info['H2M'] = '.'
 								info['H2N'] = '.'
 			
-								form='0|1' #first allele not variant. Second allele known
+								form='0|1' 
 
-								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
 
 				
-				else: #different number or motif for haplotype 1
+				else: 
 
 					pos=reps[0]
 					ref=reference_sequence[(reps[0]-1):reps[1]]
 
-					seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) #must exist
-					coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
+					seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
+					coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 					si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 					alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
 					
-					seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) #this may not exist
+					seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) 
 
 					if ref==alt1:
 
-						if len(seq_h2) == 0: #we don't have coverage on that region
+						if len(seq_h2) == 0: 
 
 							info=dict()
 			
 							info['END'] = reps[1]
-							info['H1M'] = ref_dict_motif[reps] ############# ref and hap1 are the same
-							info['H1N'] = ref_dict_number[reps] ############ ref and hap1 are the same
+							info['H1M'] = ref_dict_motif[reps] 
+							info['H1N'] = ref_dict_number[reps] 
 							info['H2M'] = '.'
 							info['H2N'] = '.'
 			
-							form='0|.' #first allele not variant. Second allele not known
+							form='0|.' 
 
-							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
 
-						else: #we have coverage
+						else: 
 
-							coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
+							coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 							si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 							alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
 
@@ -943,14 +902,14 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								info=dict()
 			
 								info['END'] = reps[1]
-								info['H1M'] = ref_dict_motif[reps] ############# ref and hap1 are the same
-								info['H1N'] = ref_dict_number[reps] ############ ref and hap1 are the same
+								info['H1M'] = ref_dict_motif[reps] 
+								info['H1N'] = ref_dict_number[reps] 
 								info['H2M'] = '.'
 								info['H2N'] = '.'
 			
-								form='0|.' #first allele not variant. Second allele not known
+								form='0|.' 
 
-								VCF_variantwriter(chromosome, pos, ref, '.', info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
 
 							else:
 
@@ -963,18 +922,18 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 									info=dict()
 			
 									info['END'] = reps[1]
-									info['H1M'] = ref_dict_motif[reps] ############# ref and hap1 are the same
-									info['H1N'] = ref_dict_number[reps] ############ ref and hap1 are the same
+									info['H1M'] = ref_dict_motif[reps] 
+									info['H1N'] = ref_dict_number[reps] 
 									info['H2M'] = '.'
 									info['H2N'] = '.'
 			
-									form='0|1' #second allele variant. Second allele known
+									form='0|1' 
 
-									VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
+									VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
 
 					else:
 
-						if len(seq_h2) == 0: #we don't have coverage on that region
+						if len(seq_h2) == 0: 
 
 							info=dict()
 			
@@ -984,13 +943,13 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info['H2M'] = '.'
 							info['H2N'] = '.'
 			
-							form='1|.' #first allele variant. Second allele not known
+							form='1|.' 
 
-							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
-						else: #we have coverage
+						else: 
 
-							coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
+							coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 							si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 							alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
 
@@ -1004,10 +963,10 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								info['H2M'] = '.'
 								info['H2N'] = '.'
 			
-								form='1|.' #first allele variant. Second allele not known
+								form='1|.' 
 
 
-								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 							else:
 
@@ -1021,9 +980,9 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 									info['H2M'] = '.'
 									info['H2N'] = '.'
 			
-									form='1|0' #first allele variant. Second allele known
+									form='1|0' 
 
-									VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+									VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 								else:
 
@@ -1037,10 +996,10 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 										info['H2M'] = '.'
 										info['H2N'] = '.'
 			
-										form='1|1' #both alleles variant. Unique variant
+										form='1|1' 
 
 
-										VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+										VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 									else:
 
@@ -1052,22 +1011,22 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 										info['H2M'] = '.'
 										info['H2N'] = '.'
 			
-										form='1|2' #both alleles are variant. Double variant
+										form='1|2' 
 
 
-										VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out)
+										VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
 
 
-			elif reps in ref_dict_number.keys() and reps not in hap1_dict_number.keys() and reps in hap2_dict_number.keys(): #range not present in hap1, can be a difference
+			elif reps in ref_dict_number.keys() and reps not in hap1_dict_number.keys() and reps in hap2_dict_number.keys(): 
 
-				if ref_dict_number[reps] == hap2_dict_number[reps] and ref_dict_motif[reps] == hap2_dict_motif[reps]: #only hap1 can be variant
+				if ref_dict_number[reps] == hap2_dict_number[reps] and ref_dict_motif[reps] == hap2_dict_motif[reps]: 
 
 					pos=reps[0]
 					ref=reference_sequence[(reps[0]-1):reps[1]]
 
 					seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1])
 
-					if len(seq_h1) == 0: #we don't have coverage on that region
+					if len(seq_h1) == 0: 
 
 						info=dict()
 			
@@ -1077,13 +1036,13 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						info['H2M'] = hap2_dict_motif[reps]
 						info['H2N'] = hap2_dict_number[reps]
 			
-						form='.|0' #second allele not variant. first allele not known
+						form='.|0' 
 
-						VCF_variantwriter(chromosome, pos, ref, '.', info, form, out)
+						VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
 
-					else: #we have coverage
+					else: 
 
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
+						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 						alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
 
@@ -1098,9 +1057,9 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info['H2M'] = hap2_dict_motif[reps]
 							info['H2N'] = hap2_dict_number[reps]
 			
-							form='.|0' #second allele not variant. first allele not known
+							form='.|0' 
 
-							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
 
 						else:
 
@@ -1118,57 +1077,57 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								info['H2M'] = hap2_dict_motif[reps]
 								info['H2N'] = hap2_dict_number[reps]
 			
-								form='1|0' #first allele variant. Sequence known
+								form='1|0' 
 
-								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 				
-				else: #different number or motif for haplotype 2
+				else: 
 
 					pos=reps[0]
 					ref=reference_sequence[(reps[0]-1):reps[1]]
 
 					seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])
-					coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
+					coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 					si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 					alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
 					
-					seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) #this may not exist
+					seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
 
 					if ref==alt2:
 
-						if len(seq_h1) == 0: #we don't have coverage on that region
+						if len(seq_h1) == 0: 
 
 							info=dict()
 			
 							info['END'] = reps[1]
 							info['H1M'] = '.'
 							info['H1N'] = '.'
-							info['H2M'] = ref_dict_motif[reps] ############# ref and hap2 are the same
-							info['H2N'] = ref_dict_number[reps] ############# ref and hap2 are the same
+							info['H2M'] = ref_dict_motif[reps] 
+							info['H2N'] = ref_dict_number[reps] 
 			
-							form='.|0' #second allele not variant. First allele not known
+							form='.|0' 
 
-							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
 
-						else: #we have coverage
+						else: 
 
-							coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
+							coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 							si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 							alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
 
-							if alt1=='': #start coordinate or end coordinate not present, same as we don't have coverage
+							if alt1=='': 
 
 								info=dict()
 			
 								info['END'] = reps[1]
 								info['H1M'] = '.'
 								info['H1N'] = '.'
-								info['H2M'] = ref_dict_motif[reps] ############# ref and hap2 are the same
-								info['H2N'] = ref_dict_number[reps] ############# ref and hap2 are the same
+								info['H2M'] = ref_dict_motif[reps] 
+								info['H2N'] = ref_dict_number[reps] 
 			
-								form='.|0' #second allele is not variant. First allele not known
+								form='.|0' 
 
-								VCF_variantwriter(chromosome, pos, ref, '.', info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
 
 							else:
 
@@ -1183,16 +1142,16 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 									info['END'] = reps[1]
 									info['H1M'] = '.'
 									info['H1N'] = '.'
-									info['H2M'] = ref_dict_motif[reps] ############# ref and hap2 are the same
-									info['H2N'] = ref_dict_number[reps] ############# ref and hap2 are the same
+									info['H2M'] = ref_dict_motif[reps] 
+									info['H2N'] = ref_dict_number[reps] 
 			
-									form='1|0' #first allele variant.
+									form='1|0' 
 
-									VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+									VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 					else:
 						
-						if len(seq_h1) == 0: #we don't have coverage on that region
+						if len(seq_h1) == 0: 
 
 							info=dict()
 			
@@ -1202,13 +1161,13 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info['H2M'] = hap2_dict_motif[reps]
 							info['H2N'] = hap2_dict_number[reps]
 			
-							form='.|1' #second allele is variant. First allele not known
+							form='.|1' 
 
-							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
 
-						else: #we have coverage
+						else: 
 
-							coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
+							coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 							si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 							alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
 
@@ -1222,9 +1181,9 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								info['H2M'] = hap2_dict_motif[reps]
 								info['H2N'] = hap2_dict_number[reps]
 			
-								form='.|1' #second allele is variant. First allele not known
+								form='.|1' 
 
-								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
 
 							else:
 
@@ -1238,9 +1197,9 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 									info['H2M'] = hap2_dict_motif[reps]
 									info['H2N'] = hap2_dict_number[reps]
 			
-									form='0|1' #second allele is variant. First allele known
+									form='0|1' 
 
-									VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
+									VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
 
 								else:
 
@@ -1254,10 +1213,10 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 										info['H2M'] = hap2_dict_motif[reps]
 										info['H2N'] = hap2_dict_number[reps]
 			
-										form='1|1' #both alleles variant. Unique variant
+										form='1|1' 
 
 
-										VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+										VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 									else:
 
@@ -1270,23 +1229,23 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 										info['H2N'] = hap2_dict_number[reps]
 
 
-										form='1|2' #both alleles variant. Double variant
+										form='1|2' 
 
-										VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out)
+										VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
 			
 
-			elif reps not in ref_dict_number.keys() and reps in hap1_dict_number.keys() and reps in hap2_dict_number.keys(): #range not present in ref, can be a difference
+			elif reps not in ref_dict_number.keys() and reps in hap1_dict_number.keys() and reps in hap2_dict_number.keys(): 
 
 				pos=reps[0]
 				ref=reference_sequence[(reps[0]-1):reps[1]]
 
-				seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) #this coordinates may not exist
-				coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
+				seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
+				coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 				si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 				alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
 
-				seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) #this coordinates may not exist
-				coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
+				seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) 
+				coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 				si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 				alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
 
@@ -1300,14 +1259,14 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 					info=dict()
 
 					info['END'] = reps[1]
-					info['H1M'] = hap1_dict_motif[reps] #cannot change to reference dict, as we have not such information
-					info['H1N'] = hap1_dict_number[reps] #cannot change to reference dict, as we have not such information
+					info['H1M'] = hap1_dict_motif[reps] 
+					info['H1N'] = hap1_dict_number[reps] 
 					info['H2M'] = hap2_dict_motif[reps]
 					info['H2N'] = hap2_dict_number[reps]
 									
-					form='0|1' #second allele variant.
+					form='0|1' 
 
-					VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
+					VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
 
 
 				elif ref != alt1 and ref == alt2:
@@ -1317,12 +1276,12 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 					info['END'] = reps[1]
 					info['H1M'] = hap1_dict_motif[reps]
 					info['H1N'] = hap1_dict_number[reps]
-					info['H2M'] = hap2_dict_motif[reps] #cannot change to reference dict, as we have not such information
-					info['H2N'] = hap2_dict_number[reps] #cannot change to reference dict, as we have not such information
+					info['H2M'] = hap2_dict_motif[reps] 
+					info['H2N'] = hap2_dict_number[reps] 
 									
-					form='1|0' #first allele variant.
+					form='1|0' 
 
-					VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+					VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 
 				elif ref != alt1 and ref != alt2:
@@ -1337,9 +1296,9 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						info['H2M'] = hap2_dict_motif[reps]
 						info['H2N'] = hap2_dict_number[reps]
 									
-						form='1|1' #both alleles variants. Unique variant
+						form='1|1' 
 
-						VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+						VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 					else:
 
@@ -1351,28 +1310,28 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						info['H2M'] = hap2_dict_motif[reps]
 						info['H2N'] = hap2_dict_number[reps]
 									
-						form='1|2' #both alleles variants. Double variant
+						form='1|2' 
 
-						VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out)
+						VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
 
 
-			elif reps in ref_dict_number.keys() and reps not in hap1_dict_number.keys() and reps not in hap2_dict_number.keys(): #range present just in reference
+			elif reps in ref_dict_number.keys() and reps not in hap1_dict_number.keys() and reps not in hap2_dict_number.keys(): 
 
 
 				pos=reps[0]
 				ref=reference_sequence[(reps[0]-1):reps[1]]
 
-				seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) #this coordinates may not exist
-				seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) #this coordinates may not exist
+				seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
+				seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) 
 
-				if len(seq_h1) == 0 and len(seq_h2) == 0: #we don't have coverage for the two regions
+				if len(seq_h1) == 0 and len(seq_h2) == 0: 
 
 					continue
 
 
-				elif len(seq_h1) != 0 and len(seq_h2) == 0: #we don't have coverage for hap2
+				elif len(seq_h1) != 0 and len(seq_h2) == 0: 
 
-					coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
+					coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 					si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 					alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
 
@@ -1387,14 +1346,14 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info=dict()
 
 							info['END'] = reps[1]
-							info['H1M'] = '.' ###
-							info['H1N'] = '.' ###
+							info['H1M'] = '.' 
+							info['H1N'] = '.' 
 							info['H2M'] = '.'
 							info['H2N'] = '.'
 									
-							form='0|.' #first allele not variant. Second allele not known
+							form='0|.' 
 
-							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
 
 						else:
 
@@ -1406,14 +1365,14 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info['H2M'] = '.'
 							info['H2N'] = '.'
 									
-							form='1|.' #first allele variant. Second allele not known
+							form='1|.' 
 
-							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 				
-				elif len(seq_h1) == 0 and len(seq_h2) != 0: #we don't have coverage for hap1
+				elif len(seq_h1) == 0 and len(seq_h2) != 0: 
 
-					coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
+					coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 					si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 					alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
 
@@ -1430,12 +1389,12 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info['END'] = reps[1]
 							info['H1M'] = '.' 
 							info['H1N'] = '.'
-							info['H2M'] = '.' ###
-							info['H2N'] = '.' ###
+							info['H2M'] = '.' 
+							info['H2N'] = '.' 
 									
-							form='.|0' #second allele not variant. First allele not known
+							form='.|0' 
 
-							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
 
 						else:
 
@@ -1447,18 +1406,18 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info['H2M'] = '.'
 							info['H2N'] = '.'
 									
-							form='.|1' #second allele variant. First allele not known
+							form='.|1' 
 
-							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
 
 					
-				elif len(seq_h1) != 0 and len(seq_h2) != 0: #coverage for both
+				elif len(seq_h1) != 0 and len(seq_h2) != 0: 
 
-					coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
+					coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 					si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 					alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
 
-					coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
+					coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 					si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 					alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
 
@@ -1466,7 +1425,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 
 						if alt2 == '':
 
-							continue #range outside both haplotypes
+							continue 
 
 						else:
 
@@ -1480,9 +1439,9 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								info['H2M'] = '.' 
 								info['H2N'] = '.' 
 			
-								form='.|0' #second allele not variant. first one not known
+								form='.|0' 
 
-								VCF_variantwriter(chromosome, pos, ref, '.', info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
 
 							else:
 
@@ -1495,9 +1454,9 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								info['H2M'] = '.' 
 								info['H2N'] = '.' 
 			
-								form='.|1' #second allele variant. first one not known
+								form='.|1' 
 
-								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
 
 					else:
 
@@ -1513,9 +1472,9 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								info['H2M'] = '.' 
 								info['H2N'] = '.' 
 			
-								form='0|.' #first allele not variant. Second not known
+								form='0|.' 
 
-								VCF_variantwriter(chromosome, pos, ref, '.', info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
 
 							else:
 
@@ -1528,12 +1487,12 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								info['H2M'] = '.' 
 								info['H2N'] = '.' 
 			
-								form='1|.'  #first allele variant. Second not known
+								form='1|.'  
 
-								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 
-						else: #no haplotype out of range
+						else: 
 
 
 							if ref == alt1 and ref == alt2: 
@@ -1545,14 +1504,14 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								info=dict()
 			
 								info['END'] = reps[1]
-								info['H1M'] = '.' ### 
-								info['H1N'] = '.' ### 
+								info['H1M'] = '.' 
+								info['H1N'] = '.' 
 								info['H2M'] = '.'
 								info['H2N'] = '.'
 			
-								form='0|1' #second allele variant.
+								form='0|1' 
 
-								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
 
 							elif ref != alt1 and ref == alt2:
 
@@ -1564,9 +1523,9 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								info['H2M'] = '.' 
 								info['H2N'] = '.' 
 			
-								form='1|0' #first allele variant.
+								form='1|0' 
 
-								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 							elif ref != alt1 and ref != alt2:
 
@@ -1580,9 +1539,9 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 									info['H2M'] = '.'
 									info['H2N'] = '.'
 			
-									form='1|2' #both alleles variant. Double variant
+									form='1|2' 
 
-									VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out)
+									VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
 
 								else:
 
@@ -1594,27 +1553,27 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 									info['H2M'] = '.'
 									info['H2N'] = '.'
 			
-									form='1|1' #both alleles variant. Unique variant
+									form='1|1' 
 
-									VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+									VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 
-			elif reps not in ref_dict_number.keys() and reps in hap1_dict_number.keys() and reps not in hap2_dict_number.keys(): #range present just in haplotype 1
+			elif reps not in ref_dict_number.keys() and reps in hap1_dict_number.keys() and reps not in hap2_dict_number.keys(): 
 
 				pos=reps[0]
 				ref=reference_sequence[(reps[0]-1):reps[1]]
 
-				seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) #this coordinates must exist
+				seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
 
-				coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
+				coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 				si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 				alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
 
-				seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) #this coordinates may not exist
+				seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) 
 
 				if ref==alt1:
 
-					if len(seq_h2) == 0: #no coverage for the second allele
+					if len(seq_h2) == 0: 
 
 						info=dict()
 
@@ -1624,13 +1583,13 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						info['H2M'] = '.'
 						info['H2N'] = '.'
 									
-						form='0|.' #first allele not variant. Second allele not known
+						form='0|.' 
 
-						VCF_variantwriter(chromosome, pos, ref, '.', info, form, out)
+						VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
 
 					else:
 
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
+						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 						alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
 
@@ -1645,9 +1604,9 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info['H2M'] = '.'
 							info['H2N'] = '.'
 									
-							form='0|.' #first allele not variant. Second allele not known
+							form='0|.' 
 
-							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
 
 						else:
 
@@ -1665,13 +1624,13 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								info['H2M'] = '.'
 								info['H2N'] = '.'
 									
-								form='0|1' #second allele variant
+								form='0|1' 
 
-								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
 
 				else:
 
-					if len(seq_h2) == 0: #no coverage for the second allele
+					if len(seq_h2) == 0: 
 
 						info=dict()
 
@@ -1681,15 +1640,15 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						info['H2M'] = '.'
 						info['H2N'] = '.'
 									
-						form='1|.' #first allele variant. Second one not known 
+						form='1|.' 
 
-						VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+						VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 
 					else:
 
 
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
+						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 						alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
 
@@ -1703,9 +1662,9 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info['H2M'] = '.'
 							info['H2N'] = '.'
 									
-							form='1|.' #first allele variant. Second one not known 
+							form='1|.' 
 
-							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 						else:
 
@@ -1719,9 +1678,9 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								info['H2M'] = '.'
 								info['H2N'] = '.'
 									
-								form='1|0' #first allele variant.
+								form='1|0' 
 
-								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 							
 							else:
 								
@@ -1735,9 +1694,9 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 									info['H2M'] = '.'
 									info['H2N'] = '.'
 									
-									form='1|1' #both alleles variant. Unique variant
+									form='1|1' 
 
-									VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+									VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 
 								else:
@@ -1750,25 +1709,25 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 									info['H2M'] = '.'
 									info['H2N'] = '.'
 									
-									form='1|2' #both alleles variant. Double variant
+									form='1|2' 
 							
-									VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out)
+									VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
 
-			else: #range present just in haplotype 2
+			else: 
 
 				pos=reps[0]
 				ref=reference_sequence[(reps[0]-1):reps[1]]
 
-				seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])#this coordinates must exist
-				coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) #overwrite previous variables
+				seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])
+				coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 				si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 				alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
 
-				seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) #this coordinates may not exist
+				seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
 
 				if ref==alt2:
 
-					if len(seq_h1) == 0: #no coverage for the second allele
+					if len(seq_h1) == 0: 
 
 						info=dict()
 
@@ -1778,13 +1737,13 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						info['H2M'] = hap2_dict_motif[reps]
 						info['H2N'] = hap2_dict_number[reps]
 									
-						form='.|0' #second allele not a variant. First one not known
+						form='.|0' 
 
-						VCF_variantwriter(chromosome, pos, ref, '.', info, form, out)
+						VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
 
 					else:
 
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
+						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 						alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
 
@@ -1798,9 +1757,9 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							info['H2M'] = hap2_dict_motif[reps]
 							info['H2N'] = hap2_dict_number[reps]
 									
-							form='.|0' #second allele not a variant. First one not known
+							form='.|0' 
 
-							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
 
 						else:
 
@@ -1818,14 +1777,14 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								info['H2M'] = hap2_dict_motif[reps]
 								info['H2N'] = hap2_dict_number[reps]
 									
-								form='1|0' #first allele variant
+								form='1|0' 
 
-								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 				else:
 
 
-					if len(seq_h1) == 0: #no coverage for the second allele
+					if len(seq_h1) == 0: 
 
 						info=dict()
 
@@ -1835,13 +1794,13 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 						info['H2M'] = hap2_dict_motif[reps]
 						info['H2N'] = hap2_dict_number[reps]
 									
-						form='.|1' #second allele variant. First one not known
+						form='.|1' 
 
-						VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
+						VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
 
 					else:
 
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) #overwrite previous variables
+						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
 						alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
 
@@ -1858,7 +1817,7 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 							form='.|1' 
 
 
-							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
+							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
 
 						else:
 
@@ -1872,10 +1831,10 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 								info['H2M'] = hap2_dict_motif[reps]
 								info['H2N'] = hap2_dict_number[reps]
 								
-								form='0|1' #second allele variant.
+								form='0|1' 
 
 
-								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out)
+								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
 							
 							else:
 
@@ -1889,9 +1848,9 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 									info['H2M'] = hap2_dict_motif[reps]
 									info['H2N'] = hap2_dict_number[reps]
 									
-									form='1|1' #both alleles variant. Unique variant
+									form='1|1' 
 
-									VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out)
+									VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 								else:
 
@@ -1903,6 +1862,6 @@ def VCF_writer(chromosome, reference_repetitions, reference_sequence, haplotype1
 									info['H2M'] = hap2_dict_motif[reps]
 									info['H2N'] = hap2_dict_number[reps]
 									
-									form='1|2' #both alleles variant. Double variant
+									form='1|2' 
 							
-									VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out)
+									VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
