@@ -18,6 +18,85 @@ import editdistance
 ## FUNCTIONS
 
 
+def SolveNestedR(SortedIntervals):
+
+
+    extended=[]
+
+    i=0
+
+    while i < len(SortedIntervals):
+
+        if extended==[]:
+
+            extended.append(SortedIntervals[i])
+
+        else:
+
+            if extended[-1][2] >= SortedIntervals[i][1]:
+
+                if SortedIntervals[i][2] - SortedIntervals[i][1] > extended[-1][2] - extended[-1][1]:
+
+                    extended.remove(extended[-1])
+                    extended.append(SortedIntervals[i])
+            else:
+
+                extended.append(SortedIntervals[i])
+        
+        i+=1
+    
+    return extended
+
+
+def ReferenceFilter(reference_reps,wanted,size,start): 
+
+
+    corr_=[]
+
+    for reps in reference_reps:
+    
+        self_=list(look_for_self(reps,wanted))
+        ranges=[]
+
+        for i in range(len(self_)-1):
+
+            if self_[i+1][1]-self_[i][1] == len(reps):
+
+                ranges.append((self_[i][1],self_[i+1][1]))
+
+        collapsed_ranges= defaultdict(list)
+        
+        for x, y in ranges:
+
+            collapsed_ranges[x].append(y)
+            collapsed_ranges[y].append(x)
+
+        result = defaultdict(list)
+        visited = set()
+        
+        for vertex in collapsed_ranges:
+
+            if vertex not in visited:
+
+                dfs(collapsed_ranges, visited, vertex, result, vertex)
+
+        if len(result) !=0:
+
+            new_reps=[(reps, start+val[0], start+val[-1]+len(reps)-1, len(val)) for val in list(result.values()) if val[-1]+len(reps)-val[0] >= size]
+            corr_.extend(new_reps)
+
+    if corr_ == []:
+
+        return corr_
+
+    else:
+
+        s_corr_=sorted(corr_, key=itemgetter(1,2))
+        mod_int=SolveNestedR(s_corr_)
+
+        return mod_int
+
+
 def SolveNestedH(SortedIntervals, string, size):
 
     extended=[]
