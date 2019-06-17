@@ -455,7 +455,6 @@ def ReferenceReps(s,refseq,regex,maxmotif,size):
 
 
 	chromosome,start,end=s[0],s[1],s[2]
-
 	wanted=refseq[start-1:end]
 
 	if 'N' in wanted:
