@@ -1,3 +1,5 @@
+#!/bin/bash
+
 cd $1
 
 if [ ! -z `find . -type f -name "*.srt.bam" -not -name "chr*" -print -quit` ]; then
