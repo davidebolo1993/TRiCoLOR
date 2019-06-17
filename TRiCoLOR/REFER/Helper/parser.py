@@ -14,14 +14,16 @@ import subprocess
 import pysam
 
 
+## FUNCTIONS
+
+
 def sub_none(list_of_coord):
 
 
-	return [-999999 if v is None else v for v in list_of_coord] #return a very small number so that it won't be take into account
+	return [-999999 if v is None else v for v in list_of_coord]
 
 
-def check_coverage(pysam_AlignmentFile, chromosome, start, end, coverage): #check if we have at least the wanted coverage for the interval
-
+def check_coverage(pysam_AlignmentFile, chromosome, start, end, coverage):
 
 	counter = 0
 
@@ -29,7 +31,7 @@ def check_coverage(pysam_AlignmentFile, chromosome, start, end, coverage): #chec
 		
 		if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
 
-			if read.reference_start <= start and read.reference_end >= end: #make sure that the same read cover the entire region
+			if read.reference_start <= start and read.reference_end >= end: 
 
 				counter +=1
 
@@ -42,79 +44,75 @@ def check_coverage(pysam_AlignmentFile, chromosome, start, end, coverage): #chec
 		return False
 
 
-def fastagen(header,sequence,iteration,out):
+#def split_equal(value, parts):
 
 
-	filename=os.path.abspath(out+'/Fasta'+str(iteration+1)+'.unaligned.fa')
-
-	with open(os.path.abspath(out+'/Fasta'+str(iteration+1)+'.unaligned.fa'), 'a') as fastaout:
-
-		fastaout.write('>' + header + '\n' + sequence + '\n')
-
-
-def split_equal(value, parts):
-
-
-	value = float(value)
+	#value = float(value)
 	
-	return int(value/parts), len([i*value/parts for i in range(1,parts+1)])
+	#return int(value/parts), len([i*value/parts for i in range(1,parts+1)])
 
 
-def sizechecker(start, end): #adjust size of interval so that we don't have sequences too short and they can me mapped with more accuracy
+#def sizechecker(start, end):
 
 
-	if end-start <= 2000:
+	#if end-start <= 2000:
 
-		return start, end, end-start
+		#return start, end, end-start
 
-	else:
+	#else:
 
-		size, len_=split_equal(end-start, math.ceil((end-start)/2000))
+		#size, len_=split_equal(end-start, math.ceil((end-start)/2000))
 
-		return start, start+(size*len_), size 
+		#return start, start+(size*len_), size 
 
 
-def Bamfile_Analyzer(bamfilein,chromosome,start,end, coverage, fastaout):
+def Bamfile_Analyzer(bamfilein,chromosome,start,end, coverage, out, processor):
 
 
 	bamfile=pysam.AlignmentFile(bamfilein,'rb')	
-	start,end,size=sizechecker(start,end) #split the period in sub-period of equal length
-	next_=start+size
-	iteration=0
-	final=False
+	#start,end,size=sizechecker(start,end)
+	#next_=start+size
+	#iteration=0
+	#final=False
 
-	while not final:
+	#while not final:
 
-		if check_coverage(bamfile, chromosome, start, next_, coverage): # coverage check for the region
+	if check_coverage(bamfile, chromosome, start, end, coverage):
 
-			for read in bamfile.fetch(chromosome,start,next_):
+		fake=[]
 
-				if not read.is_unmapped and not read.is_secondary and not read.is_supplementary: #skip everything but primary, as in coverage check
+		for read in bamfile.fetch(chromosome,start,end):
 
-					read_start=read.reference_start
-					read_end=read.reference_end
+			fake.append(read)
 
-					if read_start <= start and read_end >= read_end: #make sure that the same read cover the entire region
+			if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
 
-						sequence=read.seq
-						coord=sub_none(read.get_reference_positions(full_length=True))
-						header=read.query_name
+				read_start=read.reference_start
+				read_end=read.reference_end
 
-						s_,e_=min(coord, key=lambda x:abs(x-start)), min(coord, key=lambda x:abs(x-(start+size))) #must exist
-						s_i,e_i = [i for i,e in enumerate(coord) if e == s_][0], [i for i,e in enumerate(coord) if e == e_][0] #must exist
+				if read_start <= start and read_end >= end:
 
-						fastagen(header,sequence[s_i:e_i+1],iteration,fastaout)
+					sequence=read.seq
+					coord=sub_none(read.get_reference_positions(full_length=True))
+					header=read.query_name
 
-		iteration+=1
+					s_,e_=min(coord, key=lambda x:abs(x-start)), min(coord, key=lambda x:abs(x-end)) 
+					s_i,e_i = [i for i,e in enumerate(coord) if e == s_][0], [i for i,e in enumerate(coord) if e == e_][0] 
 
-		if end-next_ >= size:
+					with open(os.path.abspath(out+'/' + processor + '.unaligned.fa'),'a') as fastaout:
 
-			start += size
-			next_ += size
+						fastaout.write('>' + header + '\n' + sequence[s_i:e_i+1] + '\n')
 
-		else:
+		#iteration+=1
 
-			final=True
+		#if end-next_ >= size:
+
+			#start += size
+			#next_ += size
+
+		#else:
+
+			#final=True
 	
 	bamfile.close()
 
