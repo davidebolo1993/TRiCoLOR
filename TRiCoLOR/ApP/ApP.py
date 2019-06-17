@@ -6,12 +6,11 @@ import os
 import glob
 import math
 import logging
-from collections import defaultdict
-from shutil import which
 import sys
 import subprocess
 import csv
-
+from collections import defaultdict
+from shutil import which
 
 # additional modules
 
@@ -98,7 +97,7 @@ def run(parser, args):
 	it_ = iter(b_in)
 	labels_set=set()
 
-	logging.info('Generating plots...')
+	logging.info('Generating plots ...')
 
 	for i in range(b_in.length()):
 
