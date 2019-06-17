@@ -6,8 +6,8 @@ import os
 import sys
 import math
 import itertools
+import multiprocessing
 from operator import itemgetter
-from multiprocessing import Process
 from shutil import which
 import logging
 import subprocess
@@ -221,14 +221,14 @@ def run(parser, args):
 ##FUNCTIONS
 
 
-def runInParallel(function, *arguments): #? AS THIS DOES NOT TAKE TOO MUCH TIME, SIMPLY RUN IN PARALLE THE 2 HAPLOTYPES WHEN 2 HAPLOTYPES ARE PROVIDED. DO WE NEED THIS TO BE FASTER? NOT PRIORITY.
+def runInParallel(function, *arguments): #? AS THIS DOES NOT TAKE TOO MUCH TIME EVEN TO SCAN ENTIRE GENOMES, SIMPLY RUN IN PARALLEL THE 2 HAPLOTYPES WHEN 2 HAPLOTYPES ARE PROVIDED. DO WE NEED THIS TO BE FASTER? NOT PRIORITY.
 
 
 	proc = []
 
 	for args in arguments:
 
-		p = Process(target=function, args=args)
+		p = multiprocessing.Process(target=function, args=args)
 		p.start()
 		proc.append(p)
 
