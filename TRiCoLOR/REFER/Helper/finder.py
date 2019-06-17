@@ -15,6 +15,9 @@ import pysam
 import editdistance
 
 
+## FUNCTIONS
+
+
 def SolveNestedH(SortedIntervals, string, size):
 
     extended=[]
@@ -32,38 +35,35 @@ def SolveNestedH(SortedIntervals, string, size):
 
         else:
 
-            if extended[-1][2] >= SortedIntervals[i][1] and extended[-1][2] < SortedIntervals[i][2]: #the two intervals overlap in end(1)/start(2)
+            if extended[-1][2] >= SortedIntervals[i][1] and extended[-1][2] < SortedIntervals[i][2]:
 
-                if abs(extended[-1][2]-SortedIntervals[i][1]) >= round((extended[-1][2]-extended[-1][1])/2): #big overlap, keep one out of the 2 reps overlapping
+                if abs(extended[-1][2]-SortedIntervals[i][1]) >= round((extended[-1][2]-extended[-1][1])/2):
 
 
                     c1=string[extended[-1][1]:extended[-1][2]+1].count(extended[-1][0])
                     c2=string[SortedIntervals[i][1]:SortedIntervals[i][2]+1].count(SortedIntervals[i][0])
 
-
-                    #extend and rank
-
                     new_s,new_e=min(extended[-1][1],SortedIntervals[i][1]), max(extended[-1][2],SortedIntervals[i][2])
                     st_=string[new_s:new_e+1]
                     m1=extended[-1][0]
                     m2=SortedIntervals[i][0]
-                    rank1,count1=Markovchain(m1,st_)
+                    rank1,count1=Markovchain(m1,st_) #?  OTHER WAY TO DECIDE WHICH REPETITIVE MOTIF IS MORE SIGNIFICANT. NOT PRIORITY. IT WORKS WELL
                     rank2,count2=Markovchain(m2,st_)
 
-                    if rank2 > rank1: #rank2 higher
+                    if rank2 > rank1:
 
                         if count2 > c2:
 
                             extended.remove(extended[-1])
                             extended.append((m2,new_s, new_e, count2))
 
-                        else: #extending did not increase the number of repetitions, keep original for second
+                        else:
 
                             extended.remove(extended[-1])
                             extended.append((m2,SortedIntervals[i][1],SortedIntervals[i][2], c2))
 
 
-                    elif rank2 < rank1: #rank1 higher
+                    elif rank2 < rank1:
 
                         if count1 > c1:
 
@@ -71,18 +71,18 @@ def SolveNestedH(SortedIntervals, string, size):
                             extended.append((m1,new_s, new_e, count1))
 
 
-                    else: #two ranks are the same
+                    else: 
 
-                        if m2 not in possible_rotations(m1): #if rep in second interval is not a rotation of the other
+                        if m2 not in possible_rotations(m1):
 
                             if count2 > count1: 
 
                                 extended.append((m2,new_s, new_e, count2))
 
 
-                else: #small overlap, resize and decide whether to keep new
+                else:
                     
-                    new_s,new_e=SortedIntervals[i][1]+1,SortedIntervals[i][2]
+                    new_s,new_e=extended[-1][2]+1,SortedIntervals[i][2]
                     st_=string[new_s:new_e+1]
 
                     if len(st_) >=size:
@@ -90,7 +90,7 @@ def SolveNestedH(SortedIntervals, string, size):
                         extended.append((SortedIntervals[i][0],new_s, new_e, st_.count(SortedIntervals[i][0])))
 
                         
-            elif extended[-1][2] < SortedIntervals[i][1]: #following does not overlap
+            elif extended[-1][2] < SortedIntervals[i][1]:
 
                 s_,e_=SortedIntervals[i][1],SortedIntervals[i][2]
                 num=string[s_:e_+1].count(SortedIntervals[i][0])
@@ -122,7 +122,7 @@ def RegexBuilder(kmer,times,overlapping,strictmotif,strictimes):
 
         else:
 
-            if kmer == 1: #discouraged
+            if kmer == 1:
 
                 my_regex = r'(.{1})\1+' if not overlapping else r'(?=(.{1})\1+)'
 
@@ -140,7 +140,7 @@ def RegexBuilder(kmer,times,overlapping,strictmotif,strictimes):
 
         else:
 
-            if kmer==1: #discouraged
+            if kmer==1:
 
                 if not strictimes:
 
@@ -198,7 +198,7 @@ def RepeatsFinder(string, regex, maxkmerlength):
     return seen
 
 
-def Get_Alignment_Positions(bamfilein): #as the consensus sequence is supposed to generate just one sequence aligned to the reference, secondary alignments are removed
+def Get_Alignment_Positions(bamfilein):
 
   
     coords=[]
@@ -218,10 +218,10 @@ def Get_Alignment_Positions(bamfilein): #as the consensus sequence is supposed t
     return coords,seq
 
 
-def modifier(coordinates): #fast way to remove None and substitute with closest number in list
+def modifier(coordinates):
 
     
-    coordinates=[el+1 if el is not None else el for el in coordinates] #get true coordinates
+    coordinates=[el+1 if el is not None else el for el in coordinates]
     start=next(ele for ele in coordinates if ele is not None)
 
     for ind, ele in enumerate(coordinates):
@@ -245,7 +245,7 @@ def Get_Alignment_Coordinates(coord_list,repetitions):
     return rep_coord_list
 
 
-def look_for_self(rep,sequence): #build another regular expression, looking for the core of the repetition
+def look_for_self(rep,sequence):
 
 
     r=re.compile(rep)
@@ -268,10 +268,10 @@ def dfs(adj_list, visited, vertex, result, key):
             dfs(adj_list, visited, neighbor, result, key)
 
 
-def check_edit(string1, string2, allowed): #cython-based way to check for edit distance, faster than check every time for neighbors
+def check_edit(string1, string2, allowed):
 
 
-    if len(string2) <= allowed: #string 2 is empty or is motif of length leq allowed
+    if len(string2) <= allowed:
 
         return True
 
@@ -294,7 +294,7 @@ def Markovchain(motif,string):
         next_ = string[i + STATE_LEN :i + STATE_LEN*2]
         model[state][next_] += 1
 
-    motif_probability=(model[motif][motif]/len(string))*len(motif) + len(motif)/len(string) #reward based on motif length
+    motif_probability=(model[motif][motif]/len(string))*len(motif) + len(motif)/len(string)
 
     return motif_probability, model[motif][motif]+1
 
@@ -305,7 +305,7 @@ def check_ref(string1, string2):
     return string1 != string2
 
 
-def corrector(reference, string, repetitions, coordinates, size, allowed): # correct for n-nucleotides insertions/deletions/substitutions inside a repetitive range
+def corrector(reference, string, repetitions, coordinates, size, allowed):
 
 
     corr_=[]
@@ -320,17 +320,17 @@ def corrector(reference, string, repetitions, coordinates, size, allowed): # cor
 
         for i in range(len(self_)-1):
 
-            if self_[i+1][1]-self_[i][1] == len(reps): #reps are subsequent in string
+            if self_[i+1][1]-self_[i][1] == len(reps): 
 
-                ranges.append((self_[i][1],self_[i+1][1])) #accept as putative interval with reps
+                ranges.append((self_[i][1],self_[i+1][1]))
 
-            else: #reps are not subsequent
+            else:
 
                 if len(reps) > 1:
 
                     if check_edit(reps,string[self_[i][1]+len(reps):self_[i+1][1]], allowed) and check_ref(reference[self__[i][1]-1:self__[i+1][1]],string[self_[i][1]: self_[i+1][1]+1]):
 
-                        ranges.append((self_[i][1],self_[i+1][1])) #allows same motifs separated by a string with edit distance n from the rep
+                        ranges.append((self_[i][1],self_[i+1][1]))
 
 
         collapsed_ranges= defaultdict(list)
@@ -347,8 +347,7 @@ def corrector(reference, string, repetitions, coordinates, size, allowed): # cor
 
             if vertex not in visited:
 
-                dfs(collapsed_ranges, visited, vertex, result, vertex) #collapse ranges that have common bounds
-
+                dfs(collapsed_ranges, visited, vertex, result, vertex)
         if len(result) != 0:
 
             corr_.extend([(reps, interv[0], interv[-1]+(len(reps)-1)) for interv in result.values() if interv[-1]+len(reps)-interv[0] >= size])
