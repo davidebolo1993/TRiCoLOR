@@ -22,7 +22,7 @@ import numpy as np
 def run(parser, args):
 
 
-	if not os.path.exists(os.path.abspath(args.output)): #folder does not exist
+	if not os.path.exists(os.path.abspath(args.output)):
 
 		try:
 
@@ -30,17 +30,17 @@ def run(parser, args):
 
 		except:
 
-			print('Cannot create the output folder') #no write permission, probably			
+			print('Cannot create the output folder')		
 			sys.exit(1)
 
-	else: #path already exists
+	else:
 
-		if not os.access(os.path.abspath(args.output),os.W_OK): #folder exists but no write permissions
+		if not os.access(os.path.abspath(args.output),os.W_OK):
 
 			print('Missing write permissions on the output folder')			
 			sys.exit(1)
 			
-		elif os.listdir(os.path.abspath(args.output)): #folder exists but isn't empty. Do not overwrite results.
+		elif os.listdir(os.path.abspath(args.output)):
 
 			print('The output folder is not empty. Specify another output folder or clean the previsouly chosen')
 			sys.exit(1)
@@ -57,14 +57,12 @@ def run(parser, args):
 
 	external_tools=['samtools', 'bedops']
 
-	for tools in external_tools: #this tools are required
+	for tools in external_tools:
 
 		if which(tools) is None:
 
 			logging.error(tools + ' cannot be executed. Install ' + tools + ' and re-run TRiCoLOR SENSoR')
 			sys.exit(1)
-
-	#check all inputs
 
 	bams=args.bamfile[0]
 
@@ -103,7 +101,7 @@ def run(parser, args):
 	logging.info('Entropy treshold: ' + str(args.entropy))
 	logging.info('Minimum suppporting calls: ' + str(args.call))
 	logging.info('Minimum entropy drops length: ' + str(args.length))
-	logging.info('Ploidy: ' + str(len(bams)))
+	logging.info('Haplotypes: ' + str(len(bams)))
 	logging.info('Cores: ' + str(len(bams)))
 
 	if args.chromosomes is None:
@@ -134,11 +132,11 @@ def run(parser, args):
 		logging.info('Writing final BED to output folder')
 
 
-		with open(os.path.abspath(args.output + '/merged.srt.bed'), 'w') as srtbed1:
+		with open(os.path.abspath(args.output + '/TRiCoLOR.srt.bed'), 'w') as srtbed1:
 		
 			subprocess.call(['sort-bed', os.path.abspath(args.output + '/H1.bed')],stdout=srtbed1, stderr=open(os.devnull, 'wb'))
 
-		os.remove(os.path.abspath(args.output + '/H1.bed')) #remove unsorted
+		os.remove(os.path.abspath(args.output + '/H1.bed'))
 
 
 	else:
@@ -169,17 +167,16 @@ def run(parser, args):
 			subprocess.call(['sort-bed', os.path.abspath(args.output + '/H2.bed')],stdout=srtbed2, stderr=open(os.devnull, 'wb'))
 
 
-		os.remove(os.path.abspath(args.output + '/H1.bed')) #remove unsorted
-		os.remove(os.path.abspath(args.output + '/H2.bed')) #remove unsorted
+		os.remove(os.path.abspath(args.output + '/H1.bed'))
+		os.remove(os.path.abspath(args.output + '/H2.bed'))
 
 
-		with open(os.path.abspath(args.output + '/merged.bed'), 'w') as bedout:
+		with open(os.path.abspath(args.output + '/TRiCoLOR.srt.bed'), 'w') as bedout:
 
 			subprocess.call(['bedops', '-m', os.path.abspath(args.output + '/H1.srt.bed'), os.path.abspath(args.output + '/H2.srt.bed')], stderr=open(os.devnull, 'wb'), stdout=bedout)
 
-
-		os.remove(os.path.abspath(args.output + '/H1.srt.bed')) #remove unmerged
-		os.remove(os.path.abspath(args.output + '/H2.srt.bed')) #remove unmerged
+		os.remove(os.path.abspath(args.output + '/H1.srt.bed'))
+		os.remove(os.path.abspath(args.output + '/H2.srt.bed'))
 
 
 	if args.exclude is None:
@@ -204,25 +201,27 @@ def run(parser, args):
 
 				logging.warning('Incorrect format for BED to -x/--exclude. No region excluded')
 
-
 			if os.path.exists(os.path.abspath(args.output + '/exclude.srt.bed')):
 
-				with open(os.path.abspath(args.output + '/merged.bed.tmp'), 'w') as excludeout:
+				with open(os.path.abspath(args.output + '/TRiCoLOR.srt.bed.tmp'), 'w') as excludeout:
 
-					subprocess.call(['bedops', '-d', os.path.abspath(args.output + '/merged.bed'), os.path.abspath(args.output + '/exclude.srt.bed')],stdout=excludeout, stderr=open(os.devnull, 'wb'))
-
+					subprocess.call(['bedops', '-d', os.path.abspath(args.output + '/TRiCoLOR.srt.bed'), os.path.abspath(args.output + '/exclude.srt.bed')],stdout=excludeout, stderr=open(os.devnull, 'wb'))
 
 				logging.info('Excluded regions from ' + args.exclude)
 				
 				os.remove(os.path.abspath(args.output + '/merged.bed'))
-				os.rename(os.path.abspath(args.output + '/merged.bed.tmp'),os.path.abspath(args.output + '/' + args.label + '.merged.bed'))
+				os.remove(os.path.abspath(args.output + '/TRiCoLOR.srt.bed'))
+				os.rename(os.path.abspath(args.output + '/TRiCoLOR.srt.bed.tmp'),os.path.abspath(args.output + '/TRiCoLOR.srt.bed'))
 
 
 
 	logging.info('Done')
 
 
-def runInParallel(function, *arguments):
+##FUNCTIONS
+
+
+def runInParallel(function, *arguments): #? AS THIS DOES NOT TAKE TOO MUCH TIME, SIMPLY RUN IN PARALLE THE 2 HAPLOTYPES WHEN 2 HAPLOTYPES ARE PROVIDED. DO WE NEED THIS TO BE FASTER? NOT PRIORITY.
 
 
 	proc = []
@@ -238,7 +237,7 @@ def runInParallel(function, *arguments):
 		p.join()
 
 
-def entropy(string): #Shannon entropy scanner
+def entropy(string):
 
 
 	prob = [float(string.count(c)) / len(string) for c in dict.fromkeys(list(string))]
@@ -247,7 +246,7 @@ def entropy(string): #Shannon entropy scanner
 	return entropy
 
 
-def modifier(coordinates): #fast way to remove None (soft-clipped coordinates) and substitute with closest number in list. Mantain 0-based coordinates
+def modifier(coordinates):
 
 
 	start = next(ele for ele in coordinates if ele is not None)
@@ -265,7 +264,7 @@ def modifier(coordinates): #fast way to remove None (soft-clipped coordinates) a
 	return coordinates
 
 
-def entropy_finder(sequence,coordinates,scansize,entropy_treshold): # get coordinates for intervals of certain scansize in a sequence in which entropy is lower than treshold 
+def entropy_finder(sequence,coordinates,scansize,entropy_treshold):
 
 
 	ind_start=0
@@ -293,7 +292,7 @@ def entropy_finder(sequence,coordinates,scansize,entropy_treshold): # get coordi
 	return hit
 
 
-def merge_intervals(intervals): #merge overlapping tuples in the same list
+def merge_intervals(intervals):
 
 
 	sorted_by_lower_bound = sorted(intervals, key=itemgetter(0))
@@ -356,7 +355,7 @@ def BScanner(bamfilein, chromosomes, bedfileout,scansize,entropy_treshold,call_t
 
 					chr_array[hit[0]:hit[1]+1]+=1
 
-		to_get= np.concatenate(np.where(chr_array>=call_treshold)).tolist() #at least the number of entropy drop specified in call_treshold must support the entropy drop in that point
+		to_get= np.concatenate(np.where(chr_array>=call_treshold)).tolist()
 		intervals=[]
 
 		for k, g in itertools.groupby(enumerate(to_get),lambda x:x[0]-x[1]):
@@ -364,11 +363,9 @@ def BScanner(bamfilein, chromosomes, bedfileout,scansize,entropy_treshold,call_t
 			group = (map(itemgetter(1),g))
 			group = list(map(int,group))
 
-			if len(group) >= dist_treshold: #exclude intervals that are shorter than dist_treshold
+			if len(group) >= dist_treshold:
 
-				intervals.append((group[0]-500,group[-1]+500)) # extend interval to the left and to the right, so that intervals overlapping in extended range can be merged
-
-		#merge overlapping intervals
+				intervals.append((group[0]-350,group[-1]+350))
 
 		intervals=merge_intervals(intervals)
 
