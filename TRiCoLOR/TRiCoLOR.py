@@ -69,6 +69,9 @@ def main():
 	additionals = parser_finder.add_argument_group('Additional parameters')
 
 	additionals.add_argument('--samplename', help='sample name in VCF header [sample]',metavar='',default='sample')
+	additionals.add_argument('--readstype', help='long reads technology (ONT, PB) [ONT]',metavar='',default='ONT', choices=['ONT', 'PB'])
+	additionals.add_argument('-th', '--threads', help='number of cores to use [1]',metavar='',default=1, type=int)
+
 
 	parser_finder.set_defaults(func=run_subtool)
 
@@ -97,6 +100,8 @@ def main():
 
 	args.func(parser, args)
 
+
+## CLASS
 
 class CustomFormat(HelpFormatter):
 
@@ -136,6 +141,7 @@ class CustomFormat(HelpFormatter):
 		return action.dest.upper()
 
 
+## FUNCTION
 
 def run_subtool(parser, args):
 
