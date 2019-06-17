@@ -1,19 +1,7 @@
-cd $2
-find . -name "*.unaligned.fa" -printf '%f\n' > files.txt
+cd $1
 
-i=0
-while ((i++)); read -r line
-do
-    $1 consensus -f fasta -t ont $line
-    minimap2 -ax map-ont $3 cs.fa.gz > cs.sam
-    samtools view -bS cs.sam > cs.bam && rm cs.sam
-    samtools sort cs.bam > Fasta$i.consensus.srt.bam && rm cs.bam
-    samtools index Fasta$i.consensus.srt.bam
-
-done < files.txt
-
-find . -not -name "*.srt.bam" -not -name "*.srt.bam.bai" -not -name "*.bed" -delete
-
-
-
-
+$2 consensus -f fasta -t $3 -a $4".al.fa.gz" -c $4".cs.fa.gz" $5 && rm $5 && rm $5".fai"
+minimap2 -ax $6 $7 $4".cs.fa.gz" > $4".cs.sam" && rm $4".al.fa.gz" && rm $4".cs.fa.gz"
+samtools view -b $4".cs.sam" > $4".cs.bam" && rm $4".cs.sam"
+samtools sort $4".cs.bam" > $4".cs.srt.bam" && rm $4".cs.bam"
+samtools index $4".cs.srt.bam"
