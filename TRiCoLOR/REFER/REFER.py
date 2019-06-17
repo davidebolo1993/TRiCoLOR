@@ -11,13 +11,12 @@ import itertools
 import csv
 import math
 import multiprocessing
-import logging
-import datetime
 from collections import defaultdict, Counter
 from operator import itemgetter
 from bisect import bisect_left,bisect_right
 from shutil import which
-
+import logging
+import datetime
 
 
 # additional modules
@@ -288,16 +287,16 @@ def run(parser, args):
 
 		for key in Rrep.keys():
 
-			TableWriter(b_chrom,Rrep[key],os.path.abspath(args.output + '/reference'))
-			TableWriter(b_chrom,H1rep[key],os.path.abspath(args.output + '/haplotype1'))
+			writer.BED_repswriter(b_chrom,Rrep[key],os.path.abspath(args.output + '/reference'))
+			writer.BED_repswriter(b_chrom,H1rep[key],os.path.abspath(args.output + '/haplotype1'))
 
 			if H2rep is not None:
 
-				TableWriter(b_chrom,H2rep[key],os.path.abspath(args.output + '/haplotype2'))
+				writer.BED_repswriter(b_chrom,H2rep[key],os.path.abspath(args.output + '/haplotype2'))
 
 			else:
 
-				TableWriter(b_chrom,[],os.path.abspath(args.output + '/haplotype2'))
+				writer.BED_repswriter(b_chrom,[],os.path.abspath(args.output + '/haplotype2'))
 
 		CleanResults(SHMpath, b_chrom, os.path.abspath(args.output), os.path.abspath(bams[0]), os.path.abspath(bams[1]), cores)
 
@@ -454,110 +453,6 @@ def Runner(processor,sli,refseq,regex,maxmotif,size,bamfile1,bamfile2,coverage,a
 		H2rep[processor] = H2item
 
 
-
-def TableWriter(chromosome,coordreps, out):
-
-
-	seq=[el[0] for el in coordreps]
-	start=[el[1] for el in coordreps]
-	end=[el[2] for el in coordreps]
-	rep=[el[3] for el in coordreps]
-	chrom=[chromosome]*len(start)
-
-	Table=pd.DataFrame({'Chromosome':chrom, 'Start':start,'End':end, 'Repeated Motif':seq,'Repetitions Number':rep},columns=['Chromosome', 'Start', 'End', 'Repeated Motif', 'Repetitions Number'])
-	
-	if os.path.exists(os.path.abspath(out + '/' + chromosome + '.repetitions.bed')):
-
-		with open(os.path.abspath(out + '/' + chromosome + '.repetitions.bed'), 'a') as refout:
-
-			Table.to_csv(refout ,sep='\t',index=False, header=False)
-
-	else:
-
-		with open(os.path.abspath(out + '/' + chromosome + '.repetitions.bed'), 'w') as refout:
-
-			Table.to_csv(refout ,sep='\t',index=False)
-
-
-def SolveNestedR(SortedIntervals):
-
-
-	extended=[]
-
-	i=0
-
-	while i < len(SortedIntervals):
-
-		if extended==[]:
-
-			extended.append(SortedIntervals[i])
-
-		else:
-
-			if extended[-1][2] >= SortedIntervals[i][1]:
-
-				if SortedIntervals[i][2] - SortedIntervals[i][1] > extended[-1][2] - extended[-1][1]:
-
-					extended.remove(extended[-1])
-					extended.append(SortedIntervals[i])
-			else:
-
-				extended.append(SortedIntervals[i])
-		
-		i+=1
-	
-	return extended
-
-
-def ReferenceFilter(reference_reps,wanted,size,start): 
-
-
-	corr_=[]
-
-	for reps in reference_reps:
-	
-		self_=list(finder.look_for_self(reps,wanted))
-		ranges=[]
-
-		for i in range(len(self_)-1):
-
-			if self_[i+1][1]-self_[i][1] == len(reps):
-
-				ranges.append((self_[i][1],self_[i+1][1]))
-
-		collapsed_ranges= defaultdict(list)
-		
-		for x, y in ranges:
-
-			collapsed_ranges[x].append(y)
-			collapsed_ranges[y].append(x)
-
-		result = defaultdict(list)
-		visited = set()
-		
-		for vertex in collapsed_ranges:
-
-			if vertex not in visited:
-
-				finder.dfs(collapsed_ranges, visited, vertex, result, vertex)
-
-		if len(result) !=0:
-
-			new_reps=[(reps, start+val[0], start+val[-1]+len(reps)-1, len(val)) for val in list(result.values()) if val[-1]+len(reps)-val[0] >= size]
-			corr_.extend(new_reps)
-
-	if corr_ == []:
-
-		return corr_
-
-	else:
-
-		s_corr_=sorted(corr_, key=itemgetter(1,2))
-		mod_int=SolveNestedR(s_corr_)
-
-		return mod_int
-
-
 def ReferenceReps(s,refseq,regex,maxmotif,size):
 
 
@@ -572,7 +467,7 @@ def ReferenceReps(s,refseq,regex,maxmotif,size):
 	else:
 
 		repetitions=list(finder.RepeatsFinder(wanted,regex,maxmotif))
-		filtered=ReferenceFilter(repetitions,wanted,size,start)
+		filtered=finder.ReferenceFilter(repetitions,wanted,size,start)
 		
 		return filtered
 
