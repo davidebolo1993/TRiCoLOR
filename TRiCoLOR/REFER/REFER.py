@@ -181,7 +181,7 @@ def run(parser, args):
 
 	logging.info('Cores: ' + str(cores))
 
-	Cpath=os.path.abspath(os.path.dirname(__file__) + '/alfred/bin/alfred') #? FASTER AND STAND-ALONE CONSENSUS
+	Cpath=os.path.abspath(os.path.dirname(__file__) + '/alfred/bin/alfred') #? FASTER AND STAND-ALONE CONSENSUS. PRIMARY TASK
 	SHCpath=os.path.abspath(os.path.dirname(__file__) + '/consensus.sh')
 	SHMpath=os.path.abspath(os.path.dirname(__file__) + '/merging.sh')
 	
@@ -192,7 +192,7 @@ def run(parser, args):
 
 	for b_chrom in b_chroms:
 
-		logging.info('Parsing input bed for chromosome ' + b_chrom + ' ...')
+		logging.info('Parsing input BED for chromosome ' + b_chrom + ' ...')
 
 		b_in2=Bed_Reader(os.path.abspath(args.bedfile), chromosome=b_chrom)
 		p_reg=list(iter(b_in2))
@@ -241,7 +241,6 @@ def run(parser, args):
 
 					subprocess.call(['minimap2','-H', '-d', os.path.abspath(gendir + '/' + b_chrom + '.pb.mmi'),os.path.abspath(gendir + '/' + b_chrom + '.fa')],stderr=open(os.devnull, 'wb'), stdout=open(os.devnull, 'wb'))
 					chromind=os.path.abspath(gendir + '/' + b_chrom + '.pb.mmi')
-
 
 		reg=len(p_reg)
 		chunk_size=reg/cores
