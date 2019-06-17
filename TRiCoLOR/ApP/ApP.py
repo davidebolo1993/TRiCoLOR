@@ -26,7 +26,7 @@ from plotly.offline import plot
 def run(parser, args):
 
 
-	if not os.path.exists(os.path.abspath(args.output)): #folder does not exist
+	if not os.path.exists(os.path.abspath(args.output)):
 
 		try:
 
@@ -34,17 +34,17 @@ def run(parser, args):
 
 		except:
 
-			print('Cannot create the output folder') #no write permission, probably			
+			print('Cannot create the output folder')
 			sys.exit(1)
 
-	else: #path already exists
+	else:
 
-		if not os.access(os.path.abspath(args.output),os.W_OK): #folder exists but no write permissions
+		if not os.access(os.path.abspath(args.output),os.W_OK):
 
 			print('Missing write permissions on the output folder')			
 			sys.exit(1)
 			
-		elif os.listdir(os.path.abspath(args.output)): #folder exists but isn't empty. Do not overwrite results.
+		elif os.listdir(os.path.abspath(args.output)):
 
 			print('The output folder is not empty. Specify another output folder or clean the previsouly chosen')
 			sys.exit(1)
@@ -53,9 +53,7 @@ def run(parser, args):
 	
 	notkey=['func']
 	command_string= ' '.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey)
-
 	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR_ApP.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-
 	logging.info('main=TRiCoLOR ' + command_string)
 
 	if which('samtools') is None:
@@ -63,14 +61,11 @@ def run(parser, args):
 		logging.error('samtools cannot be executed. Install samtools and re-run TRiCoLOR ApP')
 		sys.exit(1)
 
-	#check if the genome file exists, is readable and is in .fasta format
-
 	try:
 
 		with open(os.path.abspath(args.genome),'r') as file:
 
-			assert(file.readline().startswith('>')) #genome .file starts with '>'
-
+			assert(file.readline().startswith('>'))
 	except:
 
 		logging.error('Reference file does not exist, is not readable or is not a valid FASTA')
@@ -93,23 +88,17 @@ def run(parser, args):
 			logging.error('BAM ' + bam + ' does not exist, is not readable or is not a valid BAM')
 			sys.exit(1)
 
-
 		if not os.path.exists(os.path.abspath(bam + '.bai')):
 
 			logging.error('Missing index for BAM ' + bam + '. Not a BAM generated with REFER')
 			sys.exit(1)
 
-	logging.info('Ploidy: ' + str(len(bams)))
-
+	logging.info('Haplotypes: ' + str(len(bams)))
 	b_in=Bed_Reader(args.bedfile)
 	it_ = iter(b_in)
 	labels_set=set()
 
-	logging.info('Analyzing ...')
-	logging.info('Regions in BED: ' + str(b_in.length()))
-
-	skippedlabel=0
-	skippederror=0
+	logging.info('Generating plots...')
 
 	for i in range(b_in.length()):
 
@@ -118,7 +107,6 @@ def run(parser, args):
 		if label in labels_set:
 
 			logging.warning('Skipped region with duplicated label')
-			skippedlabel+=1
 			
 		else:
 
@@ -129,44 +117,48 @@ def run(parser, args):
 			except:
 
 				logging.exception('Unexpected error while analyzing region ' + chromosome + ':' + str(start) + '-' +str(end) + ". Log is below")
-				skippederror+=1
 
-	logging.info('Regions with duplicated labels skipped: ' + str(skippedlabel))
-	logging.info('Regions with unexpected errors: ' + str(skippederror))
 	logging.info('Done')
+
+
+#CLASS
 
 
 class Bed_Reader():
 
 
-	def __init__(self,bedfile):
+	def __init__(self,bedfile,chromosome=None):
 
 		self.bedfile=bedfile
+		self.chromosome=chromosome
 
 	def __iter__(self):
 
 		with open (self.bedfile, 'r') as bedin:
 
-			for line in csv.reader(bedin, delimiter='\t'):
+			for line in csv.reader(bedin, delimiter='\t'): #? FIND ANOTHER, FASTER, WAY TO PARSE BED. NOT PRIORITY
 
 				if not line[0].startswith('#') and line !=[]: 
 
-					if len(line) < 4:
+					if len(line) < 3:
 
-						logging.error('BED to TRiCoLOR ApP -bed/--bedfile must contain at least: chromosome, start, end, label (other fields are ignored)')
+						logging.error('BED to TRiCoLOR REFER -bed/--bedfile must contain at least: chromosome, start, end (other fields are ignored)')
 						sys.exit(1)
 
 					else:
 
-						yield (line[0], int(line[1]), int(line[2]), line[3]) # exclude other fields if they are present
+						if self.chromosome is None:
 
-	def length(self):
+							yield (line[0])
 
-		with open(self.bedfile, 'r') as bedin:
+						else:
 
-			size=sum(1 for _ in bedin if not _.startswith('#') and not _.strip()=='')
+							if line[0] == self.chromosome:
 
-			return size
+								yield (line[0], int(line[1]), int(line[2]))
+
+
+#FUNCTIONS
 
 
 def Get_Alignment_Positions(bamfile,chromosome,start,end):
@@ -182,7 +174,7 @@ def Get_Alignment_Positions(bamfile,chromosome,start,end):
 		end=start+1
 
 
-	for read in BamFile.fetch(chromosome, start-1, end-1): #fetch on zero based positions
+	for read in BamFile.fetch(chromosome, start-1, end-1):
 
 		if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
 
@@ -204,12 +196,11 @@ def list_duplicates(list_of_seq):
 	return ((key,locs) for key,locs in a_.items() if len(locs) > 1)
 
 
-def modifier(coordinates): #fast way to remove None and substitute with closest number in list
+def modifier(coordinates):
 
     
-    coordinates=[el+1 if el is not None else el for el in coordinates] #get true coordinates
+    coordinates=[el+1 if el is not None else el for el in coordinates]
     start=next(ele for ele in coordinates if ele is not None)
-
 
     for ind, ele in enumerate(coordinates):
         
@@ -247,8 +238,6 @@ def Modifier(list_of_coord,seq):
 	for i in range(len(mod_dup)):
 
 		coords_without_insertions[min(where_dup[i][1]):max(where_dup[i][1])+1]=mod_dup[i][1]
-
-	#Modify deletions
 	
 	NewSeq=''
 	coords_purified=[]
@@ -284,19 +273,16 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 		bam1_coords,bam1_seq=Get_Alignment_Positions(hap_bam[0],chromosome,start,end)
 		bam2_coords,bam2_seq=[],[]
 
-
 	else:
 
 		bam1_coords,bam1_seq=Get_Alignment_Positions(hap_bam[0],chromosome,start,end)
 		bam2_coords,bam2_seq=Get_Alignment_Positions(hap_bam[1],chromosome,start,end)
 
 
-
 	if hap_table is None:
 
 		hap1_table = None
 		hap2_table = None
-
 
 	else:
 
@@ -307,7 +293,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 				hap1_table = hap_table[0][0]
 				hap2_table = None
 
-			else: #len is 2 and cannot be sure which one the BED refers to
+			else: 
 
 				logging.warning('Double input to -bam/--bamfile and single input to -hb/--haplotypebed: cannot say to which BAM BED refers. Skipped repetitions highlighting.')
 
@@ -319,14 +305,10 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 			hap1_table = hap_table[0][0]
 			hap2_table = hap_table[0][1]
 
-
-
 	if len(bam1_seq) == 0 and len(bam2_seq) == 0:
-
 
 		min_=start-1000
 		max_=end+1000
-
 
 		ref=pyfaidx.Fasta(reference_fasta)
 		chrom=ref[chromosome]
@@ -334,7 +316,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 		ref_seq=ref_seq[min_-1:max_]
 
 		Reference_Trace = go.Scatter(
-			x = list(range(min_,max_+1)), # works with positions
+			x = list(range(min_,max_+1)),
 			y = [0]*len(ref_seq),
 			name = 'Reference',
 			text = list(ref_seq),
@@ -345,16 +327,13 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 			marker=dict(color='rgba(116, 116, 116, 1)')
 		)
 
-
 		data = [Reference_Trace]
-
 
 		if ref_table is None:
 
 			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'))
 			fig = dict(data=data, layout=layout)
 			plot(fig,filename=os.path.abspath(out)+'/'+label+'.html',auto_open=False)
-
 
 		else:
 
@@ -368,24 +347,18 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]-.1,y0=-.15,x1=ref_rep['End'][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
-
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Reference Repetitions',method = 'relayout',args = ['shapes', cluster_ref])]))])
 			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
-
 		
 		fig = dict(data=data, layout=layout)
 		plot(fig,filename=os.path.abspath(out)+'/'+label+'.html',auto_open=False)
 
-
 	elif len(bam1_seq) == 0 and len(bam2_seq) != 0:
-
 
 		bam2_mod_coords,bam2_mod_seq=Modifier(bam2_coords,bam2_seq)
 
 		min_=math.floor(next(item for item in bam2_mod_coords if item is not None))
 		max_=math.ceil(next(item for item in reversed(bam2_mod_coords) if item is not None))
-
-
 
 		ref=pyfaidx.Fasta(reference_fasta)
 		chrom=ref[chromosome]
@@ -393,7 +366,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 		ref_seq=ref_seq[min_-1:max_]
 
 		Reference_Trace = go.Scatter(
-			x = list(range(min_,max_+1)), # works with positions
+			x = list(range(min_,max_+1)),
 			y = [0]*len(ref_seq),
 			name = 'Reference',
 			text = list(ref_seq),
@@ -404,9 +377,8 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 			marker=dict(color='rgba(116, 116, 116, 1)')
 		)
 
-
 		Haplo2_Trace_Lower = go.Scatter(
-			x = bam2_mod_coords, # works with positions
+			x = bam2_mod_coords,
 			y = [-1]*len(bam2_mod_seq),
 			name = 'Haplotype 2',
 			text = list(bam2_mod_seq),
@@ -417,8 +389,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 			marker=dict(color='rgb(152, 77, 77)')
 		)
 
-
-
 		data = [Reference_Trace,Haplo2_Trace_Lower]
 
 		if ref_table is None and hap2_table is None:
@@ -426,7 +396,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'))
 			fig = dict(data=data, layout=layout)
 			plot(fig,filename=os.path.abspath(out)+'/'+label+'.html',auto_open=False)
-
 
 		elif ref_table is not None and hap2_table is None:
 
@@ -444,10 +413,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Reference Repetitions',method = 'relayout',args = ['shapes', cluster_ref])]))])
 			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
 
-
-
 		elif ref_table is None and hap2_table is not None:
-
 
 			hap2_rep=pd.read_csv(os.path.abspath(hap2_table),sep='\t')
 			cluster_hap2=[]
@@ -462,8 +428,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Haplotype 2 Repetitions',method = 'relayout',args = ['shapes', cluster_hap2])]))])
 			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
 
-
-
 		elif ref_table is not None and hap2_table is not None:
 
 			ref_rep=pd.read_csv(os.path.abspath(ref_table),sep='\t')
@@ -475,7 +439,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 
 					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]-.1,y0=-.15,x1=ref_rep['End'][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
-
 
 			hap2_rep=pd.read_csv(os.path.abspath(hap2_table),sep='\t')
 			cluster_hap2=[]
@@ -490,11 +453,8 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Reference Repetitions',method = 'relayout',args = ['shapes', cluster_ref]),dict(label = 'Haplotype 2 Repetitions',method ='relayout',args = ['shapes', cluster_hap2]),dict(label = 'Both',method = 'relayout',args = ['shapes', cluster_ref+cluster_hap2])]))])
 			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
 
-
 		fig = dict(data=data, layout=layout)
 		plot(fig,filename=os.path.abspath(out)+'/'+label+'.html',auto_open=False)
-
-
 
 	elif len(bam1_seq) != 0 and len(bam2_seq) == 0:
 
@@ -503,15 +463,13 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 		min_=math.floor(next(item for item in bam1_mod_coords if item is not None))
 		max_=math.ceil(next(item for item in reversed(bam1_mod_coords) if item is not None))
 
-
 		ref=pyfaidx.Fasta(reference_fasta)
 		chrom=ref[chromosome]
 		ref_seq=chrom[:len(chrom)].seq
 		ref_seq=ref_seq[min_-1:max_]
 
-
 		Reference_Trace = go.Scatter(
-			x = list(range(min_,max_+1)), # works with positions
+			x = list(range(min_,max_+1)),
 			y = [0]*len(ref_seq),
 			name = 'Reference',
 			text = list(ref_seq),
@@ -522,9 +480,8 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 			marker=dict(color='rgba(116, 116, 116, 1)')
 		)
 
-
 		Haplo1_Trace_Upper = go.Scatter(
-			x = bam1_mod_coords, # works with positions
+			x = bam1_mod_coords,
 			y = [1]*len(bam1_mod_seq),
 			name = 'Haplotype 1',
 			text = list(bam1_mod_seq),
@@ -535,7 +492,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 			marker=dict(color='rgb(66, 96, 154)')
 		)
 
-
 		data = [Reference_Trace,Haplo1_Trace_Upper]
 
 		if ref_table is None and hap1_table is None:
@@ -543,7 +499,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'))
 			fig = dict(data=data, layout=layout)
 			plot(fig,filename=os.path.abspath(out)+'/'+label+'.html',auto_open=False)
-
 
 		elif ref_table is not None and hap1_table is None:
 
@@ -557,14 +512,10 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]-.1,y0=-.15,x1=ref_rep['End'][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
-
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Reference Repetitions',method = 'relayout',args = ['shapes', cluster_ref])]))])
 			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
 
-
-
 		elif ref_table is None and hap1_table is not None:
-
 
 			hap1_rep=pd.read_csv(os.path.abspath(hap1_table),sep='\t')
 			cluster_hap1=[]
@@ -578,9 +529,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Haplotype 1 Repetitions',method = 'relayout',args = ['shapes', cluster_hap1])]))])
 			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
-
-
-
 
 		elif ref_table is not None and hap1_table is not None:
 
@@ -594,7 +542,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]-.1,y0=-.15,x1=ref_rep['End'][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
-
 			hap1_rep=pd.read_csv(os.path.abspath(hap1_table),sep='\t')
 			cluster_hap1=[]
 
@@ -605,36 +552,27 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap1_rep['Start'][i]-.1,y0=.85,x1=hap1_rep['End'][i]+.1,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
 					cluster_hap1.append(cluster_dict)
 
-
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Reference Repetitions',method = 'relayout',args = ['shapes', cluster_ref]),dict(label = 'Haplotype 1 Repetitions',method ='relayout',args = ['shapes', cluster_hap1]),dict(label = 'Both',method = 'relayout',args = ['shapes', cluster_ref+cluster_hap1])]))])
 			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
-
 
 		fig = dict(data=data, layout=layout)
 		plot(fig,filename=os.path.abspath(out)+'/'+label+'.html',auto_open=False)
 
-
 	else:
-
 
 		bam1_mod_coords,bam1_mod_seq=Modifier(bam1_coords,bam1_seq)
 		bam2_mod_coords,bam2_mod_seq=Modifier(bam2_coords,bam2_seq)
-
-
-		#get minimum and maximum for the bams coordinates, so that the reference sequence is rescaled to that range
 		mins=[((next(item for item in bam1_mod_coords if item is not None)),(next(item for item in bam2_mod_coords if item is not None)))][0]
 		maxs=[((next(item for item in reversed(bam1_mod_coords) if item is not None)),(next(item for item in reversed(bam2_mod_coords) if item is not None)))][0]
-
 		min_=math.floor(min(mins))
 		max_=math.ceil(max(maxs))
-
 		ref=pyfaidx.Fasta(reference_fasta)
 		chrom=ref[chromosome]
 		ref_seq=chrom[:len(chrom)].seq
 		ref_seq=ref_seq[min_-1:max_]
 
 		Reference_Trace = go.Scatter(
-			x = list(range(min_,max_+1)), # works with positions
+			x = list(range(min_,max_+1)),
 			y = [0]*len(ref_seq),
 			name = 'Reference',
 			text = list(ref_seq),
@@ -646,7 +584,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 		)
 
 		Haplo1_Trace_Upper = go.Scatter(
-			x = bam1_mod_coords, # works with positions
+			x = bam1_mod_coords,
 			y = [1]*len(bam1_mod_seq),
 			name = 'Haplotype 1',
 			text = list(bam1_mod_seq),
@@ -658,7 +596,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 		)
 
 		Haplo2_Trace_Lower = go.Scatter(
-			x = bam2_mod_coords, # works with positions
+			x = bam2_mod_coords,
 			y = [-1]*len(bam2_mod_seq),
 			name = 'Haplotype 2',
 			text = list(bam2_mod_seq),
@@ -669,7 +607,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 			marker=dict(color='rgb(152, 77, 77)')
 		)
 
-
 		data = [Reference_Trace,Haplo1_Trace_Upper,Haplo2_Trace_Lower]
 
 		if ref_table is None and hap1_table is None and hap2_table is None:
@@ -677,7 +614,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'))
 			fig = dict(data=data, layout=layout)
 			plot(fig,filename=os.path.abspath(out)+'/'+label+'.html',auto_open=False)
-
 
 		elif ref_table is not None and hap1_table is None and hap2_table is None:
 
@@ -691,13 +627,10 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]-.1,y0=-.15,x1=ref_rep['End'][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
-
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Reference Repetitions',method = 'relayout',args = ['shapes', cluster_ref])]))])
 			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
 
-
 		elif ref_table is None and hap1_table is not None and hap2_table is None:
-
 
 			hap1_rep=pd.read_csv(os.path.abspath(hap1_table),sep='\t')
 			cluster_hap1=[]
@@ -712,9 +645,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Haplotype 1 Repetitions',method = 'relayout',args = ['shapes', cluster_hap1])]))])
 			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
 
-
 		elif ref_table is None and hap1_table is None and hap2_table is not None:
-
 
 			hap2_rep=pd.read_csv(os.path.abspath(hap2_table),sep='\t')
 			cluster_hap2=[]
@@ -729,7 +660,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Haplotype 2 Repetitions',method = 'relayout',args = ['shapes', cluster_hap2])]))])
 			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
 
-
 		elif ref_table is not None and hap1_table is not None and hap2_table is None:
 
 			ref_rep=pd.read_csv(os.path.abspath(ref_table),sep='\t')
@@ -742,7 +672,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]-.1,y0=-.15,x1=ref_rep['End'][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
-
 			hap1_rep=pd.read_csv(os.path.abspath(hap1_table),sep='\t')
 			cluster_hap1=[]
 
@@ -753,10 +682,8 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap1_rep['Start'][i]-.1,y0=.85,x1=hap1_rep['End'][i]+.1,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
 					cluster_hap1.append(cluster_dict)
 
-
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Reference Repetitions',method = 'relayout',args = ['shapes', cluster_ref]),dict(label = 'Haplotype 1 Repetitions',method ='relayout',args = ['shapes', cluster_hap1]),dict(label = 'Both',method = 'relayout',args = ['shapes', cluster_ref+cluster_hap1])]))])
 			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
-
 
 		elif ref_table is not None and hap1_table is None and hap2_table is not None:
 
@@ -769,7 +696,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 
 					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]-.1,y0=-.15,x1=ref_rep['End'][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
-
 
 			hap2_rep=pd.read_csv(os.path.abspath(hap2_table),sep='\t')
 			cluster_hap2=[]
@@ -784,7 +710,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Reference Repetitions',method = 'relayout',args = ['shapes', cluster_ref]),dict(label = 'Haplotype 2 Repetitions',method ='relayout',args = ['shapes', cluster_hap2]),dict(label = 'Both',method = 'relayout',args = ['shapes', cluster_ref+cluster_hap2])]))])
 			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
 
-
 		elif ref_table is None and hap1_table is not None and hap2_table is not None:
 
 			hap1_rep=pd.read_csv(os.path.abspath(hap1_table),sep='\t')
@@ -796,7 +721,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 
 					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap1_rep['Start'][i]-.1,y0=.85,x1=hap1_rep['End'][i]+.1,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
 					cluster_hap1.append(cluster_dict)
-
 
 			hap2_rep=pd.read_csv(os.path.abspath(hap2_table),sep='\t')
 			cluster_hap2=[]
@@ -833,7 +757,6 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap1_rep['Start'][i]-.1,y0=.85,x1=hap1_rep['End'][i]+.1,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
 					cluster_hap1.append(cluster_dict)
 
-
 			hap2_rep=pd.read_csv(os.path.abspath(hap2_table),sep='\t')
 			cluster_hap2=[]
 
@@ -847,8 +770,5 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Reference Repetitions',method = 'relayout',args = ['shapes', cluster_ref]),dict(label = 'Haplotype 1 Repetitions',method ='relayout',args = ['shapes', cluster_hap1]),dict(label = 'Haplotype 2 Repetitions',method ='relayout',args = ['shapes', cluster_hap2]),dict(label = 'All',method = 'relayout',args = ['shapes', cluster_ref+cluster_hap1+cluster_hap2])]))])
 			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
 
-
 		fig = dict(data=data, layout=layout)
 		plot(fig,filename=os.path.abspath(out)+'/'+label+'.html',auto_open=False)
-
-
