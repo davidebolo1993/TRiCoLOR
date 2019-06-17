@@ -1,3 +1,5 @@
+#!/bin/bash
+
 cd $1
 
 $2 consensus -f fasta -t $3 -a $4".al.fa.gz" -c $4".cs.fa.gz" $5 && rm $5 && rm $5".fai"
