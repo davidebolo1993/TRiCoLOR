@@ -19,6 +19,30 @@ import pysam
 ## FUNCTIONS
 
 
+def BED_repswriter(chromosome,coordreps, out):
+
+
+	seq=[el[0] for el in coordreps]
+	start=[el[1] for el in coordreps]
+	end=[el[2] for el in coordreps]
+	rep=[el[3] for el in coordreps]
+	chrom=[chromosome]*len(start)
+
+	Table=pd.DataFrame({'Chromosome':chrom, 'Start':start,'End':end, 'Repeated Motif':seq,'Repetitions Number':rep},columns=['Chromosome', 'Start', 'End', 'Repeated Motif', 'Repetitions Number'])
+	
+	if os.path.exists(os.path.abspath(out + '/' + chromosome + '.repetitions.bed')):
+
+		with open(os.path.abspath(out + '/' + chromosome + '.repetitions.bed'), 'a') as refout:
+
+			Table.to_csv(refout ,sep='\t',index=False, header=False)
+
+	else:
+
+		with open(os.path.abspath(out + '/' + chromosome + '.repetitions.bed'), 'w') as refout:
+
+			Table.to_csv(refout ,sep='\t',index=False)
+
+
 def VCF_headerwriter(bamfile1, bamfile2, samplename, commandline, out, processor):
 
 	bam1=pysam.AlignmentFile(bamfile1,'rb')
