@@ -40,7 +40,7 @@ def run(parser, args):
 
 		if not os.access(os.path.abspath(args.output),os.W_OK):
 
-			print('Missing write permissions on the output folder')
+			print('Missing write permissions on the output folder')			
 			sys.exit(1)
 			
 		elif os.listdir(os.path.abspath(args.output)):
