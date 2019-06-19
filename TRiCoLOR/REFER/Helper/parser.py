@@ -79,11 +79,7 @@ def Bamfile_Analyzer(bamfilein,chromosome,start,end, coverage, out, processor):
 
 	if check_coverage(bamfile, chromosome, start, end, coverage):
 
-		fake=[]
-
 		for read in bamfile.fetch(chromosome,start,end):
-
-			fake.append(read)
 
 			if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
 
