@@ -63,13 +63,12 @@ def run(parser, args):
 	os.makedirs(os.path.abspath(args.output) + '/reference')
 	os.makedirs(os.path.abspath(args.output) + '/haplotype1')
 	os.makedirs(os.path.abspath(args.output) + '/haplotype2')
-
 	command_dict= vars(args)	
 	notkey=['func']
 	command_string= ' '.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey)
 	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR_REFER.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')	
 	logging.info('main=TRiCoLOR ' + command_string)
-	external_tools=['minimap2', 'samtools', 'bcftools'] #? ALSO ADD NGMLR. NOT PRIORITY
+	external_tools=['minimap2', 'samtools', 'bcftools'] #? ALSO ADD NGMLR. NOT PRIORITY. MINIMAP2 IS FASTER AND MORE ACCURATE
 
 	for tools in external_tools: 
 
@@ -183,8 +182,7 @@ def run(parser, args):
 
 	Cpath=os.path.abspath(os.path.dirname(__file__) + '/alfred/bin/alfred') #? FASTER AND STAND-ALONE CONSENSUS. PRIMARY TASK
 	SHCpath=os.path.abspath(os.path.dirname(__file__) + '/consensus.sh')
-	SHMpath=os.path.abspath(os.path.dirname(__file__) + '/merging.sh')
-	
+	SHMpath=os.path.abspath(os.path.dirname(__file__) + '/merging.sh')	
 	ref=pyfaidx.Fasta(os.path.abspath(args.genome))
 	gendir=os.path.abspath(os.path.dirname(args.genome))
 	b_in=Bed_Reader(os.path.abspath(args.bedfile))
@@ -225,22 +223,20 @@ def run(parser, args):
 
 					with open(os.path.abspath(gendir + '/' + b_chrom + '.fa'), 'w') as chromout:
 
-						subprocess.check_call(['samtools','faidx', os.path.abspath(args.genome), b_chrom],stderr=open(os.devnull, 'wb'),stdout=chromout)
+						subprocess.call(['samtools','faidx', os.path.abspath(args.genome), b_chrom],stderr=open(os.devnull, 'wb'),stdout=chromout)
 
 				except:
 
 					logging.error('Unexpected error while creating index for current chromosome. Does your reference genome contain informations for this chromosome?')
 					sys.exit(1)
 
-				if args.readstype == 'ONT':
+			if args.readstype == 'ONT':
 
-					subprocess.call(['minimap2','-d', os.path.abspath(gendir + '/' + b_chrom + '.ont.mmi'),os.path.abspath(gendir + '/' + b_chrom + '.fa')],stderr=open(os.devnull, 'wb'), stdout=open(os.devnull, 'wb'))
-					chromind=os.path.abspath(gendir + '/' + b_chrom + '.ont.mmi')
+				subprocess.call(['minimap2','-d', os.path.abspath(gendir + '/' + b_chrom + '.ont.mmi'),os.path.abspath(gendir + '/' + b_chrom + '.fa')],stderr=open(os.devnull, 'wb'), stdout=open(os.devnull, 'wb'))
 
-				else: #? MINIMAP2 SUGGESTS TO PERFORM INDEXING FOR PBIO USING -H AS WELL
+			else:
 
-					subprocess.call(['minimap2','-H', '-d', os.path.abspath(gendir + '/' + b_chrom + '.pb.mmi'),os.path.abspath(gendir + '/' + b_chrom + '.fa')],stderr=open(os.devnull, 'wb'), stdout=open(os.devnull, 'wb'))
-					chromind=os.path.abspath(gendir + '/' + b_chrom + '.pb.mmi')
+				subprocess.call(['minimap2','-H', '-d', os.path.abspath(gendir + '/' + b_chrom + '.pb.mmi'),os.path.abspath(gendir + '/' + b_chrom + '.fa')],stderr=open(os.devnull, 'wb'), stdout=open(os.devnull, 'wb'))
 
 		reg=len(p_reg)
 		chunk_size=reg/cores
@@ -330,7 +326,6 @@ def run(parser, args):
 		os.remove(bcf + '.csi')
 
 	logging.info('Done')
-
 
 
 ##CLASS
@@ -436,11 +431,11 @@ def Runner(processor,sli,refseq,regex,maxmotif,size,bamfile1,bamfile2,coverage,a
 
 		except BaseException as BE:
 
-			logging.exception('Processor ' + processor + ' generated an error for region ' + s[0] +  ':' + str(s[1]) + '-' + str(s[2]) + '. Check TRiCoLOR.' + processor + '.unexpected.err.log in ' + os.path.abspath(output) + ' for details')
+			logging.error('Processor ' + processor + ' generated an error for region ' + s[0] +  ':' + str(s[1]) + '-' + str(s[2]) + '. Check TRiCoLOR.' + processor + '.unexpected.err.log in ' + os.path.abspath(output) + ' for details')
 			
 			with open (os.path.abspath(output + '/TRiCoLOR.' + processor + '.unexpected.err.log'), 'a') as errorout:
 
-				errorout.write('Unexpected error in region '+ s[0] +  ':' + str(s[1]) + '-' + str(s[2]) + '.' + '\n' + BE + '\n')
+				errorout.write('Unexpected error in region '+ s[0] +  ':' + str(s[1]) + '-' + str(s[2]) + '.' + '\n' + str(BE) + '\n')
 
 
 	Rrep[processor] = Ritem
@@ -455,6 +450,7 @@ def ReferenceReps(s,refseq,regex,maxmotif,size):
 
 
 	chromosome,start,end=s[0],s[1],s[2]
+
 	wanted=refseq[start-1:end]
 
 	if 'N' in wanted:
@@ -496,7 +492,7 @@ def HaploReps(SHCpath,Cpath, bamfile,s, coverage, regex, maxmotif, size, allowed
 			mmivar='map-pb'
 			consvar='pacbio'
 
-		subprocess.call(['bash', SHCpath, out, Cpath, consvar, processor, os.path.basename(file), mmivar, chromind],stdout=open(os.devnull, 'wb'),stderr=open(os.devnull, 'wb'))		
+		subprocess.call(['bash', SHCpath, out, Cpath, consvar, processor, os.path.basename(file), mmivar, chromind],stdout=open(os.devnull, 'wb'),stderr=open(os.devnull, 'wb'))
 		c_bam=os.path.abspath(out + '/' + processor + '.cs.srt.bam')
 		coords,seq=finder.Get_Alignment_Positions(c_bam)
 
