@@ -230,7 +230,7 @@ def GetIndex(start, end, coordinates):
 
 
 	si=bisect_left(coordinates, start)
-	ei=bisect_right(coordinates, end)-1
+	ei=bisect_right(coordinates, end)
 
 	return si,ei
 
@@ -410,7 +410,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 						seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])
 						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps)
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-						alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
+						alt2=seq_h2[si_2:ei_2].replace('-','')
 
 						if ref == alt2:
 
@@ -436,7 +436,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 						seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1])
 						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps)
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
-						alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
+						alt1=seq_h1[si_1:ei_1].replace('-','')
 
 						if ref == alt1:
 
@@ -465,8 +465,8 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps)
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-						alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
-						alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
+						alt1=seq_h1[si_1:ei_1].replace('-','')
+						alt2=seq_h2[si_2:ei_2].replace('-','')
 
 						if ref == alt1 and ref == alt2:
 
@@ -535,7 +535,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 						seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])
 						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps)
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-						alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
+						alt2=seq_h2[si_2:ei_2].replace('-','')
 
 						if ref == alt2:
 
@@ -564,8 +564,8 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps)
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-						alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
-						alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
+						alt1=seq_h1[si_1:ei_1].replace('-','')
+						alt2=seq_h2[si_2:ei_2].replace('-','')
 
 						if ref == alt1 and ref == alt2:
 
@@ -607,8 +607,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 								info['H1M'] = hap1_dict_motif[reps]
 								info['H1N'] = hap1_dict_number[reps]
 								info['H2M'] = hap2_dict_motif[reps]
-								info['H2N'] = hap2_dict_number[reps]
-			
+								info['H2N'] = hap2_dict_number[reps]			
 								form='1|2' 
 
 								VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
@@ -621,12 +620,10 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 								info['H1M'] = hap1_dict_motif[reps]
 								info['H1N'] = hap1_dict_number[reps]
 								info['H2M'] = hap2_dict_motif[reps]
-								info['H2N'] = hap2_dict_number[reps]
-			
+								info['H2N'] = hap2_dict_number[reps]			
 								form='1|1' 
 
 								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
 
 				elif ref_dict_number[reps] != hap1_dict_number[reps] and ref_dict_number[reps] == hap2_dict_number[reps]: 
 
@@ -638,8 +635,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 						seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1])
 						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
-						alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
-
+						alt1=seq_h1[si_1:ei_1].replace('-','')
 
 						if ref == alt1: 
 
@@ -653,14 +649,12 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 							info['H1M'] = hap1_dict_motif[reps]
 							info['H1N'] = hap1_dict_number[reps]
 							info['H2M'] = hap2_dict_motif[reps]
-							info['H2N'] = hap2_dict_number[reps]
-			
+							info['H2N'] = hap2_dict_number[reps]			
 							form='1|0' 
 
 							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 					else: 
-
 
 						pos=reps[0]
 						ref=reference_sequence[(reps[0]-1):reps[1]]
@@ -671,13 +665,11 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 
-
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 
-						alt1=seq_h1[si_1:(ei_1+1)].replace('-','') 
-						alt2=seq_h2[si_2:(ei_2+1)].replace('-','') 
-
+						alt1=seq_h1[si_1:ei_1].replace('-','') 
+						alt2=seq_h2[si_2:ei_2].replace('-','') 
 
 						if ref == alt1 and ref == alt2: 
 
@@ -691,8 +683,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 							info['H1M'] = ref_dict_motif[reps] 
 							info['H1N'] = ref_dict_number[reps] 
 							info['H2M'] = hap2_dict_motif[reps]
-							info['H2N'] = hap2_dict_number[reps]
-			
+							info['H2N'] = hap2_dict_number[reps]			
 							form='0|1' 
 
 							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
@@ -705,8 +696,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 							info['H1M'] = hap1_dict_motif[reps]
 							info['H1N'] = hap1_dict_number[reps]
 							info['H2M'] = ref_dict_motif[reps] 
-							info['H2N'] = ref_dict_number[reps] 
-			
+							info['H2N'] = ref_dict_number[reps]			
 							form='1|0' 
 
 							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
@@ -721,8 +711,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 								info['H1M'] = hap1_dict_motif[reps]
 								info['H1N'] = hap1_dict_number[reps]
 								info['H2M'] = hap2_dict_motif[reps]
-								info['H2N'] = hap2_dict_number[reps]
-			
+								info['H2N'] = hap2_dict_number[reps]			
 								form='1|2' 
 
 								VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
@@ -736,11 +725,9 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 								info['H1N'] = hap1_dict_number[reps]
 								info['H2M'] = hap2_dict_motif[reps]
 								info['H2N'] = hap2_dict_number[reps]
-			
 								form='1|1' 
 
 								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
 
 				else: 
 
@@ -750,16 +737,14 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 					seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1])
 					seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])
 
-
 					coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 					coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 
 					si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
 					si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
 
-					alt1=seq_h1[si_1:(ei_1+1)].replace('-','') 
-					alt2=seq_h2[si_2:(ei_2+1)].replace('-','') 
-
+					alt1=seq_h1[si_1:ei_1].replace('-','') 
+					alt2=seq_h2[si_2:ei_2].replace('-','') 
 
 					if ref == alt1 and ref == alt2: 
 
@@ -773,8 +758,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 						info['H1M'] = ref_dict_motif[reps] 
 						info['H1N'] = ref_dict_number[reps] 
 						info['H2M'] = hap2_dict_motif[reps]
-						info['H2N'] = hap2_dict_number[reps]
-			
+						info['H2N'] = hap2_dict_number[reps]			
 						form='0|1' 
 
 						VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
@@ -788,7 +772,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 						info['H1N'] = hap1_dict_number[reps]
 						info['H2M'] = ref_dict_motif[reps] 
 						info['H2N'] = ref_dict_number[reps] 
-			
 						form='1|0' 
 
 						VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
@@ -804,7 +787,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 							info['H1N'] = hap1_dict_number[reps]
 							info['H2M'] = hap2_dict_motif[reps]
 							info['H2N'] = hap2_dict_number[reps]
-			
 							form='1|2' 
 
 							VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
@@ -818,7 +800,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 							info['H1N'] = hap1_dict_number[reps]
 							info['H2M'] = hap2_dict_motif[reps]
 							info['H2N'] = hap2_dict_number[reps]
-			
 							form='1|1' 
 
 							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
@@ -842,7 +823,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 						info['H1N'] = hap1_dict_number[reps]
 						info['H2M'] = '.'
 						info['H2N'] = '.'
-			
 						form='0|.'  
 
 						VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
@@ -851,7 +831,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 
 						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)						
-						alt2=seq_h2[si_2:(ei_2+1)].replace('-','') 
+						alt2=seq_h2[si_2:ei_2].replace('-','') 
 
 						if alt2 == '':
 
@@ -862,7 +842,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 							info['H1N'] = hap1_dict_number[reps]
 							info['H2M'] = '.'
 							info['H2N'] = '.'
-			
 							form='0|.' 
 
 							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
@@ -882,12 +861,10 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 								info['H1N'] = hap1_dict_number[reps]
 								info['H2M'] = '.'
 								info['H2N'] = '.'
-			
 								form='0|1' 
 
 								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
 
-				
 				else: 
 
 					pos=reps[0]
@@ -896,7 +873,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 					seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
 					coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 					si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
-					alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
+					alt1=seq_h1[si_1:ei_1].replace('-','')
 					
 					seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) 
 
@@ -911,7 +888,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 							info['H1N'] = ref_dict_number[reps] 
 							info['H2M'] = '.'
 							info['H2N'] = '.'
-			
 							form='0|.' 
 
 							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
@@ -920,7 +896,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 
 							coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 							si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-							alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
+							alt2=seq_h2[si_2:ei_2].replace('-','')
 
 							if alt2 =='': 
 
@@ -931,7 +907,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 								info['H1N'] = ref_dict_number[reps] 
 								info['H2M'] = '.'
 								info['H2N'] = '.'
-			
 								form='0|.' 
 
 								VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
@@ -951,7 +926,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 									info['H1N'] = ref_dict_number[reps] 
 									info['H2M'] = '.'
 									info['H2N'] = '.'
-			
 									form='0|1' 
 
 									VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
@@ -967,7 +941,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 							info['H1N'] = hap1_dict_number[reps]
 							info['H2M'] = '.'
 							info['H2N'] = '.'
-			
 							form='1|.' 
 
 							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
@@ -976,7 +949,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 
 							coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 							si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-							alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
+							alt2=seq_h2[si_2:ei_2].replace('-','')
 
 							if alt2=='': 
 
@@ -987,9 +960,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 								info['H1N'] = hap1_dict_number[reps]
 								info['H2M'] = '.'
 								info['H2N'] = '.'
-			
 								form='1|.' 
-
 
 								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
@@ -1004,7 +975,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 									info['H1N'] = hap1_dict_number[reps]
 									info['H2M'] = '.'
 									info['H2N'] = '.'
-			
 									form='1|0' 
 
 									VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
@@ -1020,9 +990,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 										info['H1N'] = hap1_dict_number[reps]
 										info['H2M'] = '.'
 										info['H2N'] = '.'
-			
-										form='1|1' 
-
+										form='1|1'
 
 										VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
@@ -1035,12 +1003,9 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 										info['H1N'] = hap1_dict_number[reps]
 										info['H2M'] = '.'
 										info['H2N'] = '.'
-			
 										form='1|2' 
 
-
 										VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
-
 
 			elif reps in ref_dict_number.keys() and reps not in hap1_dict_number.keys() and reps in hap2_dict_number.keys(): 
 
@@ -1060,7 +1025,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 						info['H1N'] = '.'
 						info['H2M'] = hap2_dict_motif[reps]
 						info['H2N'] = hap2_dict_number[reps]
-			
 						form='.|0' 
 
 						VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
@@ -1069,7 +1033,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 
 						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
-						alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
+						alt1=seq_h1[si_1:ei_1].replace('-','')
 
 
 						if alt1=='':
@@ -1081,7 +1045,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 							info['H1N'] = '.'
 							info['H2M'] = hap2_dict_motif[reps]
 							info['H2N'] = hap2_dict_number[reps]
-			
 							form='.|0' 
 
 							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
@@ -1101,7 +1064,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 								info['H1N'] = '.'
 								info['H2M'] = hap2_dict_motif[reps]
 								info['H2N'] = hap2_dict_number[reps]
-			
 								form='1|0' 
 
 								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
@@ -1114,7 +1076,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 					seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])
 					coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 					si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-					alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
+					alt2=seq_h2[si_2:ei_2].replace('-','')
 					
 					seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
 
@@ -1129,7 +1091,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 							info['H1N'] = '.'
 							info['H2M'] = ref_dict_motif[reps] 
 							info['H2N'] = ref_dict_number[reps] 
-			
 							form='.|0' 
 
 							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
@@ -1138,7 +1099,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 
 							coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 							si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
-							alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
+							alt1=seq_h1[si_1:ei_1].replace('-','')
 
 							if alt1=='': 
 
@@ -1148,8 +1109,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 								info['H1M'] = '.'
 								info['H1N'] = '.'
 								info['H2M'] = ref_dict_motif[reps] 
-								info['H2N'] = ref_dict_number[reps] 
-			
+								info['H2N'] = ref_dict_number[reps]
 								form='.|0' 
 
 								VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
@@ -1169,7 +1129,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 									info['H1N'] = '.'
 									info['H2M'] = ref_dict_motif[reps] 
 									info['H2N'] = ref_dict_number[reps] 
-			
 									form='1|0' 
 
 									VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
@@ -1185,7 +1144,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 							info['H1N'] = '.'
 							info['H2M'] = hap2_dict_motif[reps]
 							info['H2N'] = hap2_dict_number[reps]
-			
 							form='.|1' 
 
 							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
@@ -1194,7 +1152,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 
 							coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 							si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
-							alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
+							alt1=seq_h1[si_1:ei_1].replace('-','')
 
 							if alt1=='':
 
@@ -1205,7 +1163,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 								info['H1N'] = '.'
 								info['H2M'] = hap2_dict_motif[reps]
 								info['H2N'] = hap2_dict_number[reps]
-			
 								form='.|1' 
 
 								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
@@ -1221,7 +1178,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 									info['H1N'] = '.'
 									info['H2M'] = hap2_dict_motif[reps]
 									info['H2N'] = hap2_dict_number[reps]
-			
 									form='0|1' 
 
 									VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
@@ -1237,9 +1193,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 										info['H1N'] = '.'
 										info['H2M'] = hap2_dict_motif[reps]
 										info['H2N'] = hap2_dict_number[reps]
-			
 										form='1|1' 
-
 
 										VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
@@ -1252,8 +1206,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 										info['H1N'] = '.'
 										info['H2M'] = hap2_dict_motif[reps]
 										info['H2N'] = hap2_dict_number[reps]
-
-
 										form='1|2' 
 
 										VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
@@ -1267,13 +1219,12 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 				seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
 				coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 				si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
-				alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
+				alt1=seq_h1[si_1:ei_1].replace('-','')
 
 				seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) 
 				coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 				si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-				alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
-
+				alt2=seq_h2[si_2:ei_2].replace('-','')
 
 				if ref==alt1 and ref==alt2:
 
@@ -1287,12 +1238,10 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 					info['H1M'] = hap1_dict_motif[reps] 
 					info['H1N'] = hap1_dict_number[reps] 
 					info['H2M'] = hap2_dict_motif[reps]
-					info['H2N'] = hap2_dict_number[reps]
-									
+					info['H2N'] = hap2_dict_number[reps]		
 					form='0|1' 
 
 					VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
-
 
 				elif ref != alt1 and ref == alt2:
 
@@ -1302,12 +1251,10 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 					info['H1M'] = hap1_dict_motif[reps]
 					info['H1N'] = hap1_dict_number[reps]
 					info['H2M'] = hap2_dict_motif[reps] 
-					info['H2N'] = hap2_dict_number[reps] 
-									
+					info['H2N'] = hap2_dict_number[reps]			
 					form='1|0' 
 
 					VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
 
 				elif ref != alt1 and ref != alt2:
 
@@ -1320,7 +1267,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 						info['H1N'] = hap1_dict_number[reps]
 						info['H2M'] = hap2_dict_motif[reps]
 						info['H2N'] = hap2_dict_number[reps]
-									
 						form='1|1' 
 
 						VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
@@ -1333,8 +1279,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 						info['H1M'] = hap1_dict_motif[reps]
 						info['H1N'] = hap1_dict_number[reps]
 						info['H2M'] = hap2_dict_motif[reps]
-						info['H2N'] = hap2_dict_number[reps]
-									
+						info['H2N'] = hap2_dict_number[reps]			
 						form='1|2' 
 
 						VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
@@ -1353,12 +1298,11 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 
 					continue
 
-
 				elif len(seq_h1) != 0 and len(seq_h2) == 0: 
 
 					coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 					si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
-					alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
+					alt1=seq_h1[si_1:ei_1].replace('-','')
 
 					if alt1=='':
 
@@ -1374,8 +1318,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 							info['H1M'] = '.' 
 							info['H1N'] = '.' 
 							info['H2M'] = '.'
-							info['H2N'] = '.'
-									
+							info['H2N'] = '.'	
 							form='0|.' 
 
 							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
@@ -1388,18 +1331,16 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 							info['H1M'] = '.'
 							info['H1N'] = '.'
 							info['H2M'] = '.'
-							info['H2N'] = '.'
-									
+							info['H2N'] = '.'	
 							form='1|.' 
 
 							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
-				
 				elif len(seq_h1) == 0 and len(seq_h2) != 0: 
 
 					coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 					si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-					alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
+					alt2=seq_h2[si_2:ei_2].replace('-','')
 
 					if alt2 == '':
 
@@ -1415,8 +1356,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 							info['H1M'] = '.' 
 							info['H1N'] = '.'
 							info['H2M'] = '.' 
-							info['H2N'] = '.' 
-									
+							info['H2N'] = '.'		
 							form='.|0' 
 
 							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
@@ -1430,21 +1370,19 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 							info['H1N'] = '.'
 							info['H2M'] = '.'
 							info['H2N'] = '.'
-									
 							form='.|1' 
 
 							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
-
 					
 				elif len(seq_h1) != 0 and len(seq_h2) != 0: 
 
 					coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 					si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
-					alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
+					alt1=seq_h1[si_1:ei_1].replace('-','')
 
 					coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 					si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-					alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
+					alt2=seq_h2[si_2:ei_2].replace('-','')
 
 					if alt1 == '':
 
@@ -1462,8 +1400,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 								info['H1M'] = '.'
 								info['H1N'] = '.'
 								info['H2M'] = '.' 
-								info['H2N'] = '.' 
-			
+								info['H2N'] = '.'
 								form='.|0' 
 
 								VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
@@ -1472,13 +1409,11 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 
 								info=dict()
 
-
 								info['END'] = reps[1]
 								info['H1M'] = '.'
 								info['H1N'] = '.'
 								info['H2M'] = '.' 
-								info['H2N'] = '.' 
-			
+								info['H2N'] = '.'			
 								form='.|1' 
 
 								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
@@ -1495,8 +1430,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 								info['H1M'] = '.'
 								info['H1N'] = '.'
 								info['H2M'] = '.' 
-								info['H2N'] = '.' 
-			
+								info['H2N'] = '.'
 								form='0|.' 
 
 								VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
@@ -1505,20 +1439,16 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 
 								info=dict()
 
-
 								info['END'] = reps[1]
 								info['H1M'] = '.'
 								info['H1N'] = '.'
 								info['H2M'] = '.' 
-								info['H2N'] = '.' 
-			
+								info['H2N'] = '.'			
 								form='1|.'  
 
 								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
-
 						else: 
-
 
 							if ref == alt1 and ref == alt2: 
 
@@ -1532,8 +1462,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 								info['H1M'] = '.' 
 								info['H1N'] = '.' 
 								info['H2M'] = '.'
-								info['H2N'] = '.'
-			
+								info['H2N'] = '.'			
 								form='0|1' 
 
 								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
@@ -1546,8 +1475,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 								info['H1M'] = '.'
 								info['H1N'] = '.'
 								info['H2M'] = '.' 
-								info['H2N'] = '.' 
-			
+								info['H2N'] = '.'
 								form='1|0' 
 
 								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
@@ -1563,7 +1491,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 									info['H1N'] = '.'
 									info['H2M'] = '.'
 									info['H2N'] = '.'
-			
 									form='1|2' 
 
 									VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
@@ -1577,11 +1504,9 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 									info['H1N'] = '.'
 									info['H2M'] = '.'
 									info['H2N'] = '.'
-			
 									form='1|1' 
 
 									VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
 
 			elif reps not in ref_dict_number.keys() and reps in hap1_dict_number.keys() and reps not in hap2_dict_number.keys(): 
 
@@ -1592,7 +1517,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 
 				coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 				si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
-				alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
+				alt1=seq_h1[si_1:ei_1].replace('-','')
 
 				seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) 
 
@@ -1606,8 +1531,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 						info['H1M'] = hap1_dict_motif[reps]
 						info['H1N'] = hap1_dict_number[reps]
 						info['H2M'] = '.'
-						info['H2N'] = '.'
-									
+						info['H2N'] = '.'									
 						form='0|.' 
 
 						VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
@@ -1616,7 +1540,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 
 						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-						alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
+						alt2=seq_h2[si_2:ei_2].replace('-','')
 
 
 						if alt2=='':
@@ -1628,7 +1552,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 							info['H1N'] = hap1_dict_number[reps]
 							info['H2M'] = '.'
 							info['H2N'] = '.'
-									
 							form='0|.' 
 
 							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
@@ -1648,7 +1571,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 								info['H1N'] = hap1_dict_number[reps]
 								info['H2M'] = '.'
 								info['H2N'] = '.'
-									
 								form='0|1' 
 
 								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
@@ -1663,19 +1585,16 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 						info['H1M'] = hap1_dict_motif[reps]
 						info['H1N'] = hap1_dict_number[reps]
 						info['H2M'] = '.'
-						info['H2N'] = '.'
-									
+						info['H2N'] = '.'	
 						form='1|.' 
 
 						VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
-
 					else:
-
 
 						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-						alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
+						alt2=seq_h2[si_2:ei_2].replace('-','')
 
 						if alt2=='':
 
@@ -1685,8 +1604,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 							info['H1M'] = hap1_dict_motif[reps]
 							info['H1N'] = hap1_dict_number[reps]
 							info['H2M'] = '.'
-							info['H2N'] = '.'
-									
+							info['H2N'] = '.'									
 							form='1|.' 
 
 							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
@@ -1702,7 +1620,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 								info['H1N'] = hap1_dict_number[reps]
 								info['H2M'] = '.'
 								info['H2N'] = '.'
-									
 								form='1|0' 
 
 								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
@@ -1718,11 +1635,9 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 									info['H1N'] = hap1_dict_number[reps]
 									info['H2M'] = '.'
 									info['H2N'] = '.'
-									
 									form='1|1' 
 
 									VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
 
 								else:
 
@@ -1732,8 +1647,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 									info['H1M'] = hap1_dict_motif[reps]
 									info['H1N'] = hap1_dict_number[reps]
 									info['H2M'] = '.'
-									info['H2N'] = '.'
-									
+									info['H2N'] = '.'									
 									form='1|2' 
 							
 									VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
@@ -1746,7 +1660,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 				seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])
 				coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
 				si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-				alt2=seq_h2[si_2:(ei_2+1)].replace('-','')
+				alt2=seq_h2[si_2:ei_2].replace('-','')
 
 				seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
 
@@ -1761,7 +1675,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 						info['H1N'] = '.'
 						info['H2M'] = hap2_dict_motif[reps]
 						info['H2N'] = hap2_dict_number[reps]
-									
 						form='.|0' 
 
 						VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
@@ -1770,7 +1683,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 
 						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
-						alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
+						alt1=seq_h1[si_1:ei_1].replace('-','')
 
 						if alt1=='':
 
@@ -1781,7 +1694,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 							info['H1N'] = '.'
 							info['H2M'] = hap2_dict_motif[reps]
 							info['H2N'] = hap2_dict_number[reps]
-									
 							form='.|0' 
 
 							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
@@ -1801,13 +1713,11 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 								info['H1N'] = '.'
 								info['H2M'] = hap2_dict_motif[reps]
 								info['H2N'] = hap2_dict_number[reps]
-									
 								form='1|0' 
 
 								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
 
 				else:
-
 
 					if len(seq_h1) == 0: 
 
@@ -1817,8 +1727,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 						info['H1M'] = '.'
 						info['H1N'] = '.'
 						info['H2M'] = hap2_dict_motif[reps]
-						info['H2N'] = hap2_dict_number[reps]
-									
+						info['H2N'] = hap2_dict_number[reps]									
 						form='.|1' 
 
 						VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
@@ -1827,7 +1736,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 
 						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
 						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
-						alt1=seq_h1[si_1:(ei_1+1)].replace('-','')
+						alt1=seq_h1[si_1:ei_1].replace('-','')
 
 						if alt1=='':
 
@@ -1838,9 +1747,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 							info['H1N'] = '.'
 							info['H2M'] = hap2_dict_motif[reps]
 							info['H2N'] = hap2_dict_number[reps]
-									
 							form='.|1' 
-
 
 							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
 
@@ -1854,10 +1761,8 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 								info['H1M'] = '.'
 								info['H1N'] = '.'
 								info['H2M'] = hap2_dict_motif[reps]
-								info['H2N'] = hap2_dict_number[reps]
-								
+								info['H2N'] = hap2_dict_number[reps]								
 								form='0|1' 
-
 
 								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
 							
@@ -1871,8 +1776,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 									info['H1M'] = '.'
 									info['H1N'] = '.'
 									info['H2M'] = hap2_dict_motif[reps]
-									info['H2N'] = hap2_dict_number[reps]
-									
+									info['H2N'] = hap2_dict_number[reps]									
 									form='1|1' 
 
 									VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
@@ -1886,7 +1790,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2,
 									info['H1N'] = '.'
 									info['H2M'] = hap2_dict_motif[reps]
 									info['H2N'] = hap2_dict_number[reps]
-									
 									form='1|2' 
 							
 									VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
