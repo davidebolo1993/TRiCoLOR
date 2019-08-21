@@ -53,12 +53,15 @@ def run(parser, args):
 	notkey=['func']
 	command_string= ' '.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey)
 	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR_ApP.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+	
+	print('Initialized .log file ' + os.path.abspath(args.output + '/TRiCoLOR_ApP.log'))
+
 	logging.info('main=TRiCoLOR ' + command_string)
 
 	if which('samtools') is None:
 
 		logging.error('samtools cannot be executed. Install samtools and re-run TRiCoLOR ApP')
-		sys.exit(1)
+		exitonerror()
 
 	try:
 
@@ -68,7 +71,7 @@ def run(parser, args):
 	except:
 
 		logging.error('Reference file does not exist, is not readable or is not a valid FASTA')
-		sys.exit(1)
+		exitonerror()
 
 	bams=args.bamfile[0]
 
@@ -80,17 +83,17 @@ def run(parser, args):
 
 		try:
 
-			subprocess.check_call(['samtools','quickcheck', os.path.abspath(bam)],stderr=open(os.devnull, 'wb'))
+			subprocess.call(['samtools','quickcheck', os.path.abspath(bam)],stderr=open(os.devnull, 'wb'))
 
 		except:
 
 			logging.error('BAM ' + bam + ' does not exist, is not readable or is not a valid BAM')
-			sys.exit(1)
+			exitonerror()
 
 		if not os.path.exists(os.path.abspath(bam + '.bai')):
 
 			logging.error('Missing index for BAM ' + bam + '. Not a BAM generated with REFER')
-			sys.exit(1)
+			exitonerror()
 
 	logging.info('Haplotypes: ' + str(len(bams)))
 	b_in=Bed_Reader(args.bedfile)
@@ -123,6 +126,7 @@ def run(parser, args):
 					logging.exception('Unexpected error while analyzing region ' + chromosome + ':' + str(start) + '-' +str(end) + ". Log is below")
 
 	logging.info('Done')
+	print('Done')
 
 
 #CLASS
@@ -147,7 +151,7 @@ class Bed_Reader():
 					if len(line) < 4:
 
 						logging.error('BED to TRiCoLOR ApP -bed/--bedfile must contain at least: chromosome, start, end, label (other fields are ignored)')
-						sys.exit(1)
+						exitonerror()
 
 					else:
 
@@ -163,6 +167,12 @@ class Bed_Reader():
 
 
 #FUNCTIONS
+
+
+def exitonerror():
+
+	print('An error occured. Check the log file for more details')
+	sys.exit(1)
 
 
 def Get_Alignment_Positions(bamfile,chromosome,start,end):
@@ -299,7 +309,7 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 
 			else: 
 
-				logging.warning('Double input to -bam/--bamfile and single input to -hb/--haplotypebed: cannot say to which BAM BED refers. Skipped repetitions highlighting.')
+				logging.warning('Double input to -bam/--bamfile and single input to -hb/--haplotypebed: cannot say to which BAM BED refers. Skipped repetitions highlighting in haplotypes.')
 
 				hap1_table = None
 				hap2_table = None
