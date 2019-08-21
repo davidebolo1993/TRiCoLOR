@@ -25,7 +25,6 @@ import pysam
 import editdistance
 import pandas as pd
 
-
 # import submodules
 
 from .Helper import parser
