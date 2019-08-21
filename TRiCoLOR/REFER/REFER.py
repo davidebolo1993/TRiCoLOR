@@ -67,6 +67,9 @@ def run(parser, args):
 	notkey=['func']
 	command_string= ' '.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey)
 	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR_REFER.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')	
+
+	print('Initialized .log file ' + os.path.abspath(args.output + '/TRiCoLOR_REFER.log'))
+
 	logging.info('main=TRiCoLOR ' + command_string)
 	external_tools=['minimap2', 'samtools', 'bcftools'] #? ALSO ADD NGMLR. NOT PRIORITY. MINIMAP2 IS FASTER AND MORE ACCURATE
 
@@ -75,7 +78,7 @@ def run(parser, args):
 		if which(tools) is None:
 
 			logging.error(tools + ' cannot be executed. Install ' + tools + ' and re-run TRiCoLOR REFER')
-			sys.exit(1)
+			exitonerror()
 
 	try:
 
@@ -86,25 +89,25 @@ def run(parser, args):
 	except:
 
 		logging.error('Reference file does not exist, is not readable or is not a valid FASTA')
-		sys.exit(1)
+		exitonerror()
 
 	bams=args.bamfile[0]
 
 	if len(bams) > 2:
 
 		logging.error('TRiCoLOR supports haploid and diploid genomes only')
-		sys.exit(1)
+		exitonerror()
 
 	for bam in bams:
 
 		try:
 
-			subprocess.check_call(['samtools','quickcheck', os.path.abspath(bam)],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
+			subprocess.call(['samtools','quickcheck', os.path.abspath(bam)],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
 
 		except:
 
 			logging.error('BAM ' + bam + ' does not exist, is not readable or is not a valid BAM')
-			sys.exit(1)
+			exitonerror()
 
 		if not os.path.exists(os.path.abspath(bam + '.bai')):
 
@@ -112,12 +115,12 @@ def run(parser, args):
 
 			try:
 
-				subprocess.check_call(['samtools', 'index', os.path.abspath(bam)], stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
+				subprocess.call(['samtools', 'index', os.path.abspath(bam)], stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
 
 			except:
 
 				logging.error('BAM ' + bam + ' could not be indexed')
-				sys.exit(1)
+				exitonerror()
 
 	if not args.precisemotif:
 
@@ -134,7 +137,7 @@ def run(parser, args):
 		if args.motif == 0:
 
 			logging.error('Cannot search for repetitions with motif length 0')
-			sys.exit(1)
+			exitonerror()
 
 		else:
 
@@ -167,12 +170,13 @@ def run(parser, args):
 	logging.info('Allowed edit distance: ' + str(args.editdistance))
 	logging.info('Minimum repeated region size: ' + str(args.size))
 	logging.info('Haplotypes: ' + str(len(bams)))
+	logging.info('Coverage treshold: ' + str(args.coverage))
 	logging.info('Long reads type: ' + str(args.readstype))
 
 	if args.threads > multiprocessing.cpu_count():
 
 		cores=multiprocessing.cpu_count()
-		logging.warning(str(args.threads) + ' cores specified but only ' + str(cores) + ' available. Using all available cores.')
+		logging.warning(str(args.threads) + ' cores specified but only ' + str(cores) + ' available. Using all cores available')
 
 	else:
 
@@ -213,7 +217,7 @@ def run(parser, args):
 			if not os.access(gendir, os.W_OK):
 
 				logging.error('Missing write permissions on the reference genome folder. This is necessary to store chromosomes indexes for re-alignments')
-				sys.exit(1)
+				exitonerror()
 
 			logging.info('Creating .mmi index for ' + b_chrom)
 
@@ -228,7 +232,7 @@ def run(parser, args):
 				except:
 
 					logging.error('Unexpected error while creating index for current chromosome. Does your reference genome contain informations for this chromosome?')
-					sys.exit(1)
+					exitonerror()
 
 			if args.readstype == 'ONT':
 
@@ -326,6 +330,7 @@ def run(parser, args):
 		os.remove(bcf + '.csi')
 
 	logging.info('Done')
+	print('Done')
 
 
 ##CLASS
@@ -350,7 +355,7 @@ class Bed_Reader():
 					if len(line) < 3:
 
 						logging.error('BED to TRiCoLOR REFER -bed/--bedfile must contain at least: chromosome, start, end (other fields are ignored)')
-						sys.exit(1)
+						exitonerror()
 
 					else:
 
@@ -366,6 +371,12 @@ class Bed_Reader():
 
 
 ##FUNCTIONS
+
+
+def exitonerror():
+
+	print('An error occured. Check the log file for more details')
+	sys.exit(1)
 
 
 def Chunks(l,n):
@@ -531,4 +542,3 @@ def CleanResults(SHMpath,chromosome, out, bamfile1, bamfile2,cores):
 	if bamfile2 is not None:
 
 		subprocess.call(['bash', SHMpath, os.path.abspath(out + '/haplotype2'), bamfile2,chromosome,str(cores-1)],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
-
