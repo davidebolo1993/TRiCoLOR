@@ -50,6 +50,9 @@ def run(parser, args):
 	notkey=['func']
 	command_string= ' '.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey)
 	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR_SENSoR.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+	
+	print('Initialized .log file ' + os.path.abspath(args.output + '/TRiCoLOR_SENSoR.log'))
+
 	logging.info('main=TRiCoLOR ' + command_string)
 	external_tools=['samtools', 'bedops']
 
@@ -58,24 +61,25 @@ def run(parser, args):
 		if which(tools) is None:
 
 			logging.error(tools + ' cannot be executed. Install ' + tools + ' and re-run TRiCoLOR SENSoR')
-			sys.exit(1)
+			exitonerror()
 
 	bams=args.bamfile[0]
 
 	if len(bams) > 2:
 
 		logging.error('TRiCoLOR supports haploid and diploid genomes only')
+		exitonerror()
 
 	for bam in bams:
 
 		try:
 
-			subprocess.check_call(['samtools','quickcheck', os.path.abspath(bam)],stderr=open(os.devnull, 'wb'))
+			subprocess.call(['samtools','quickcheck', os.path.abspath(bam)],stderr=open(os.devnull, 'wb'))
 
 		except:
 
 			logging.error('BAM ' + bam + ' does not exist, is not readable or is not a valid BAM')
-			sys.exit(1)
+			exitonerror()
 
 		if not os.path.exists(os.path.abspath(bam + '.bai')):
 
@@ -83,12 +87,12 @@ def run(parser, args):
 
 			try:
 
-				subprocess.check_call(['samtools', 'index', os.path.abspath(args.bamfile1)], stderr=open(os.devnull, 'wb'))
+				subprocess.call(['samtools', 'index', os.path.abspath(args.bamfile1)], stderr=open(os.devnull, 'wb'))
 
 			except:
 
 				logging.error('BAM ' + bam + ' could not be indexed')
-				sys.exit(1)
+				exitonerror()
 
 	logging.info('Scansize: ' + str(args.scansize))
 	logging.info('Entropy treshold: ' + str(args.entropy))
@@ -116,7 +120,7 @@ def run(parser, args):
 		except:
 
 			logging.exception('Unexpected error while scanning. Log is below')
-			sys.exit(1)
+			exitonerror()
 
 		logging.info('Done')
 		logging.info('Writing final BED to output folder')
@@ -136,7 +140,7 @@ def run(parser, args):
 		except:
 
 			logging.exception('Unexpected error while scanning. Log is below')
-			sys.exit(1)
+			exitonerror()
 
 		logging.info('Done')
 		logging.info('Writing final BED to output folder ...')
@@ -159,47 +163,20 @@ def run(parser, args):
 		os.remove(os.path.abspath(args.output + '/H1.srt.bed'))
 		os.remove(os.path.abspath(args.output + '/H2.srt.bed'))
 
-	if args.exclude is None:
-
-		logging.info('No region to exclude')
-
-	else:
-
-		if not os.path.exists(os.path.abspath(args.exclude)):
-
-			logging.warning('BED to -x/--exclude does not exists. No region excluded')
-
-		else:
-
-			try:
-
-				with open(os.path.abspath(args.output + '/exclude.srt.bed'), 'w') as ebedout:
-
-					subprocess.check_call(['sort-bed', os.path.abspath(args.exclude)],stdout=ebedout, stderr=open(os.devnull, 'wb'))
-
-			except:
-
-				logging.warning('Incorrect format for BED to -x/--exclude. No region excluded')
-
-			if os.path.exists(os.path.abspath(args.output + '/exclude.srt.bed')):
-
-				with open(os.path.abspath(args.output + '/TRiCoLOR.srt.bed.tmp'), 'w') as excludeout:
-
-					subprocess.call(['bedops', '-d', os.path.abspath(args.output + '/TRiCoLOR.srt.bed'), os.path.abspath(args.output + '/exclude.srt.bed')],stdout=excludeout, stderr=open(os.devnull, 'wb'))
-
-				logging.info('Excluded regions from ' + os.path.abspath(args.exclude))
-				
-				os.remove(os.path.abspath(args.output + '/exclude.srt.bed'))
-				os.remove(os.path.abspath(args.output + '/TRiCoLOR.srt.bed'))
-				os.rename(os.path.abspath(args.output + '/TRiCoLOR.srt.bed.tmp'),os.path.abspath(args.output + '/TRiCoLOR.srt.bed'))
-
 	logging.info('Done')
+	print('Done')
 
 
 ##FUNCTIONS
 
 
-def runInParallel(function, *arguments): #? AS THIS DOES NOT TAKE TOO MUCH TIME EVEN TO SCAN ENTIRE GENOMES, SIMPLY RUN IN PARALLEL THE 2 HAPLOTYPES WHEN 2 HAPLOTYPES ARE PROVIDED. DO WE NEED THIS TO BE FASTER? NOT PRIORITY.
+def exitonerror():
+
+	print('An error occured. Check the log file for more details')
+	sys.exit(1)
+
+
+def runInParallel(function, *arguments): #? AS THIS DOES NOT TAKE TOO MUCH TIME EVEN TO SCAN ENTIRE GENOMES, SIMPLY RUN IN PARALLEL THE 2 HAPLOTYPES WHEN 2 HAPLOTYPES ARE PROVIDED. DO WE NEED THIS TO BE FASTER? NOT A PRIORITY.
 
 
 	proc = []
