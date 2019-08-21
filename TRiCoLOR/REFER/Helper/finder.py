@@ -99,6 +99,7 @@ def ReferenceFilter(reference_reps,wanted,size,start):
 
 def SolveNestedH(SortedIntervals, string, size):
 
+
     extended=[]
     
     i=0
@@ -111,17 +112,14 @@ def SolveNestedH(SortedIntervals, string, size):
             num=string[s_:e_+1].count(SortedIntervals[i][0])
             extended.append((SortedIntervals[i][0], s_, e_, num))
         
-
         else:
 
             if extended[-1][2] >= SortedIntervals[i][1] and extended[-1][2] < SortedIntervals[i][2]:
 
                 if abs(extended[-1][2]-SortedIntervals[i][1]) >= round((extended[-1][2]-extended[-1][1])/2):
 
-
                     c1=string[extended[-1][1]:extended[-1][2]+1].count(extended[-1][0])
                     c2=string[SortedIntervals[i][1]:SortedIntervals[i][2]+1].count(SortedIntervals[i][0])
-
                     new_s,new_e=min(extended[-1][1],SortedIntervals[i][1]), max(extended[-1][2],SortedIntervals[i][2])
                     st_=string[new_s:new_e+1]
                     m1=extended[-1][0]
@@ -141,14 +139,12 @@ def SolveNestedH(SortedIntervals, string, size):
                             extended.remove(extended[-1])
                             extended.append((m2,SortedIntervals[i][1],SortedIntervals[i][2], c2))
 
-
                     elif rank2 < rank1:
 
                         if count1 > c1:
 
                             extended.remove(extended[-1])
                             extended.append((m1,new_s, new_e, count1))
-
 
                     else: 
 
@@ -158,7 +154,6 @@ def SolveNestedH(SortedIntervals, string, size):
 
                                 extended.append((m2,new_s, new_e, count2))
 
-
                 else:
                     
                     new_s,new_e=extended[-1][2]+1,SortedIntervals[i][2]
@@ -167,7 +162,6 @@ def SolveNestedH(SortedIntervals, string, size):
                     if len(st_) >=size:
 
                         extended.append((SortedIntervals[i][0],new_s, new_e, st_.count(SortedIntervals[i][0])))
-
                         
             elif extended[-1][2] < SortedIntervals[i][1]:
 
