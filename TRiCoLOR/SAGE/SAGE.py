@@ -154,7 +154,6 @@ def run(parser, args):
 	logging.info('Parsing input BCF ...')
 
 	infos,header=GetInfo(os.path.abspath(args.bcffile))
-	infos=infos[:10]
 
 	logging.info('Done')
 
