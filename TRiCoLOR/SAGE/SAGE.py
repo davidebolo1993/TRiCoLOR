@@ -170,6 +170,7 @@ def run(parser, args):
 	for names,couples in zip(snames,args.bamfile):
 
 		logging.info('Genotyping ' + names + ' ...')
+		print('Genotyping ' + names + ' ...')
 
 		os.makedirs(os.path.abspath(args.output) + '/' + names + '/haplotype1')
 		os.makedirs(os.path.abspath(args.output) + '/' + names + '/haplotype2')
@@ -223,7 +224,7 @@ def run(parser, args):
 
 			vcfout.write(CHROM + '\t' + POS + '\t' + ID + '\t' + REF + '\t' + ALT + '\t' + QUAL + '\t' + FILTER + '\t' + 'END='+END + '\t' + FORMAT + '\t' + GENCHILD + ':' +  QUALCHILD+ '\t' + '\t'.join(x for x in toadd) + '\n')
 
-	subprocess.call(['bcftools', 'view', '-o', os.path.abspath(args.output + '/TRiCoLOR_SAGE.srt.bcf'), '-O', 'b', os.path.abspath(args.output + '/TRiCoLOR_SAGE.vcf')],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
+	subprocess.call(['bcftools', 'sort', '-o', os.path.abspath(args.output + '/TRiCoLOR_SAGE.srt.bcf'), '-O', 'b', os.path.abspath(args.output + '/TRiCoLOR_SAGE.vcf')],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
 	subprocess.call(['bcftools', 'index', os.path.abspath(args.output + '/TRiCoLOR_SAGE.srt.bcf')],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
 	os.remove(os.path.abspath(args.output + '/TRiCoLOR_SAGE.vcf'))
 
@@ -260,7 +261,7 @@ def GetInfo(bcfile):
 
 	for variant in it:
 
-		infos.append((variant.CHROM, variant.start, variant.end, variant.REF, variant.ALT, variant.genotypes[0]))
+		infos.append((variant.CHROM, variant.start+1, variant.end, variant.REF, variant.ALT, variant.genotypes[0]))
 
 	it.close()
 
@@ -372,7 +373,6 @@ def Bamfile_Analyzer(bamfilein,chromosome,start,end, coverage, out, processor):
 						fastaout.write('>' + header + '\n' + sequence[s_i:e_i+1] + '\n')
 	
 	bamfile.close()
-
 
 
 def Get_Alignment_Positions(bamfilein):
@@ -563,7 +563,9 @@ def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,covera
 
 				else:
 
-					quality=round(qual1+qual2,2)	
+					quality=round(qual1+qual2,2)
+
+		print(s, seq1, seq2, genotype,quality)
 
 		Entries.append((genotype, quality))
 
