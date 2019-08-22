@@ -155,9 +155,6 @@ def run(parser, args):
 
 	infos,header=GetInfo(os.path.abspath(args.bcffile))
 
-	infos=infos[:10]
-	print(infos)
-
 	logging.info('Done')
 
 	VCF_HeaderModifier(header,snames,os.path.abspath(args.output))
@@ -569,7 +566,6 @@ def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,covera
 					quality=round(qual1+qual2,2)
 
 		Entries.append((chromosome,start,end,ref,alt,gen, genotype, quality))
-		print(chromosome,start,end,ref,alt,gen, genotype, quality)
 
 	PROC_ENTRIES[processor]=Entries
 
