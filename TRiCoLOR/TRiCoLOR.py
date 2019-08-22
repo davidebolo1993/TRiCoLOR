@@ -105,8 +105,8 @@ def main():
 
 	tables = parser_app.add_argument_group('BED with repetitions to highlight')
 
-	tables.add_argument('-gb', '--genomebed', metavar='', default=None, help='BED for repetitions in reference [None]')
-	tables.add_argument('-hb', '--haplotypebed', metavar='', default=None, help='one or more ordered BED for repetitions in BAM to -bam/--bamfile [None]',nargs='+', action='append')
+	tables.add_argument('-gb', '--genomebed', metavar='', default=None, help='BED generated with REFER with repetitions in reference[None]')
+	tables.add_argument('-hb', '--haplotypebed', metavar='', default=None, help='one or more ordered BED generated with REFER with repetitions in BAM to -bam/--bamfile [None]',nargs='+', action='append')
 	
 	parser_app.set_defaults(func=run_subtool)
 
