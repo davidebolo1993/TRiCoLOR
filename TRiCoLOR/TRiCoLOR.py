@@ -86,7 +86,7 @@ def main():
 
 	additionals = parser_sage.add_argument_group('Additional parameters')
 
-	additionals.add_argument('--samplename', help='sample name in BCF header [sample]', metavar='',default='sample')
+	additionals.add_argument('--samplename', help='one name for each couple of BAM specified in -bam/--bamfile', metavar='',default=None, nargs='+', action='append')
 	additionals.add_argument('--readstype', help='long reads technology (ONT, PB) [ONT]', metavar='', default='ONT', choices=['ONT', 'PB'])
 	additionals.add_argument('--threads', help='number of cores [1]',metavar='', default=1, type=int)
 
