@@ -155,6 +155,9 @@ def run(parser, args):
 
 	infos,header=GetInfo(os.path.abspath(args.bcffile))
 
+	infos=infos[:10]
+	print(infos)
+
 	logging.info('Done')
 
 	VCF_HeaderModifier(header,snames,os.path.abspath(args.output))
@@ -207,20 +210,20 @@ def run(parser, args):
 	FILTER='.'
 	QUAL='.'
 	ID='.'
-	FORMAT='GT:GQ'
+	FORMAT='GT:GD'
 	QUALCHILD=str(1.0)
 
 	with open(os.path.abspath(args.output + '/TRiCoLOR_SAGE.vcf'), 'a') as vcfout:
 
-		for i,el in enumerate(infos):
+		for i in range(len(infos)):
 
-			CHROM,POS,END,REF,ALT,GENCHILD=el[0], str(el[1]), str(el[2]), el[3], ','.join(x for x in el[4]), '|'.join(str(x) for x in el[5][:-1]).replace('-1', '.')
+			CHROM,POS,END,REF,ALT,GENCHILD=Namesdict[snames[0]][i][0], str(Namesdict[snames[0]][i][1]), str(Namesdict[snames[0]][i][2]), Namesdict[snames[0]][i][3], ','.join(x for x in Namesdict[snames[0]][i][4]), '|'.join(str(x) for x in Namesdict[snames[0]][i][5][:-1]).replace('-1', '.')
 
 			toadd=[]
 
 			for names in snames:
 
-				toadd.append(Namesdict[names][i][0] + ':' + str(Namesdict[names][i][1]))
+				toadd.append(Namesdict[names][i][6] + ':' + str(Namesdict[names][i][7]))
 
 			vcfout.write(CHROM + '\t' + POS + '\t' + ID + '\t' + REF + '\t' + ALT + '\t' + QUAL + '\t' + FILTER + '\t' + 'END='+END + '\t' + FORMAT + '\t' + GENCHILD + ':' +  QUALCHILD+ '\t' + '\t'.join(x for x in toadd) + '\n')
 
@@ -273,7 +276,7 @@ def VCF_HeaderModifier(rawheader, samples, output):
 
 	headlist=rawheader.split('\n')[:-1]
 	newheader=''
-	toadd='##FORMAT=<ID=GQ,Number=1,Type=Float,Description="Genotype Quality">' + '\n'
+	toadd='##FORMAT=<ID=GD,Number=1,Type=Float,Description="Genotype Distance ranges from 0.0 to 1.0">' + '\n'
 
 	for el in headlist:
 
@@ -565,9 +568,8 @@ def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,covera
 
 					quality=round(qual1+qual2,2)
 
-		print(s, seq1, seq2, genotype,quality)
-
-		Entries.append((genotype, quality))
+		Entries.append((chromosome,start,end,ref,alt,gen, genotype, quality))
+		print(chromosome,start,end,ref,alt,gen, genotype, quality)
 
 	PROC_ENTRIES[processor]=Entries
 
