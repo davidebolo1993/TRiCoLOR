@@ -194,11 +194,13 @@ def run(parser, args):
 	for b_chrom in b_chroms:
 
 		logging.info('Parsing input BED for chromosome ' + b_chrom + ' ...')
+		print('Parsing input BED for chromosome ' + b_chrom + ' ...')
 
 		b_in2=Bed_Reader(os.path.abspath(args.bedfile), chromosome=b_chrom)
 		p_reg=list(iter(b_in2))
 	
 		logging.info('Finding repetitions on chromosome ' + b_chrom + ' ...')
+		print('Finding repetitions on chromosome ' + b_chrom + ' ...')
 
 		chrom=ref[b_chrom]
 		refseq=chrom[:len(chrom)].seq
@@ -298,6 +300,7 @@ def run(parser, args):
 		CleanResults(SHMpath, b_chrom, os.path.abspath(args.output), os.path.abspath(bams[0]), os.path.abspath(bams[1]), cores)
 
 		logging.info('Processed chromosome ' + b_chrom)
+		print('Processed chromosome ' + b_chrom)
 
 	bcfs=[]
 
