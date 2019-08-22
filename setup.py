@@ -3,7 +3,7 @@ from setuptools import setup,find_packages
 
 
 setup(name='TRiCoLOR',      
-  version=1.0,
+  version='1.0.0',
   description='Tandem Repeats Caller for LOng Reads',
   url='https://github.com/davidebolo1993/TRiCoLOR',
   requires=['python (>= 3.6)'],
