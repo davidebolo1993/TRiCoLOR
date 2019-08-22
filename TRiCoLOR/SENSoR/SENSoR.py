@@ -44,7 +44,6 @@ def run(parser, args):
 			print('The output folder is not empty. Specify another output folder or clean the previsouly chosen')
 			sys.exit(1)
 			
-
 	command_dict= vars(args)
 	
 	notkey=['func']
@@ -110,6 +109,7 @@ def run(parser, args):
 		logging.info('Chromosomes: ' + '-'.join(x for x in args.chromosomes[0]))
 
 	logging.info('Scanning ...')
+	print('Scanning ...')
 
 	if len(bams) == 1:
 
