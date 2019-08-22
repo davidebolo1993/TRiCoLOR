@@ -101,6 +101,7 @@ def run(parser, args):
 	labels_set=set()
 
 	logging.info('Generating plots ...')
+	print('Generating plots ...')
 
 	for chromosome in b_chrom:
 
