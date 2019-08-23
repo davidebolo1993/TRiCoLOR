@@ -9,7 +9,6 @@ import logging
 import multiprocessing
 from shutil import which,rmtree
 from bisect import bisect_left,bisect_right
-from collections import OrderedDict
 
 # additional modules
 
@@ -594,8 +593,6 @@ def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,covera
 					quality=round(float(qual1+qual2),2)
 
 		Entries.append((chromosome,start,end,ref,alt,gen, genotype, quality))
-
-		print(ref, alt, seq1, seq2, genotype, quality)
 
 
 	PROC_ENTRIES[processor]=Entries
