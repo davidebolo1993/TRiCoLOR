@@ -3,11 +3,13 @@
 import sys
 import os
 import math
+import re
 import subprocess
 import logging
 import multiprocessing
-from shutil import which
+from shutil import which,rmtree
 from bisect import bisect_left,bisect_right
+from collections import OrderedDict
 
 # additional modules
 
@@ -192,12 +194,15 @@ def run(parser, args):
 
 		Namesdict[names] = []
 
-		for key in PROC_ENTRIES.keys():
+
+		for key in sorted(PROC_ENTRIES.keys(), key=natural_keys):
 
 			Namesdict[names].extend(PROC_ENTRIES[key])
+			print(key)
+			print(PROC_ENTRIES[key])
 
-		os.rmdir(os.path.abspath(args.output) + '/' + names + '/haplotype1')
-		os.rmdir(os.path.abspath(args.output) + '/' + names + '/haplotype2')
+		rmtree(os.path.abspath(args.output) + '/' + names + '/haplotype1')
+		rmtree(os.path.abspath(args.output) + '/' + names + '/haplotype2')
 		os.rmdir(os.path.abspath(args.output) + '/' + names)
 
 		logging.info('Done')
@@ -207,7 +212,7 @@ def run(parser, args):
 	FILTER='.'
 	QUAL='.'
 	ID='.'
-	FORMAT='GT:GD'
+	FORMAT='GT:GS'
 	QUALCHILD=str(1.0)
 
 	with open(os.path.abspath(args.output + '/TRiCoLOR_SAGE.vcf'), 'a') as vcfout:
@@ -244,6 +249,16 @@ def exitonerror():
 	sys.exit(1)
 
 
+def atoi(text):
+
+    return int(text) if text.isdigit() else text
+
+
+def natural_keys(text):
+    
+    return [ atoi(c) for c in re.split(r'(\d+)', text)]
+
+
 def Chunks(l,n):
 
 
@@ -254,14 +269,18 @@ def GetInfo(bcfile):
 
 
 	infos=[]
-
 	it=VCF(bcfile)
-
 	header=it.raw_header
 
 	for variant in it:
 
-		infos.append((variant.CHROM, variant.start+1, variant.end, variant.REF, variant.ALT, variant.genotypes[0]))
+		if variant.ALT == []:
+
+			continue
+
+		else:
+
+			infos.append((variant.CHROM, variant.start+1, variant.end, variant.REF, variant.ALT, variant.genotypes[0]))
 
 	it.close()
 
@@ -273,7 +292,7 @@ def VCF_HeaderModifier(rawheader, samples, output):
 
 	headlist=rawheader.split('\n')[:-1]
 	newheader=''
-	toadd='##FORMAT=<ID=GD,Number=1,Type=Float,Description="Genotype Distance ranges from 0.0 to 1.0">' + '\n'
+	toadd='##FORMAT=<ID=GS,Number=1,Type=Float,Description="Genotype Similarity (ranges from 0.0 to 1.0)">' + '\n'
 
 	for el in headlist:
 
@@ -345,8 +364,8 @@ def check_coverage(pysam_AlignmentFile, chromosome, start, end, coverage):
 def Bamfile_Analyzer(bamfilein,chromosome,start,end, coverage, out, processor):
 
 
-	start=start-250
-	end=end+250
+	start=start-350
+	end=end+350
 
 	bamfile=pysam.AlignmentFile(bamfilein,'rb')	
 
@@ -397,7 +416,6 @@ def Get_Alignment_Positions(bamfilein):
 
 def GetGenotypeAndScore(test,ref,alt):
 
-
 	refedit=editdistance.eval(ref,test)
 	invertedRscore = (1.0-(refedit/len(test)))/2
 
@@ -411,17 +429,17 @@ def GetGenotypeAndScore(test,ref,alt):
 
 	ind = alts.index(max(alts))
 
-	if alts[ind] > invertedRscore:
+	if alts[ind] >= invertedRscore:
 
-		return str(ind +1),round(alts[ind],2)
+		return str(ind +1),round(float(alts[ind]),2)
 
 	elif alts[ind] < invertedRscore:
 
-		return '0', round(invertedRscore,2)
+		return '0', round(float(invertedRscore),2)
 
-	else:
+	#else:
 
-		return '.', '.'
+		#return '.', round(float(0))
 
 
 def modifier(coordinates):
@@ -478,12 +496,17 @@ def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,covera
 			subprocess.call(['bash', SHCpath, out1, Cpath, consvar, processor, os.path.basename(file1), mmivar, chromind],stdout=open(os.devnull, 'wb'),stderr=open(os.devnull, 'wb'))
 			c_bam1=os.path.abspath(out1 + '/' + processor + '.cs.srt.bam')
 			coords,seq=Get_Alignment_Positions(c_bam1)
-			coords1=modifier(coords)
-			si=bisect_left(coords1, start)
-			ei=bisect_right(coords1, end)
-			seq1=seq[si:ei]
-			os.remove(c_bam1)
-			os.remove(c_bam1 + '.bai')
+
+			if seq == []:
+
+				seq1 = ''
+
+			else:
+
+				coords1=modifier(coords)
+				si=bisect_left(coords1, start)
+				ei=bisect_right(coords1, end)
+				seq1=seq[si:ei]
 
 		else:
 
@@ -494,12 +517,17 @@ def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,covera
 			subprocess.call(['bash', SHCpath, out2, Cpath, consvar, processor, os.path.basename(file2), mmivar, chromind],stdout=open(os.devnull, 'wb'),stderr=open(os.devnull, 'wb'))
 			c_bam2=os.path.abspath(out2 + '/' + processor + '.cs.srt.bam')
 			coords,seq=Get_Alignment_Positions(c_bam2)
-			coords2=modifier(coords)
-			si=bisect_left(coords2, start)
-			ei=bisect_right(coords2, end)
-			seq2=seq[si:ei]
-			os.remove(c_bam2)
-			os.remove(c_bam2 + '.bai')
+
+			if seq == []:
+
+				seq2 = ''
+
+			else:
+
+				coords2=modifier(coords)
+				si=bisect_left(coords2, start)
+				ei=bisect_right(coords2, end)
+				seq2=seq[si:ei]
 
 		else:
 
@@ -508,7 +536,7 @@ def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,covera
 		if seq1 == '' and seq2 == '':
 
 			genotype='.|.'
-			quality='.'
+			quality= float(0)
 
 		elif seq1 != '' and seq2 == '':
 
@@ -518,11 +546,11 @@ def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,covera
 
 			if qual1 == '.':
 
-				quality='.'
+				quality=float(0)
 
 			else:
 
-				quality=round(qual1,2)
+				quality=qual1
 
 		elif seq1 == '' and seq2 != '':
 
@@ -532,11 +560,11 @@ def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,covera
 
 			if qual2 == '.':
 
-				quality='.'
+				quality=float(0)
 
 			else:
 
-				quality=round(qual2,2)
+				quality=qual2
 
 		else:
 
@@ -549,23 +577,26 @@ def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,covera
 
 				if qual2 == '.':
 
-					quality = '.'
+					quality = float(0)
 
 				else:
 
-					quality=round(qual2,2)
+					quality=qual2
 
 			else:
 
 				if qual2 == '.':
 
-					quality=round(qual1,2)
+					quality=qual1
 
 				else:
 
-					quality=round(qual1+qual2,2)
+					quality=round(float(qual1+qual2),2)
 
 		Entries.append((chromosome,start,end,ref,alt,gen, genotype, quality))
+
+		print(ref, alt, seq1, seq2, genotype, quality)
+
 
 	PROC_ENTRIES[processor]=Entries
 
