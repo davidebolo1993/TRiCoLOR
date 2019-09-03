@@ -51,7 +51,7 @@ def main():
 	algorithm.add_argument('-m','--motif', type=int, help='minimum size of the repetition motif [1]',metavar='',default=1)
 	algorithm.add_argument('-mm','--maxmotif', type=int, help='exclude motifs which size is greater than value [6]',metavar='', default=6)
 	algorithm.add_argument('-t','--times', type=int, help='minimum number of consecutive times the motif must be repeated to be detected [3]',metavar='',default=3)
-	algorithm.add_argument('-s','--size', type=int, help='minimum size the repeated region must have to be called [20]',metavar='',default=20)
+	algorithm.add_argument('-s','--size', type=int, help='minimum size the repeated region must have to be called [30]',metavar='',default=30)
 	algorithm.add_argument('-e','--editdistance', type=int, help='allowed number of insertions, deletions or substitutions in repetitions [1]',metavar='',default=1)
 	algorithm.add_argument('--overlapping', help='look for overlapping repeated motif', action='store_true')
 	algorithm.add_argument('--precisemotif', help='coherce -m/--motif to find only repetitions with specified motif size', action='store_true')
