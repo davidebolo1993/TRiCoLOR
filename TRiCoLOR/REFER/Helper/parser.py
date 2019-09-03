@@ -37,11 +37,11 @@ def check_coverage(pysam_AlignmentFile, chromosome, start, end, coverage):
 
 	if counter >= coverage:
 
-		return True
+		return True,counter
 
 	else:
 
-		return False
+		return False,counter
 
 
 #def split_equal(value, parts):
@@ -77,7 +77,9 @@ def Bamfile_Analyzer(bamfilein,chromosome,start,end, coverage, out, processor):
 
 	#while not final:
 
-	if check_coverage(bamfile, chromosome, start, end, coverage):
+	progress,cov=check_coverage(bamfile, chromosome, start, end, coverage)
+
+	if progress:
 
 		for read in bamfile.fetch(chromosome,start,end):
 
@@ -111,4 +113,5 @@ def Bamfile_Analyzer(bamfilein,chromosome,start,end, coverage, out, processor):
 			#final=True
 	
 	bamfile.close()
+	return cov
 
