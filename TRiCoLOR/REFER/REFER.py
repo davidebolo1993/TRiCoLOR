@@ -183,7 +183,7 @@ def run(parser, args):
 
 	logging.info('Cores: ' + str(cores))
 
-	Cpath=os.path.abspath(os.path.dirname(__file__) + '/alfred/bin/alfred') #? FASTER AND STAND-ALONE CONSENSUS. PRIMARY TASK
+	Cpath=os.path.abspath(os.path.dirname(__file__) + '/consensus') #? FAST ENOUGH
 	SHCpath=os.path.abspath(os.path.dirname(__file__) + '/consensus.sh')
 	SHMpath=os.path.abspath(os.path.dirname(__file__) + '/merging.sh')	
 	ref=pyfaidx.Fasta(os.path.abspath(args.genome))
@@ -501,14 +501,14 @@ def HaploReps(SHCpath,Cpath, bamfile,s, coverage, regex, maxmotif, size, allowed
 		if readtype == 'ONT':
 
 			mmivar='map-ont'
-			consvar='ont'
+			consvar='' #CHECK IF USING DIFFERENT SCORES FOR THE 2 TECHNOLOGIES MAKES SENSE OR NOT
 
 		else:
 
 			mmivar='map-pb'
-			consvar='pacbio'
+			consvar='' #CHECK IF USING DIFFERENT SCORES FOR THE 2 TECHNOLOGIES MAKES SENSE OR NOT
 
-		subprocess.call(['bash', SHCpath, out, Cpath, consvar, processor, os.path.basename(file), mmivar, chromind],stdout=open(os.devnull, 'wb'),stderr=open(os.devnull, 'wb'))
+		subprocess.call(['bash', SHCpath, out, Cpath, processor, os.path.basename(file), mmivar, chromind],stdout=open(os.devnull, 'wb'),stderr=open(os.devnull, 'wb'))
 		c_bam=os.path.abspath(out + '/' + processor + '.cs.srt.bam')
 		coords,seq=finder.Get_Alignment_Positions(c_bam)
 
