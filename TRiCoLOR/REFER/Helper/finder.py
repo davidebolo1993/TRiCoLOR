@@ -372,14 +372,16 @@ def Markovchain(motif,string):
     return motif_probability, model[motif][motif]+1
 
 
-def check_ref(string1, string2): 
+#def check_ref(string1, string2): 
 
 
-    return string1 != string2
+    #return string1 != string2
 
 
 def corrector(reference, string, repetitions, coordinates, size, allowed):
 
+
+    #print(string, repetitions, coordinates, size, allowed)
 
     corr_=[]
     coords=modifier(coordinates)
@@ -401,7 +403,7 @@ def corrector(reference, string, repetitions, coordinates, size, allowed):
 
                 if len(reps) > 1:
 
-                    if check_edit(reps,string[self_[i][1]+len(reps):self_[i+1][1]], allowed) and check_ref(reference[self__[i][1]-1:self__[i+1][1]],string[self_[i][1]: self_[i+1][1]+1]):
+                    if check_edit(reps,string[self_[i][1]+len(reps):self_[i+1][1]], allowed):
 
                         ranges.append((self_[i][1],self_[i+1][1]))
 
@@ -429,12 +431,8 @@ def corrector(reference, string, repetitions, coordinates, size, allowed):
 
             continue
 
-    if corr_ == []:
-
-        return corr_
-
     s_corr_=sorted(corr_, key=itemgetter(1,2))
 
     mod_int=SolveNestedH(s_corr_, string,size)
 
-    return Get_Alignment_Coordinates(coords,mod_int)
+    return Get_Alignment_Coordinates(coords,mod_int), string, coords
