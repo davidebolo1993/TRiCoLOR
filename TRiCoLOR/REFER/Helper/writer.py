@@ -5,17 +5,15 @@
 
 import datetime
 import os
-import subprocess
 import pandas as pd
 from bisect import bisect_left, bisect_right
-from collections import defaultdict
 from operator import itemgetter
 
 
 #additional libraries
 
 import pysam
-
+import editdistance
 
 ## FUNCTIONS
 
@@ -71,12 +69,17 @@ def VCF_headerwriter(bamfile1, bamfile2, samplename, commandline, out, processor
 
 	vcf_format='##fileformat=VCFv4.2'
 
-	END='##INFO=<ID=END,Number=1,Type=Integer,Description="Repetition end">'
+	SVEND='##INFO=<ID=SVEND,Number=1,Type=Integer,Description="Repetition end">'
+	RAED = '##INFO=<ID=RAED,Number=1,Type=Integer,Description="Edit distance between REF and most similar ALT allele">'
+	AED = '##INFO=<ID=AED,Number=1,Type=Integer,Description="Edit distance between ALT alleles">'
 	H1M='##INFO=<ID=H1M,Number=.,Type=String,Description="Haplotype1 Repeated Motif">'
-	H1N='##INFO=<ID=H1N,Number=.,Type=String,Description="Haplotype1 Repetitions Number">'
+	H1N='##INFO=<ID=H1N,Number=.,Type=Integer,Description="Haplotype1 Repetitions Number">'
 	H2M='##INFO=<ID=H2M,Number=.,Type=String,Description="Haplotype2 Repeated Motif">'
-	H2N='##INFO=<ID=H2N,Number=.,Type=String,Description="Haplotype2 Repetitions Number">'
-	FORMAT='##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">'
+	H2N='##INFO=<ID=H2N,Number=.,Type=Integer,Description="Haplotype2 Repetitions Number">'
+	FORMAT1='##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">'
+	FORMAT2 = '##FORMAT=<ID=DP1,Number=1,Type=Integer,Description="Coverage depth for 1st haplotype">'
+	FORMAT3 = '##FORMAT=<ID=DP2,Number=1,Type=Integer,Description="Coverage depth for 2nd haplotype">'
+
 	classic_header='#CHROM' + '\t' + 'POS' '\t' + 'ID' + '\t' + 'REF' + '\t' + 'ALT' + '\t' + 'QUAL' + '\t' + 'FILTER' + '\t' + 'INFO' + '\t' + 'FORMAT' + '\t' + samplename.upper()
 
 	with open(os.path.abspath(out + '/' + processor + '.TRiCoLOR.vcf'), 'w') as vcfout:
@@ -87,143 +90,93 @@ def VCF_headerwriter(bamfile1, bamfile2, samplename, commandline, out, processor
 
 			vcfout.write('##contig=<ID='+str(a)+',length='+str(b)+'>'+'\n')
 
-		vcfout.write(END + '\n' + H1M + '\n' + H1N + '\n' + H2M + '\n' + H2N + '\n')
-		vcfout.write(FORMAT + '\n')
+		vcfout.write(SVEND + '\n' + RAED + '\n' + AED + '\n' + H1M + '\n' + H1N + '\n' + H2M + '\n' + H2N + '\n')
+		vcfout.write(FORMAT1 + '\n' + FORMAT2 + '\n' + FORMAT3 + '\n')
 		vcfout.write('##SAMPLE=<ID=' + samplename +'>' + '\n' + classic_header + '\n')
 
 
-def VCF_variantwriter(chrom, pos, ref, alt, info, form, out, processor):
+def VCF_variantwriter(CHROM, POS, REF, ALT, INFO, FORMAT, out, processor):
 
 
 	ID='.'
 	FILTER='.'
 	QUAL='.'
-	GEN='GT'
-	CHROM=chrom
-	POS=str(pos)
-	REF=ref
-	ALT=alt
-	INFO_END=str(info['END'])
-
-	INFO_H1M=info['H1M']
+	GEN='GT:DP1:DP2'
+	
+	INFO_SVEND=str(INFO['SVEND'])
+	INFO_RAED = str(INFO['RAED'])
+	INFO_AED = str(INFO['AED'])
+	INFO_H1M=INFO['H1M']
 
 	if type(INFO_H1M) == list:
 
 		INFO_H1M = ','.join(str(x) for x in INFO_H1M) 
 
-	INFO_H1N=info['H1N']
+	INFO_H1N=INFO['H1N']
 
 	if type(INFO_H1N) == list:
 
 		INFO_H1N = ','.join(str(x) for x in INFO_H1N) 
 
-	INFO_H2M=info['H2M']
+	INFO_H2M=INFO['H2M']
 
 	if type(INFO_H2M) == list:
 
 		INFO_H2M = ','.join(str(x) for x in INFO_H2M) 
 
-	INFO_H2N=info['H2N']
+	INFO_H2N=INFO['H2N']
 
 	if type(INFO_H2N) == list:
 
 		INFO_H2N = ','.join(str(x) for x in INFO_H2N) 
 
-	FORMAT=form
-
+	FORMAT_GT=FORMAT['GT']
+	FORMAT_DP1 = str(FORMAT['DP1'])
+	FORMAT_DP2 = str(FORMAT['DP2'])
 
 	with open(os.path.abspath(out + '/' + processor + '.TRiCoLOR.vcf'), 'a') as vcfout:
 
-		vcfout.write(CHROM + '\t' + POS + '\t' + ID + '\t' + REF + '\t' + ALT + '\t' + QUAL + '\t' + FILTER + '\t' + 'END='+INFO_END + ';'+ 'H1M='+INFO_H1M + ';' + 'H1N='+INFO_H1N + ';' + 'H2M='+INFO_H2M + ';' + 'H2N='+INFO_H2N + '\t' + GEN + '\t' + FORMAT + '\n')
+		vcfout.write(CHROM + '\t' + str(POS) + '\t' + ID + '\t' + REF + '\t' + ALT + '\t' + QUAL + '\t' + FILTER + '\t' + 'SVEND='+INFO_SVEND + ';'+ 'RAED='+ INFO_RAED + ';' + 'AED=' + INFO_AED  + ';' + 'H1M='+INFO_H1M + ';' + 'H1N='+INFO_H1N + ';' + 'H2M='+INFO_H2M + ';' + 'H2N='+INFO_H2N + '\t' + GEN + '\t' + FORMAT_GT + ':' + FORMAT_DP1 + ':' + FORMAT_DP2 + '\n')
 
 
-def modifier(coordinates):
 
-	
-	coordinates=[el+1 if el is not None else el for el in coordinates]
-	start=next(ele for ele in coordinates if ele is not None)
+def modifier2(seq,coords,POS,SVEND):
 
-	for ind, ele in enumerate(coordinates):
-		
-		if ele is None:
-
-			coordinates[ind] = start
-		
-		else:
-
-			start = ele
-
-	return coordinates
-
-
-def Modifier(list_of_coord,seq,reps):
-
-
-	coords_without_insertions=modifier(list_of_coord)	
 	NewSeq=''
 	coords_purified=[]
 
-	for i in range(len(coords_without_insertions)-1):
+	for i in range(len(coords)-1):
 
-		if coords_without_insertions[i+1]-coords_without_insertions[i] > 1:
+		if coords[i+1]-coords[i] > 1:
 
-			coords_purified.append(coords_without_insertions[i])
-			coords_purified.extend(list(range(coords_without_insertions[i]+1,coords_without_insertions[i+1])))
+			coords_purified.append(coords[i])
+			coords_purified.extend(list(range(coords[i]+1,coords[i+1])))
 			NewSeq+=seq[i]
-			NewSeq+="-"*(coords_without_insertions[i+1]-coords_without_insertions[i]-1)
+			NewSeq+="-"*(coords[i+1]-coords[i]-1)
 
 		else:
 
-			coords_purified.append(coords_without_insertions[i])
+			coords_purified.append(coords[i])
 			NewSeq+=seq[i]
 
-	coords_purified.append(coords_without_insertions[-1])
+	coords_purified.append(coords[-1])
 	NewSeq+=seq[-1]
 
-	if not reps[0] >= coords_purified[0]:
+	if not POS >= coords_purified[0]:
 
-		number=reps[0]
-		how_many=coords_purified[0]-reps[0]
+		number=POS
+		how_many=coords_purified[0]-POS
 		coords_purified = [number]*how_many + coords_purified
 		NewSeq= '-'* how_many + NewSeq
 
+	if not SVEND <= coords_purified[-1]:
 
-	if not reps[1] <= coords_purified[-1]:
-
-		number=reps[1]
-		how_many=reps[1] - coords_purified[-1]
+		number=SVEND
+		how_many=SVEND - coords_purified[-1]
 		coords_purified = coords_purified + [number]*how_many 
 		NewSeq= NewSeq + '-'* how_many
 
-	return coords_purified,NewSeq
-
-
-def Get_Seq_Pos(bamfilein,chromosome, start,end):
-	
-
-	seq=[]
-	coords=[]
-	
-	if os.stat(os.path.abspath(bamfilein)).st_size == 0:
-
-		return seq,coords
-
-	else:
-
-		if start==end:
-
-			end=start+1
-
-		bamfile=pysam.AlignmentFile(bamfilein,'rb')
-
-		for read in bamfile.fetch(chromosome, start-1, end-1):
-
-			if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
-
-				coords = read.get_reference_positions(full_length=True)
-				seq=read.seq
-
-	return seq,coords
+	return NewSeq,coords_purified
 
 
 def GetIndex(start, end, coordinates):
@@ -379,1417 +332,193 @@ def Merger(sorted_int, refreps, h1reps, h2reps):
 	return sorted_ranges,ref_dict_number,ref_dict_motif,hap1_dict_number,hap1_dict_motif,hap2_dict_number,hap2_dict_motif
 
 
-def VCF_writer(chromosome, repref, reference_sequence, repsh1, bamfile1, repsh2, bamfile2, out, processor):
+def VCF_writer(chromosome, repref, reference_sequence, repsh1, seqh1, coordsh1, covh1, repsh2, seqh2, coordsh2, covh2, out, processor):
 
 
 	intersection=list(set(repref+ repsh1 + repsh2))
 
-	if len(intersection) == 0:
-
-		return
-
-	else:
+	if len(intersection) != 0:
 
 		sorted_intersection=sorted(intersection, key=itemgetter(1,2))
 		sorted_ranges,ref_dict_number,ref_dict_motif,hap1_dict_number,hap1_dict_motif,hap2_dict_number,hap2_dict_motif=Merger(sorted_intersection, repref, repsh1, repsh2)
 
+		print(sorted_ranges,ref_dict_number,ref_dict_motif,hap1_dict_number,hap1_dict_motif,hap2_dict_number,hap2_dict_motif)
+
 		for reps in sorted_ranges:
 
-			if reps in ref_dict_number.keys() and reps in hap1_dict_number.keys() and reps in hap2_dict_number.keys():
-
-				if ref_dict_number[reps] == hap1_dict_number[reps] and ref_dict_number[reps] == hap2_dict_number[reps]: 
-
-					if  ref_dict_motif[reps] == hap1_dict_motif[reps] and ref_dict_motif[reps] == hap2_dict_motif[reps]: 
-
-						continue 
-
-					elif ref_dict_motif[reps] == hap1_dict_motif[reps] and ref_dict_motif[reps] != hap2_dict_motif[reps]: 
-
-						pos=reps[0]
-						ref=reference_sequence[(reps[0]-1):reps[1]]
-						seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps)
-						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-						alt2=seq_h2[si_2:ei_2].replace('-','')
-
-						if ref == alt2:
-
-							continue
-
-						else:
-
-							info=dict()
-			
-							info['END'] = reps[1]
-							info['H1M'] = hap1_dict_motif[reps]
-							info['H1N'] = hap1_dict_number[reps]
-							info['H2M'] = hap2_dict_motif[reps]
-							info['H2N'] = hap2_dict_number[reps]			
-							form='0|1' 
-
-							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
-
-					elif ref_dict_motif[reps] != hap1_dict_motif[reps] and ref_dict_motif[reps] == hap2_dict_motif[reps]: 
-
-						pos=reps[0]
-						ref=reference_sequence[(reps[0]-1):reps[1]]
-						seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1])
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps)
-						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
-						alt1=seq_h1[si_1:ei_1].replace('-','')
-
-						if ref == alt1:
-
-							continue
-
-						else:
-
-							info=dict()
-			
-							info['END'] = reps[1]
-							info['H1M'] = hap1_dict_motif[reps]
-							info['H1N'] = hap1_dict_number[reps]
-							info['H2M'] = hap2_dict_motif[reps]
-							info['H2N'] = hap2_dict_number[reps]			
-							form='1|0' 
-
-							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
-					elif ref_dict_motif[reps] != hap1_dict_motif[reps] and ref_dict_motif[reps] != hap2_dict_motif[reps]: 
-
-						pos=reps[0]
-						ref=reference_sequence[(reps[0]-1):reps[1]]
-						seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
-						seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) 
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps)
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps)
-						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
-						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-						alt1=seq_h1[si_1:ei_1].replace('-','')
-						alt2=seq_h2[si_2:ei_2].replace('-','')
-
-						if ref == alt1 and ref == alt2:
-
-							continue
-
-						elif ref == alt1 and ref != alt2:
-
-							info=dict()
-			
-							info['END'] = reps[1]
-							info['H1M'] = ref_dict_motif[reps] 
-							info['H1N'] = ref_dict_number[reps] 
-							info['H2M'] = hap2_dict_motif[reps]
-							info['H2N'] = hap2_dict_number[reps]			
-							form='0|1' 
-
-							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
-
-						elif ref != alt1 and ref == alt2:
-
-							info=dict()			
-
-							info['END'] = reps[1]
-							info['H1M'] = hap1_dict_motif[reps]
-							info['H1N'] = hap1_dict_number[reps]
-							info['H2M'] = ref_dict_motif[reps] 
-							info['H2N'] = ref_dict_number[reps] 
-							form='1|0' 
-
-							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
-						elif ref != alt1 and ref != alt2:
-
-							if alt1 != alt2 :
-
-								info=dict()
-			
-								info['END'] = reps[1]
-								info['H1M'] = hap1_dict_motif[reps]
-								info['H1N'] = hap1_dict_number[reps]
-								info['H2M'] = hap2_dict_motif[reps]
-								info['H2N'] = hap2_dict_number[reps]			
-								form='1|2' 
-
-								VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
-
-							else:
-
-								info=dict()
-			
-								info['END'] = reps[1]
-								info['H1M'] = hap1_dict_motif[reps]
-								info['H1N'] = hap1_dict_number[reps]
-								info['H2M'] = hap2_dict_motif[reps]
-								info['H2N'] = hap2_dict_number[reps]			
-								form='1|1' 
-
-								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
-				elif ref_dict_number[reps] == hap1_dict_number[reps] and ref_dict_number[reps] != hap2_dict_number[reps]: 
-
-					if ref_dict_motif[reps] == hap1_dict_motif[reps]:
-
-						pos=reps[0]
-						ref=reference_sequence[(reps[0]-1):reps[1]]
-						seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps)
-						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-						alt2=seq_h2[si_2:ei_2].replace('-','')
-
-						if ref == alt2:
-
-							continue
-
-						else:
-
-							info=dict()
-			
-							info['END'] = reps[1]
-							info['H1M'] = hap1_dict_motif[reps]
-							info['H1N'] = hap1_dict_number[reps]
-							info['H2M'] = hap2_dict_motif[reps]
-							info['H2N'] = hap2_dict_number[reps]			
-							form='0|1'
-
-							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
-
-					else:
-
-						pos=reps[0]
-						ref=reference_sequence[(reps[0]-1):reps[1]]
-						seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
-						seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) 
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps)
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps)
-						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
-						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-						alt1=seq_h1[si_1:ei_1].replace('-','')
-						alt2=seq_h2[si_2:ei_2].replace('-','')
-
-						if ref == alt1 and ref == alt2:
-
-							continue
-
-						elif ref == alt1 and ref != alt2:
-
-							info=dict()
-			
-							info['END'] = reps[1]
-							info['H1M'] = ref_dict_motif[reps] 
-							info['H1N'] = ref_dict_number[reps] 
-							info['H2M'] = hap2_dict_motif[reps]
-							info['H2N'] = hap2_dict_number[reps]			
-							form='0|1' 
-
-							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
-
-						elif ref != alt1 and ref == alt2:
-
-							info=dict()
-			
-							info['END'] = reps[1]
-							info['H1M'] = hap1_dict_motif[reps]
-							info['H1N'] = hap1_dict_number[reps]
-							info['H2M'] = ref_dict_motif[reps]  
-							info['H2N'] = ref_dict_number[reps] 
-							form='1|0' 
-
-							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-						
-						elif ref != alt1 and ref != alt2:
-
-							if alt1 != alt2 :
-
-								info=dict()
-			
-								info['END'] = reps[1]
-								info['H1M'] = hap1_dict_motif[reps]
-								info['H1N'] = hap1_dict_number[reps]
-								info['H2M'] = hap2_dict_motif[reps]
-								info['H2N'] = hap2_dict_number[reps]			
-								form='1|2' 
-
-								VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
-
-							else:
-
-								info=dict()
-			
-								info['END'] = reps[1]
-								info['H1M'] = hap1_dict_motif[reps]
-								info['H1N'] = hap1_dict_number[reps]
-								info['H2M'] = hap2_dict_motif[reps]
-								info['H2N'] = hap2_dict_number[reps]			
-								form='1|1' 
-
-								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
-				elif ref_dict_number[reps] != hap1_dict_number[reps] and ref_dict_number[reps] == hap2_dict_number[reps]: 
-
-					if ref_dict_motif[reps] == hap2_dict_motif[reps]: 
-
-						pos=reps[0]
-						ref=reference_sequence[(reps[0]-1):reps[1]]
-
-						seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1])
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
-						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
-						alt1=seq_h1[si_1:ei_1].replace('-','')
-
-						if ref == alt1: 
-
-							continue
-
-						else:
-
-							info=dict()
-			
-							info['END'] = reps[1]
-							info['H1M'] = hap1_dict_motif[reps]
-							info['H1N'] = hap1_dict_number[reps]
-							info['H2M'] = hap2_dict_motif[reps]
-							info['H2N'] = hap2_dict_number[reps]			
-							form='1|0' 
-
-							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
-					else: 
-
-						pos=reps[0]
-						ref=reference_sequence[(reps[0]-1):reps[1]]
-
-						seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
-						seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])
-
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
-
-						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
-						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-
-						alt1=seq_h1[si_1:ei_1].replace('-','') 
-						alt2=seq_h2[si_2:ei_2].replace('-','') 
-
-						if ref == alt1 and ref == alt2: 
-
-							continue
-
-						elif ref == alt1 and ref != alt2:
-
-							info=dict()
-			
-							info['END'] = reps[1]
-							info['H1M'] = ref_dict_motif[reps] 
-							info['H1N'] = ref_dict_number[reps] 
-							info['H2M'] = hap2_dict_motif[reps]
-							info['H2N'] = hap2_dict_number[reps]			
-							form='0|1' 
-
-							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
-
-						elif ref != alt1 and ref == alt2:
-
-							info=dict()
-			
-							info['END'] = reps[1]
-							info['H1M'] = hap1_dict_motif[reps]
-							info['H1N'] = hap1_dict_number[reps]
-							info['H2M'] = ref_dict_motif[reps] 
-							info['H2N'] = ref_dict_number[reps]			
-							form='1|0' 
-
-							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
-						elif ref != alt1 and ref != alt2:
-
-							if alt1 != alt2 :
-
-								info=dict()
-			
-								info['END'] = reps[1]
-								info['H1M'] = hap1_dict_motif[reps]
-								info['H1N'] = hap1_dict_number[reps]
-								info['H2M'] = hap2_dict_motif[reps]
-								info['H2N'] = hap2_dict_number[reps]			
-								form='1|2' 
-
-								VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
-
-							else:
-
-								info=dict()
-			
-								info['END'] = reps[1]
-								info['H1M'] = hap1_dict_motif[reps]
-								info['H1N'] = hap1_dict_number[reps]
-								info['H2M'] = hap2_dict_motif[reps]
-								info['H2N'] = hap2_dict_number[reps]
-								form='1|1' 
-
-								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
-				else: 
-
-					pos=reps[0]
-					ref=reference_sequence[(reps[0]-1):reps[1]]
-
-					seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1])
-					seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])
-
-					coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
-					coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
-
-					si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1) 
-					si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-
-					alt1=seq_h1[si_1:ei_1].replace('-','') 
-					alt2=seq_h2[si_2:ei_2].replace('-','') 
-
-					if ref == alt1 and ref == alt2: 
-
-						continue
-
-					elif ref == alt1 and ref != alt2:
-
-						info=dict()
-			
-						info['END'] = reps[1]
-						info['H1M'] = ref_dict_motif[reps] 
-						info['H1N'] = ref_dict_number[reps] 
-						info['H2M'] = hap2_dict_motif[reps]
-						info['H2N'] = hap2_dict_number[reps]			
-						form='0|1' 
-
-						VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
-
-					elif ref != alt1 and ref == alt2:
-
-						info=dict()
-			
-						info['END'] = reps[1]
-						info['H1M'] = hap1_dict_motif[reps]
-						info['H1N'] = hap1_dict_number[reps]
-						info['H2M'] = ref_dict_motif[reps] 
-						info['H2N'] = ref_dict_number[reps] 
-						form='1|0' 
-
-						VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
-					elif ref != alt1 and ref != alt2:
-
-						if alt1 != alt2 :
-
-							info=dict()
-			
-							info['END'] = reps[1]
-							info['H1M'] = hap1_dict_motif[reps]
-							info['H1N'] = hap1_dict_number[reps]
-							info['H2M'] = hap2_dict_motif[reps]
-							info['H2N'] = hap2_dict_number[reps]
-							form='1|2' 
-
-							VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
-
-						else:
-
-							info=dict()
-			
-							info['END'] = reps[1]
-							info['H1M'] = hap1_dict_motif[reps]
-							info['H1N'] = hap1_dict_number[reps]
-							info['H2M'] = hap2_dict_motif[reps]
-							info['H2N'] = hap2_dict_number[reps]
-							form='1|1' 
-
-							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
-
-			elif reps in ref_dict_number.keys() and reps in hap1_dict_number.keys() and reps not in hap2_dict_number.keys(): 
-
-				if ref_dict_number[reps] == hap1_dict_number[reps] and ref_dict_motif[reps] == hap1_dict_motif[reps]: 
-
-					pos=reps[0]
-					ref=reference_sequence[(reps[0]-1):reps[1]]
-
-					seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) 
-
-					if len(seq_h2) == 0: 
-
-						info=dict()
-			
-						info['END'] = reps[1]
-						info['H1M'] = hap1_dict_motif[reps]
-						info['H1N'] = hap1_dict_number[reps]
-						info['H2M'] = '.'
-						info['H2N'] = '.'
-						form='0|.'  
-
-						VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
-
-					else: 
-
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
-						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)						
-						alt2=seq_h2[si_2:ei_2].replace('-','') 
-
-						if alt2 == '':
-
-							info=dict()
-			
-							info['END'] = reps[1]
-							info['H1M'] = hap1_dict_motif[reps]
-							info['H1N'] = hap1_dict_number[reps]
-							info['H2M'] = '.'
-							info['H2N'] = '.'
-							form='0|.' 
-
-							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
-
-						else:
-
-							if ref==alt2:
-
-								continue 
-
-							else:
-
-								info=dict()
-			
-								info['END'] = reps[1]
-								info['H1M'] = hap1_dict_motif[reps]
-								info['H1N'] = hap1_dict_number[reps]
-								info['H2M'] = '.'
-								info['H2N'] = '.'
-								form='0|1' 
-
-								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
-
-				else: 
-
-					pos=reps[0]
-					ref=reference_sequence[(reps[0]-1):reps[1]]
-
-					seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
-					coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
-					si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
-					alt1=seq_h1[si_1:ei_1].replace('-','')
-					
-					seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) 
-
-					if ref==alt1:
-
-						if len(seq_h2) == 0: 
-
-							info=dict()
-			
-							info['END'] = reps[1]
-							info['H1M'] = ref_dict_motif[reps] 
-							info['H1N'] = ref_dict_number[reps] 
-							info['H2M'] = '.'
-							info['H2N'] = '.'
-							form='0|.' 
-
-							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
-
-						else: 
-
-							coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
-							si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-							alt2=seq_h2[si_2:ei_2].replace('-','')
-
-							if alt2 =='': 
-
-								info=dict()
-			
-								info['END'] = reps[1]
-								info['H1M'] = ref_dict_motif[reps] 
-								info['H1N'] = ref_dict_number[reps] 
-								info['H2M'] = '.'
-								info['H2N'] = '.'
-								form='0|.' 
-
-								VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
-
-							else:
-
-								if ref==alt2:
-
-									continue
-
-								else:
-
-									info=dict()
-			
-									info['END'] = reps[1]
-									info['H1M'] = ref_dict_motif[reps] 
-									info['H1N'] = ref_dict_number[reps] 
-									info['H2M'] = '.'
-									info['H2N'] = '.'
-									form='0|1' 
-
-									VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
-
-					else:
-
-						if len(seq_h2) == 0: 
-
-							info=dict()
-			
-							info['END'] = reps[1]
-							info['H1M'] = hap1_dict_motif[reps]
-							info['H1N'] = hap1_dict_number[reps]
-							info['H2M'] = '.'
-							info['H2N'] = '.'
-							form='1|.' 
-
-							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
-						else: 
-
-							coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
-							si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-							alt2=seq_h2[si_2:ei_2].replace('-','')
-
-							if alt2=='': 
-
-								info=dict()
-			
-								info['END'] = reps[1]
-								info['H1M'] = hap1_dict_motif[reps]
-								info['H1N'] = hap1_dict_number[reps]
-								info['H2M'] = '.'
-								info['H2N'] = '.'
-								form='1|.' 
-
-								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
-							else:
-
-								if ref==alt2:
-
-									info=dict()
-			
-									info['END'] = reps[1]
-									info['H1M'] = hap1_dict_motif[reps]
-									info['H1N'] = hap1_dict_number[reps]
-									info['H2M'] = '.'
-									info['H2N'] = '.'
-									form='1|0' 
-
-									VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
-								else:
-
-									if alt1==alt2:
-
-										info=dict()
-			
-										info['END'] = reps[1]
-										info['H1M'] = hap1_dict_motif[reps]
-										info['H1N'] = hap1_dict_number[reps]
-										info['H2M'] = '.'
-										info['H2N'] = '.'
-										form='1|1'
-
-										VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
-									else:
-
-										info=dict()
-			
-										info['END'] = reps[1]
-										info['H1M'] = hap1_dict_motif[reps]
-										info['H1N'] = hap1_dict_number[reps]
-										info['H2M'] = '.'
-										info['H2N'] = '.'
-										form='1|2' 
-
-										VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
-
-			elif reps in ref_dict_number.keys() and reps not in hap1_dict_number.keys() and reps in hap2_dict_number.keys(): 
-
-				if ref_dict_number[reps] == hap2_dict_number[reps] and ref_dict_motif[reps] == hap2_dict_motif[reps]: 
-
-					pos=reps[0]
-					ref=reference_sequence[(reps[0]-1):reps[1]]
-
-					seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1])
-
-					if len(seq_h1) == 0: 
-
-						info=dict()
-			
-						info['END'] = reps[1]
-						info['H1M'] = '.'
-						info['H1N'] = '.'
-						info['H2M'] = hap2_dict_motif[reps]
-						info['H2N'] = hap2_dict_number[reps]
-						form='.|0' 
-
-						VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
-
-					else: 
-
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
-						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
-						alt1=seq_h1[si_1:ei_1].replace('-','')
-
-
-						if alt1=='':
-
-							info=dict()
-			
-							info['END'] = reps[1]
-							info['H1M'] = '.'
-							info['H1N'] = '.'
-							info['H2M'] = hap2_dict_motif[reps]
-							info['H2N'] = hap2_dict_number[reps]
-							form='.|0' 
-
-							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
-
-						else:
-
-							if ref==alt1:
-
-								continue
-
-							else:
-
-								info=dict()
-			
-								info['END'] = reps[1]
-								info['H1M'] = '.'
-								info['H1N'] = '.'
-								info['H2M'] = hap2_dict_motif[reps]
-								info['H2N'] = hap2_dict_number[reps]
-								form='1|0' 
-
-								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-				
-				else: 
-
-					pos=reps[0]
-					ref=reference_sequence[(reps[0]-1):reps[1]]
-
-					seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])
-					coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
-					si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-					alt2=seq_h2[si_2:ei_2].replace('-','')
-					
-					seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
-
-					if ref==alt2:
-
-						if len(seq_h1) == 0: 
-
-							info=dict()
-			
-							info['END'] = reps[1]
-							info['H1M'] = '.'
-							info['H1N'] = '.'
-							info['H2M'] = ref_dict_motif[reps] 
-							info['H2N'] = ref_dict_number[reps] 
-							form='.|0' 
-
-							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
-
-						else: 
-
-							coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
-							si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
-							alt1=seq_h1[si_1:ei_1].replace('-','')
-
-							if alt1=='': 
-
-								info=dict()
-			
-								info['END'] = reps[1]
-								info['H1M'] = '.'
-								info['H1N'] = '.'
-								info['H2M'] = ref_dict_motif[reps] 
-								info['H2N'] = ref_dict_number[reps]
-								form='.|0' 
-
-								VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
-
-							else:
-
-								if ref==alt1:
-
-									continue
-
-								else:
-
-									info=dict()
-			
-									info['END'] = reps[1]
-									info['H1M'] = '.'
-									info['H1N'] = '.'
-									info['H2M'] = ref_dict_motif[reps] 
-									info['H2N'] = ref_dict_number[reps] 
-									form='1|0' 
-
-									VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
-					else:
-						
-						if len(seq_h1) == 0: 
-
-							info=dict()
-			
-							info['END'] = reps[1]
-							info['H1M'] = '.'
-							info['H1N'] = '.'
-							info['H2M'] = hap2_dict_motif[reps]
-							info['H2N'] = hap2_dict_number[reps]
-							form='.|1' 
-
-							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
-
-						else: 
-
-							coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
-							si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
-							alt1=seq_h1[si_1:ei_1].replace('-','')
-
-							if alt1=='':
-
-								info=dict()
-			
-								info['END'] = reps[1]
-								info['H1M'] = '.'
-								info['H1N'] = '.'
-								info['H2M'] = hap2_dict_motif[reps]
-								info['H2N'] = hap2_dict_number[reps]
-								form='.|1' 
-
-								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
-
-							else:
-
-								if ref==alt1:
-
-									info=dict()
-			
-									info['END'] = reps[1]
-									info['H1M'] = '.'
-									info['H1N'] = '.'
-									info['H2M'] = hap2_dict_motif[reps]
-									info['H2N'] = hap2_dict_number[reps]
-									form='0|1' 
-
-									VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
-
-								else:
-
-									if alt1==alt2:
-
-										info=dict()
-			
-										info['END'] = reps[1]
-										info['H1M'] = '.'
-										info['H1N'] = '.'
-										info['H2M'] = hap2_dict_motif[reps]
-										info['H2N'] = hap2_dict_number[reps]
-										form='1|1' 
-
-										VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
-									else:
-
-										info=dict()
-			
-										info['END'] = reps[1]
-										info['H1M'] = '.'
-										info['H1N'] = '.'
-										info['H2M'] = hap2_dict_motif[reps]
-										info['H2N'] = hap2_dict_number[reps]
-										form='1|2' 
-
-										VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
-			
-
-			elif reps not in ref_dict_number.keys() and reps in hap1_dict_number.keys() and reps in hap2_dict_number.keys(): 
-
-				pos=reps[0]
-				ref=reference_sequence[(reps[0]-1):reps[1]]
-
-				seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
-				coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
-				si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
-				alt1=seq_h1[si_1:ei_1].replace('-','')
-
-				seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) 
-				coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
-				si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-				alt2=seq_h2[si_2:ei_2].replace('-','')
-
-				if ref==alt1 and ref==alt2:
-
-					continue
-
-				elif ref==alt1 and ref != alt2:
-
-					info=dict()
-
-					info['END'] = reps[1]
-					info['H1M'] = hap1_dict_motif[reps] 
-					info['H1N'] = hap1_dict_number[reps] 
-					info['H2M'] = hap2_dict_motif[reps]
-					info['H2N'] = hap2_dict_number[reps]		
-					form='0|1' 
-
-					VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
-
-				elif ref != alt1 and ref == alt2:
-
-					info=dict()
-
-					info['END'] = reps[1]
-					info['H1M'] = hap1_dict_motif[reps]
-					info['H1N'] = hap1_dict_number[reps]
-					info['H2M'] = hap2_dict_motif[reps] 
-					info['H2N'] = hap2_dict_number[reps]			
-					form='1|0' 
-
-					VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
-				elif ref != alt1 and ref != alt2:
-
-					if alt1==alt2:
-
-						info=dict()
-
-						info['END'] = reps[1]
-						info['H1M'] = hap1_dict_motif[reps]
-						info['H1N'] = hap1_dict_number[reps]
-						info['H2M'] = hap2_dict_motif[reps]
-						info['H2N'] = hap2_dict_number[reps]
-						form='1|1' 
-
-						VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
-					else:
-
-						info=dict()
-
-						info['END'] = reps[1]
-						info['H1M'] = hap1_dict_motif[reps]
-						info['H1N'] = hap1_dict_number[reps]
-						info['H2M'] = hap2_dict_motif[reps]
-						info['H2N'] = hap2_dict_number[reps]			
-						form='1|2' 
-
-						VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
-
-
-			elif reps in ref_dict_number.keys() and reps not in hap1_dict_number.keys() and reps not in hap2_dict_number.keys(): 
-
-
-				pos=reps[0]
-				ref=reference_sequence[(reps[0]-1):reps[1]]
-
-				seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
-				seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) 
-
-				if len(seq_h1) == 0 and len(seq_h2) == 0: 
-
-					continue
-
-				elif len(seq_h1) != 0 and len(seq_h2) == 0: 
-
-					coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
-					si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
-					alt1=seq_h1[si_1:ei_1].replace('-','')
-
-					if alt1=='':
-
-						continue 
-
-					else:
-
-						if ref == alt1:
-
-							info=dict()
-
-							info['END'] = reps[1]
-							info['H1M'] = '.' 
-							info['H1N'] = '.' 
-							info['H2M'] = '.'
-							info['H2N'] = '.'	
-							form='0|.' 
-
-							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
-
-						else:
-
-							info=dict()
-
-							info['END'] = reps[1]
-							info['H1M'] = '.'
-							info['H1N'] = '.'
-							info['H2M'] = '.'
-							info['H2N'] = '.'	
-							form='1|.' 
-
-							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
-				elif len(seq_h1) == 0 and len(seq_h2) != 0: 
-
-					coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
-					si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-					alt2=seq_h2[si_2:ei_2].replace('-','')
-
-					if alt2 == '':
-
-						continue
-
-					else:
-
-						if ref == alt2:
-
-							info=dict()
-
-							info['END'] = reps[1]
-							info['H1M'] = '.' 
-							info['H1N'] = '.'
-							info['H2M'] = '.' 
-							info['H2N'] = '.'		
-							form='.|0' 
-
-							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
-
-						else:
-
-							info=dict()
-
-							info['END'] = reps[1]
-							info['H1M'] = '.'
-							info['H1N'] = '.'
-							info['H2M'] = '.'
-							info['H2N'] = '.'
-							form='.|1' 
-
-							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
-					
-				elif len(seq_h1) != 0 and len(seq_h2) != 0: 
-
-					coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
-					si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
-					alt1=seq_h1[si_1:ei_1].replace('-','')
-
-					coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
-					si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-					alt2=seq_h2[si_2:ei_2].replace('-','')
-
-					if alt1 == '':
-
-						if alt2 == '':
-
-							continue 
-
-						else:
-
-							if ref==alt2:
-
-								info=dict()
-
-								info['END'] = reps[1]
-								info['H1M'] = '.'
-								info['H1N'] = '.'
-								info['H2M'] = '.' 
-								info['H2N'] = '.'
-								form='.|0' 
-
-								VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
-
-							else:
-
-								info=dict()
-
-								info['END'] = reps[1]
-								info['H1M'] = '.'
-								info['H1N'] = '.'
-								info['H2M'] = '.' 
-								info['H2N'] = '.'			
-								form='.|1' 
-
-								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
-
-					else:
-
-						if alt2 == '':
-
-							if ref==alt1:
-
-								info=dict()
-
-								info['END'] = reps[1]
-								info['H1M'] = '.'
-								info['H1N'] = '.'
-								info['H2M'] = '.' 
-								info['H2N'] = '.'
-								form='0|.' 
-
-								VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
-
-							else:
-
-								info=dict()
-
-								info['END'] = reps[1]
-								info['H1M'] = '.'
-								info['H1N'] = '.'
-								info['H2M'] = '.' 
-								info['H2N'] = '.'			
-								form='1|.'  
-
-								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
-						else: 
-
-							if ref == alt1 and ref == alt2: 
-
-								continue
-
-							elif ref == alt1 and ref != alt2:
-
-								info=dict()
-			
-								info['END'] = reps[1]
-								info['H1M'] = '.' 
-								info['H1N'] = '.' 
-								info['H2M'] = '.'
-								info['H2N'] = '.'			
-								form='0|1' 
-
-								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
-
-							elif ref != alt1 and ref == alt2:
-
-								info=dict()
-			
-								info['END'] = reps[1]
-								info['H1M'] = '.'
-								info['H1N'] = '.'
-								info['H2M'] = '.' 
-								info['H2N'] = '.'
-								form='1|0' 
-
-								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
-							elif ref != alt1 and ref != alt2:
-
-								if alt1 != alt2 :
-
-									info=dict()
-			
-									info['END'] = reps[1]
-									info['H1M'] = '.'
-									info['H1N'] = '.'
-									info['H2M'] = '.'
-									info['H2N'] = '.'
-									form='1|2' 
-
-									VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
-
-								else:
-
-									info=dict()
-			
-									info['END'] = reps[1]
-									info['H1M'] = '.'
-									info['H1N'] = '.'
-									info['H2M'] = '.'
-									info['H2N'] = '.'
-									form='1|1' 
-
-									VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
-			elif reps not in ref_dict_number.keys() and reps in hap1_dict_number.keys() and reps not in hap2_dict_number.keys(): 
-
-				pos=reps[0]
-				ref=reference_sequence[(reps[0]-1):reps[1]]
-
-				seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
-
-				coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
-				si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
-				alt1=seq_h1[si_1:ei_1].replace('-','')
-
-				seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1]) 
-
-				if ref==alt1:
-
-					if len(seq_h2) == 0: 
-
-						info=dict()
-
-						info['END'] = reps[1]
-						info['H1M'] = hap1_dict_motif[reps]
-						info['H1N'] = hap1_dict_number[reps]
-						info['H2M'] = '.'
-						info['H2N'] = '.'									
-						form='0|.' 
-
-						VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
-
-					else:
-
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
-						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-						alt2=seq_h2[si_2:ei_2].replace('-','')
-
-
-						if alt2=='':
-
-							info=dict()
-
-							info['END'] = reps[1]
-							info['H1M'] = hap1_dict_motif[reps]
-							info['H1N'] = hap1_dict_number[reps]
-							info['H2M'] = '.'
-							info['H2N'] = '.'
-							form='0|.' 
-
-							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
-
-						else:
-
-							if ref==alt2:
-
-								continue
-
-							else:
-
-								info=dict()
-
-								info['END'] = reps[1]
-								info['H1M'] = hap1_dict_motif[reps]
-								info['H1N'] = hap1_dict_number[reps]
-								info['H2M'] = '.'
-								info['H2N'] = '.'
-								form='0|1' 
-
-								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
+			CHROM=chromosome
+			POS=reps[0]
+			SVEND=reps[1]
+			REF=reference_sequence[(POS-1):SVEND]
+
+			if reps in hap1_dict_number.keys():
+
+				seqh1_,coordsh1_=modifier2(seqh1,coordsh1,POS,SVEND)
+				IS1,IE1=GetIndex(POS,SVEND,coordsh1_)
+				ALT1=seqh1_[IS1:IE1].replace('-','')
+				H1N=hap1_dict_number[reps]
+				H1M=hap1_dict_motif[reps]
+				DP1=covh1
+
+			else:
+
+				if seqh1 == []:
+
+					ALT1='.'
+					H1N='.'
+					H1M='.'
+					DP1=covh1
 
 				else:
 
-					if len(seq_h2) == 0: 
+					seqh1_,coordsh1_=modifier2(seqh1,coordsh1,POS,SVEND)
+					IS1,IE1=GetIndex(POS,SVEND,coordsh1_)
+					ALT1=seqh1_[IS1:IE1].replace('-','')
+					H1N='.'
+					H1M='.'
+					DP1=covh1
 
-						info=dict()
+			if reps in hap2_dict_number.keys():
 
-						info['END'] = reps[1]
-						info['H1M'] = hap1_dict_motif[reps]
-						info['H1N'] = hap1_dict_number[reps]
-						info['H2M'] = '.'
-						info['H2N'] = '.'	
-						form='1|.' 
+				seqh2_,coordsh2_=modifier2(seqh2,coordsh2,POS,SVEND)
+				IS2,IE2=GetIndex(POS,SVEND,coordsh2_)
+				ALT2=seqh2_[IS2:IE2].replace('-','')
+				H2N=hap2_dict_number[reps]
+				H2M=hap2_dict_motif[reps]
+				DP2=covh2
 
-						VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
+			else:
 
-					else:
+				if seqh2 == []:
 
-						coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
-						si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-						alt2=seq_h2[si_2:ei_2].replace('-','')
-
-						if alt2=='':
-
-							info=dict()
-
-							info['END'] = reps[1]
-							info['H1M'] = hap1_dict_motif[reps]
-							info['H1N'] = hap1_dict_number[reps]
-							info['H2M'] = '.'
-							info['H2N'] = '.'									
-							form='1|.' 
-
-							VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
-						else:
-
-							if ref==alt2:
-
-								info=dict()
-
-								info['END'] = reps[1]
-								info['H1M'] = hap1_dict_motif[reps]
-								info['H1N'] = hap1_dict_number[reps]
-								info['H2M'] = '.'
-								info['H2N'] = '.'
-								form='1|0' 
-
-								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-							
-							else:
-								
-								if alt1==alt2:
-
-									info=dict()
-
-									info['END'] = reps[1]
-									info['H1M'] = hap1_dict_motif[reps]
-									info['H1N'] = hap1_dict_number[reps]
-									info['H2M'] = '.'
-									info['H2N'] = '.'
-									form='1|1' 
-
-									VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
-
-								else:
-
-									info=dict()
-
-									info['END'] = reps[1]
-									info['H1M'] = hap1_dict_motif[reps]
-									info['H1N'] = hap1_dict_number[reps]
-									info['H2M'] = '.'
-									info['H2N'] = '.'									
-									form='1|2' 
-							
-									VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
-
-			else: 
-
-				pos=reps[0]
-				ref=reference_sequence[(reps[0]-1):reps[1]]
-
-				seq_h2,coord_h2=Get_Seq_Pos(bamfile2,chromosome, reps[0], reps[1])
-				coord_h2,seq_h2=Modifier(coord_h2,seq_h2,reps) 
-				si_2,ei_2=GetIndex(reps[0],reps[1],coord_h2)
-				alt2=seq_h2[si_2:ei_2].replace('-','')
-
-				seq_h1,coord_h1=Get_Seq_Pos(bamfile1,chromosome, reps[0], reps[1]) 
-
-				if ref==alt2:
-
-					if len(seq_h1) == 0: 
-
-						info=dict()
-
-						info['END'] = reps[1]
-						info['H1M'] = '.'
-						info['H1N'] = '.'
-						info['H2M'] = hap2_dict_motif[reps]
-						info['H2N'] = hap2_dict_number[reps]
-						form='.|0' 
-
-						VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
-
-					else:
-
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
-						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
-						alt1=seq_h1[si_1:ei_1].replace('-','')
-
-						if alt1=='':
-
-							info=dict()
-
-							info['END'] = reps[1]
-							info['H1M'] = '.'
-							info['H1N'] = '.'
-							info['H2M'] = hap2_dict_motif[reps]
-							info['H2N'] = hap2_dict_number[reps]
-							form='.|0' 
-
-							VCF_variantwriter(chromosome, pos, ref, '.', info, form, out,processor)
-
-						else:
-
-							if ref==alt1:
-
-								continue
-
-							else:
-
-								info=dict()
-							
-								info['END'] = reps[1]
-								info['H1M'] = '.'
-								info['H1N'] = '.'
-								info['H2M'] = hap2_dict_motif[reps]
-								info['H2N'] = hap2_dict_number[reps]
-								form='1|0' 
-
-								VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
+					ALT2='.'
+					H2N='.'
+					H2M='.'
+					DP2=covh2
 
 				else:
 
-					if len(seq_h1) == 0: 
+					seqh2_,coordsh2_=modifier2(seqh2,coordsh2,POS,SVEND)
+					IS2,IE2=GetIndex(POS,SVEND,coordsh2_)
+					ALT2=seqh2_[IS2:IE2].replace('-','')
+					H2N='.'
+					H2M='.'
+					DP1=covh2
 
-						info=dict()
+			if seqh1 == [] and seqh2 == []:
 
-						info['END'] = reps[1]
-						info['H1M'] = '.'
-						info['H1N'] = '.'
-						info['H2M'] = hap2_dict_motif[reps]
-						info['H2N'] = hap2_dict_number[reps]									
-						form='.|1' 
+				GEN1='.'
+				GEN2='.'
+				ALT = '.'
 
-						VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
+			elif seqh1 != [] and seqh2 == []:
+
+				GEN2='.'
+
+				if ALT1 == REF:
+
+					GEN1 = '0'
+					ALT = '.'
+
+				else:
+
+					GEN1 = '1'
+					ALT = ALT1
+
+			elif seqh1 == [] and seqh2 != []:
+
+				GEN1='.'
+
+				if ALT2 == REF:
+
+					GEN2 = '0'
+					ALT = '.'
+
+				else:
+
+					GEN2 = '1'
+					ALT = ALT2
+
+			else:
+
+				if ALT1 == REF and ALT2 == REF:
+
+					GEN1 = '0'
+					GEN2 = '0'
+					ALT = '.'
+
+				elif ALT1 == REF and ALT2 != REF:
+
+					GEN1= '0'
+					GEN2 = '1'
+					ALT = ALT2
+
+				elif ALT1 != REF and ALT2 == REF:
+
+					GEN1= '1'
+					GEN2 = '0'
+					ALT = ALT1
+
+				else:
+
+					if ALT1 == ALT2:
+
+						GEN1 = '1'
+						GEN2 = '1'
+						ALT = ALT1
 
 					else:
 
-						coord_h1,seq_h1=Modifier(coord_h1,seq_h1,reps) 
-						si_1,ei_1=GetIndex(reps[0],reps[1],coord_h1)
-						alt1=seq_h1[si_1:ei_1].replace('-','')
+						GEN1 = '1'
+						GEN2 = '2'
+						ALT = ALT1 + ',' + ALT2
 
-						if alt1=='':
+			GEN = GEN1 + '|' + GEN2
+			INFO=dict()
+			INFO['SVEND'] = SVEND
 
-							info=dict()
+			if ALT1 == '.' and ALT2 == '.':
 
-							info['END'] = reps[1]
-							info['H1M'] = '.'
-							info['H1N'] = '.'
-							info['H2M'] = hap2_dict_motif[reps]
-							info['H2N'] = hap2_dict_number[reps]
-							form='.|1' 
+				RAED = '.'
+				AED = '.'
 
-							VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
+			elif ALT1 != '.' and ALT2 == '.':
 
-						else:
+				RAED = editdistance.eval(REF, ALT1)
+				AED= '.'
 
-							if ref==alt1:
+			elif ALT1 == '.' and ALT2 != '.':
 
-								info=dict()
+				RAED = editdistance.eval(REF, ALT2)
+				AED='.'
 
-								info['END'] = reps[1]
-								info['H1M'] = '.'
-								info['H1N'] = '.'
-								info['H2M'] = hap2_dict_motif[reps]
-								info['H2N'] = hap2_dict_number[reps]								
-								form='0|1' 
+			else:
 
-								VCF_variantwriter(chromosome, pos, ref, alt2, info, form, out,processor)
-							
-							else:
+				RAED1=editdistance.eval(REF, ALT1)
+				RAED2=editdistance.eval(REF, ALT2)
 
-								if alt1==alt2:
+				if RAED1 < RAED2:
 
-									info=dict()
+					RAED = RAED1
 
-									info['END'] = reps[1]
-									info['H1M'] = '.'
-									info['H1N'] = '.'
-									info['H2M'] = hap2_dict_motif[reps]
-									info['H2N'] = hap2_dict_number[reps]									
-									form='1|1' 
+				else:
 
-									VCF_variantwriter(chromosome, pos, ref, alt1, info, form, out,processor)
+					RAED = RAED2
 
-								else:
+				AED = editdistance.eval(ALT1,ALT2)
 
-									info=dict()
+			INFO['RAED'] = RAED
+			INFO['AED'] = AED
+			INFO['H1M'] = H1M
+			INFO['H1N'] = H1N
+			INFO['H2M'] = H2M 
+			INFO['H2N'] = H2N
 
-									info['END'] = reps[1]
-									info['H1M'] = '.'
-									info['H1N'] = '.'
-									info['H2M'] = hap2_dict_motif[reps]
-									info['H2N'] = hap2_dict_number[reps]
-									form='1|2' 
-							
-									VCF_variantwriter(chromosome, pos, ref, alt1 + ',' + alt2, info, form, out,processor)
+
+			FORMAT = dict()
+
+			FORMAT['GT'] = GEN
+			FORMAT['DP1'] = covh1
+			FORMAT['DP2'] = covh2
+
+			VCF_variantwriter(CHROM, POS, REF, ALT, INFO, FORMAT, out ,processor)
