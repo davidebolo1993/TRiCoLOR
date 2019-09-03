@@ -408,7 +408,7 @@ def Runner(processor,sli,refseq,regex,maxmotif,size,bamfile1,bamfile2,coverage,a
 					Ritem.extend(pR)
 
 				out1=os.path.abspath(output + '/haplotype1')
-				pH1=HaploReps(SHCpath,Cpath, bamfile1,s, coverage, regex, maxmotif, size, allowed, refseq, chromind, out1, processor,i,readtype)
+				pH1,pS1,pC1,pCOV1=HaploReps(SHCpath,Cpath, bamfile1,s, coverage, regex, maxmotif, size, allowed, refseq, chromind, out1, processor,i,readtype)
 
 				if pH1 != []:
 
@@ -417,7 +417,7 @@ def Runner(processor,sli,refseq,regex,maxmotif,size,bamfile1,bamfile2,coverage,a
 				if bamfile2 is not None:
 					
 					out2=os.path.abspath(output + '/haplotype2')
-					pH2=HaploReps(SHCpath,Cpath, bamfile2,s, coverage, regex, maxmotif, size, allowed, refseq, chromind, out2, processor,i,readtype)
+					pH2,pS2,pC2,pCOV2=HaploReps(SHCpath,Cpath, bamfile2,s, coverage, regex, maxmotif, size, allowed, refseq, chromind, out2, processor,i,readtype)
 
 					if pH2 != []:
 
@@ -430,7 +430,8 @@ def Runner(processor,sli,refseq,regex,maxmotif,size,bamfile1,bamfile2,coverage,a
 					open(os.path.abspath(out2 +'/' + processor + '.' + str(i +1) + '.srt.bam'), 'w').close()
 					open(os.path.abspath(out2 +'/' + processor + '.' + str(i +1) + '.srt.bam.bai'), 'w').close()
 
-				writer.VCF_writer(s[0], pR, refseq, pH1, os.path.abspath(out1 + '/' + processor + '.' + str(i+1) + '.srt.bam'), pH2, os.path.abspath(out2 + '/' + processor + '.' + str(i+1) + '.srt.bam'), output, processor)
+
+				writer.VCF_writer(s[0], pR, refseq, pH1, pS1,pC1,pCOV1, pH2, pS2,pC2,pCOV2, output, processor)
 
 				if os.stat(os.path.abspath(out1 + '/' + processor + '.' + str(i+1) + '.srt.bam')).st_size == 0:
 
@@ -449,6 +450,8 @@ def Runner(processor,sli,refseq,regex,maxmotif,size,bamfile1,bamfile2,coverage,a
 			with open (os.path.abspath(output + '/TRiCoLOR.' + processor + '.unexpected.err.log'), 'a') as errorout:
 
 				errorout.write('Unexpected error in region '+ s[0] +  ':' + str(s[1]) + '-' + str(s[2]) + '.' + '\n' + str(BE) + '\n')
+
+			exitonerror()
 
 
 	Rrep[processor] = Ritem
@@ -482,7 +485,7 @@ def HaploReps(SHCpath,Cpath, bamfile,s, coverage, regex, maxmotif, size, allowed
 
 
 	chromosome,start,end=s[0],s[1],s[2]
-	parser.Bamfile_Analyzer(bamfile,chromosome,start,end,coverage,out,processor)
+	cov_inbam=parser.Bamfile_Analyzer(bamfile,chromosome,start,end,coverage,out,processor)
 	file=os.path.abspath(out + '/' + processor + '.unaligned.fa')
 	empty=[]
 
@@ -491,7 +494,7 @@ def HaploReps(SHCpath,Cpath, bamfile,s, coverage, regex, maxmotif, size, allowed
 		open(os.path.abspath(out +'/' + processor + '.' + str(iteration +1) + '.srt.bam'), 'w').close()
 		open(os.path.abspath(out +'/' + processor + '.' + str(iteration +1) + '.srt.bam.bai'), 'w').close()
 
-		return empty
+		return empty, empty, empty, empty
 
 	else:
 
@@ -516,23 +519,16 @@ def HaploReps(SHCpath,Cpath, bamfile,s, coverage, regex, maxmotif, size, allowed
 			open(os.path.abspath(out +'/' + processor + '.' + str(iteration +1) + '.srt.bam'), 'w').close()
 			open(os.path.abspath(out +'/' + processor + '.' + str(iteration +1) + '.srt.bam.bai'), 'w').close()
 
-			return empty
+			return empty, empty, empty, empty
 
 		else:
 
 			repetitions=list(finder.RepeatsFinder(seq,regex,maxmotif))
 			os.rename(c_bam,os.path.abspath(out +'/' + processor + '.' + str(iteration +1) + '.srt.bam'))
 			os.rename(c_bam + '.bai',os.path.abspath(out +'/' + processor + '.' + str(iteration +1) + '.srt.bam.bai'))
+			cor_coord_reps,consensus_string,consensus_coordinates=finder.corrector(refseq, seq, repetitions, coords, size, allowed)
 
-			if repetitions != []:
-
-				cor_coord_reps=finder.corrector(refseq, seq, repetitions, coords, size, allowed)
-
-				return cor_coord_reps
-
-			else:
-
-				return empty
+			return cor_coord_reps, consensus_string, consensus_coordinates, cov_inbam
 
 
 
