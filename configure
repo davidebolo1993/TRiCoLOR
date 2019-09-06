@@ -11,4 +11,4 @@ then
     mv ../TRiCoLOR/REFER/consensus.cpp .
 fi
 g++ consensus.cpp -std=c++11 -Iinclude/ -Lbuild/lib/ -lspoa -o consensus -static
-cp consensus ../TRiCoLOR/REFER/
+mv consensus ../TRiCoLOR/REFER/ && rm consensus.cpp
