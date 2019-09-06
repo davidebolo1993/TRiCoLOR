@@ -276,7 +276,7 @@ def run(parser, args):
 
 				writer.VCF_headerwriter(os.path.abspath(bams[0]), None, args.samplename, ','.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey), os.path.abspath(args.output))				
 
-			p=multiprocessing.Process(target=Runner, args=(processor,sli,refseq,regex,args.maxmotif,args.size,bamfile1,bamfile2,args.coverage,args.editdistance,chromind,args.readstype,os.path.abspath(args.output),Rrep,H1rep,H2rep,Cpath,SHCpath,args.match, args.mismatch, args.gapopen, args.gapextend))
+			p=multiprocessing.Process(target=Runner, args=(processor,sli,refseq,regex,args.maxmotif,args.size,bamfile1,bamfile2,args.coverage,args.editdistance,chromind,args.readstype,os.path.abspath(args.output),Rrep,H1rep,H2rep,Cpath,SHCpath,args.match,args.mismatch,args.gapopen,args.gapextend))
 			p.start()
 			processes.append(p)
 		
@@ -408,7 +408,7 @@ def Runner(processor,sli,refseq,regex,maxmotif,size,bamfile1,bamfile2,coverage,a
 					Ritem.extend(pR)
 
 				out1=os.path.abspath(output + '/haplotype1')
-				pH1,pS1,pC1,pCOV1=HaploReps(SHCpath,Cpath, bamfile1,s, coverage, regex, maxmotif, size, allowed, refseq, chromind, out1, processor,i,match,mismatch,gapopen, gapextend)
+				pH1,pS1,pC1,pCOV1=HaploReps(SHCpath,Cpath, bamfile1,s, coverage, regex, maxmotif, size, allowed, refseq, chromind, out1, processor,i,readtype,match,mismatch,gapopen, gapextend)
 
 				if pH1 != []:
 
