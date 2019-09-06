@@ -46,6 +46,13 @@ def main():
 	required.add_argument('-bam','--bamfile', help='one or two haplotype-resolved BAM',metavar='BAM', nargs='+', action='append', required=True)
 	required.add_argument('-o','--output', help='output folder',metavar='folder',required=True)
 
+	consensus = parser_refer.add_argument_group('Consensus-building parameters')
+
+	consensus.add_argument('--match', type=int, help='reward for a matching base [5]', metavar='', default = 5)
+	consensus.add_argument('--mismatch', type=int, help='penalty for a base not matching [-4]', metavar='', default = -4)
+	consensus.add_argument('--gapopen', type=int, help='penalty for gap opening [-8]', metavar='', default = -8)
+	consensus.add_argument('--gapextend', type=int, help='penalty for gap extending [-6]', metavar='', default = -6)
+
 	algorithm = parser_refer.add_argument_group('Regex-search parameters')
 
 	algorithm.add_argument('-m','--motif', type=int, help='minimum size of the repetition motif [1]',metavar='',default=1)
@@ -57,6 +64,7 @@ def main():
 	algorithm.add_argument('--precisemotif', help='coherce -m/--motif to find only repetitions with specified motif size', action='store_true')
 	algorithm.add_argument('--precisetimes', help='coherce -t/--times to find only repetitions occuring specified number of times', action='store_true')	
 
+
 	utilities = parser_refer.add_argument_group('Coverage treshold')
 
 	utilities.add_argument('-c', '--coverage', type=int, help='minimum number of reads to call a consensus sequence for region [5]', metavar='', default=5)
@@ -64,7 +72,6 @@ def main():
 	additionals = parser_refer.add_argument_group('Additional parameters')
 
 	additionals.add_argument('--samplename', help='sample name in BCF header [sample]', metavar='',default='sample')
-	additionals.add_argument('--readstype', help='long reads technology (ONT, PB) [ONT]', metavar='', default='ONT', choices=['ONT', 'PB'])
 	additionals.add_argument('--threads', help='number of cores [1]',metavar='', default=1, type=int)
 
 	parser_refer.set_defaults(func=run_subtool)
@@ -184,9 +191,9 @@ def run_subtool(parser, args):
 
 		from .REFER import REFER as submodule
 
-	elif args.command == 'SAGE': #SAmple GEnotyper
+	#elif args.command == 'SAGE': #SAmple GEnotyper
 
-		from .SAGE import SAGE as submodule
+		#from .SAGE import SAGE as submodule
 
 	elif args.command == 'ApP': #Alignment Plotter
 
