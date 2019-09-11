@@ -165,7 +165,7 @@ def run(parser, args):
 	logging.info('Match reward for consensus computation: ' +str(args.match))
 	logging.info('Mismatch penalty for consensus computation: '+ str(args.mismatch))
 	logging.info('Gap opening penalty for consensus computation: ' + str(args.gapopen))
-	logging.ingo('Gap extending penalty for consensus computatio: ' + str(args.gapextend))
+	logging.ingo('Gap extending penalty for consensus computation: ' + str(args.gapextend))
 	logging.info('Check for overlapping repeated motif: ' + str(args.overlapping))
 	regex=finder.RegexBuilder(args.motif,args.times,args.overlapping, args.precisemotif, args.precisetimes)		
 	logging.info('Regex built: ' + regex)
