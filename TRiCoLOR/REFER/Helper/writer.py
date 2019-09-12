@@ -523,7 +523,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, seqh1, coordsh1, 
 			FORMAT = dict()
 
 			FORMAT['GT'] = GEN
-			FORMAT['DP1'] = covh1
-			FORMAT['DP2'] = covh2
+			FORMAT['DP1'] = DP1
+			FORMAT['DP2'] = DP2
 
 			VCF_variantwriter(CHROM, POS, REF, ALT, INFO, FORMAT, out ,processor)
