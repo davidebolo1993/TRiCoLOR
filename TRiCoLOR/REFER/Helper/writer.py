@@ -392,7 +392,14 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, seqh1, coordsh1, 
 					ALT2='.'
 					H2N='.'
 					H2M='.'
-					DP2=covh2
+					
+					if covh2 == []:
+
+						DP2='.'
+
+					else:
+
+						DP2=covh2
 
 				else:
 
@@ -401,7 +408,7 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, seqh1, coordsh1, 
 					ALT2=seqh2_[IS2:IE2].replace('-','')
 					H2N='.'
 					H2M='.'
-					DP1=covh2
+					DP2=covh2
 
 			if seqh1 == [] and seqh2 == []:
 
