@@ -425,7 +425,7 @@ def Runner(processor,sli,refseq,regex,maxmotif,size,bamfile1,bamfile2,coverage,a
 					H1item.extend(pH1)
 
 				out2=os.path.abspath(output + '/haplotype2')
-				
+
 				if bamfile2 is not None:
 					
 					pH2,pS2,pC2,pCOV2=HaploReps(SHCpath,Cpath, bamfile2,s, coverage, regex, maxmotif, size, allowed, refseq, chromind, out2, processor,i,readtype,match,mismatch,gapopen,gapextend)
@@ -437,6 +437,9 @@ def Runner(processor,sli,refseq,regex,maxmotif,size,bamfile1,bamfile2,coverage,a
 				else:
 
 					pH2=[]
+					pS2=[]
+					pC2=[]
+					pCOV2=[]
 
 					open(os.path.abspath(out2 +'/' + processor + '.' + str(i +1) + '.srt.bam'), 'w').close()
 					open(os.path.abspath(out2 +'/' + processor + '.' + str(i +1) + '.srt.bam.bai'), 'w').close()
