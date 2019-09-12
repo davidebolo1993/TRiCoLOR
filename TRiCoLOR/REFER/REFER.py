@@ -301,7 +301,13 @@ def run(parser, args):
 
 				writer.BED_repswriter(b_chrom,[],os.path.abspath(args.output + '/haplotype2'))
 
-		CleanResults(SHMpath, b_chrom, os.path.abspath(args.output), os.path.abspath(bams[0]), os.path.abspath(bams[1]), cores)
+		if len(bams) == 2:
+
+			CleanResults(SHMpath, b_chrom, os.path.abspath(args.output), os.path.abspath(bams[0]), os.path.abspath(bams[1]), cores)
+
+		else:
+
+			CleanResults(SHMpath, b_chrom, os.path.abspath(args.output), os.path.abspath(bams[0]), None, cores)
 
 		logging.info('Processed chromosome ' + b_chrom)
 		print('Processed chromosome ' + b_chrom)
@@ -418,9 +424,10 @@ def Runner(processor,sli,refseq,regex,maxmotif,size,bamfile1,bamfile2,coverage,a
 
 					H1item.extend(pH1)
 
+				out2=os.path.abspath(output + '/haplotype2')
+				
 				if bamfile2 is not None:
 					
-					out2=os.path.abspath(output + '/haplotype2')
 					pH2,pS2,pC2,pCOV2=HaploReps(SHCpath,Cpath, bamfile2,s, coverage, regex, maxmotif, size, allowed, refseq, chromind, out2, processor,i,readtype,match,mismatch,gapopen,gapextend)
 
 					if pH2 != []:
