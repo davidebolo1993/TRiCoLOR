@@ -5,7 +5,6 @@
 
 import datetime
 import os
-import pandas as pd
 from bisect import bisect_left, bisect_right
 from operator import itemgetter
 
@@ -14,6 +13,7 @@ from operator import itemgetter
 
 import pysam
 import editdistance
+import pandas as pd
 
 ## FUNCTIONS
 
