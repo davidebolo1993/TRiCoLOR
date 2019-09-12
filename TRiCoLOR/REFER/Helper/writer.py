@@ -342,8 +342,6 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, seqh1, coordsh1, 
 		sorted_intersection=sorted(intersection, key=itemgetter(1,2))
 		sorted_ranges,ref_dict_number,ref_dict_motif,hap1_dict_number,hap1_dict_motif,hap2_dict_number,hap2_dict_motif=Merger(sorted_intersection, repref, repsh1, repsh2)
 
-		print(sorted_ranges,ref_dict_number,ref_dict_motif,hap1_dict_number,hap1_dict_motif,hap2_dict_number,hap2_dict_motif)
-
 		for reps in sorted_ranges:
 
 			CHROM=chromosome
