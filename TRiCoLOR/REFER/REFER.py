@@ -289,7 +289,7 @@ def run(parser, args):
 		
 			p.join()
 
-		for key in Rrep.keys():
+		for key in sorted(Rrep.keys(), key=natural_keys):
 
 			writer.BED_repswriter(b_chrom,Rrep[key],os.path.abspath(args.output + '/reference'))
 			writer.BED_repswriter(b_chrom,H1rep[key],os.path.abspath(args.output + '/haplotype1'))
@@ -390,6 +390,19 @@ def exitonerror():
 
 	print('An error occured. Check the log file for more details')
 	sys.exit(1)
+
+
+
+def atoi(text):
+
+
+    return int(text) if text.isdigit() else text
+
+
+def natural_keys(text):
+
+
+    return [ atoi(c) for c in re.split(r'(\d+)', text)]
 
 
 def Chunks(l,n):
