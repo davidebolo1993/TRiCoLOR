@@ -388,11 +388,11 @@ class Bed_Reader():
 
 def exitonerror():
 
+	
 	print('An error occured. Check the log file for more details')
 	sys.exit(1)
 
-
-
+	
 def atoi(text):
 
 
