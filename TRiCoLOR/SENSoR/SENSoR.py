@@ -48,12 +48,12 @@ def run(parser, args):
 	
 	notkey=['func']
 	command_string= ' '.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey)
-	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR_SENSoR.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR.SENSoR.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 	
-	print('Initialized .log file ' + os.path.abspath(args.output + '/TRiCoLOR_SENSoR.log'))
+	print('Initialized .log file ' + os.path.abspath(args.output + '/TRiCoLOR.SENSoR.log'))
 
 	logging.info('main=TRiCoLOR ' + command_string)
-	external_tools=['samtools', 'bedops']
+	external_tools=['samtools', 'bedops', 'bedtools']
 
 	for tools in external_tools:
 
@@ -108,6 +108,13 @@ def run(parser, args):
 
 		logging.info('Chromosomes: ' + '-'.join(x for x in args.chromosomes[0]))
 
+	header='#CHROM\tSTART\tEND\tMEANCOV\tSTDCOV\tCOLLAPSEDCOV\n'
+
+	with open(os.path.abspath(args.output + '/TRiCoLOR.srt.bed'), 'w') as finalbedout:
+
+		finalbedout.write(header)
+
+
 	logging.info('Scanning ...')
 	print('Scanning ...')
 
@@ -125,11 +132,17 @@ def run(parser, args):
 		logging.info('Done')
 		logging.info('Writing final BED to output folder')
 
-		with open(os.path.abspath(args.output + '/TRiCoLOR.srt.bed'), 'w') as srtbed1:
+		with open(os.path.abspath(args.output + '/TRiCoLOR.srt.bed.tmp'), 'w') as srtbed1:
 		
-			subprocess.call(['sort-bed', os.path.abspath(args.output + '/H1.bed')],stdout=srtbed1, stderr=open(os.devnull, 'wb'))
+			subprocess.call(['bedtools', 'sort', '-i', os.path.abspath(args.output + '/H1.bed')],stdout=srtbed1, stderr=open(os.devnull, 'wb'))
 
 		os.remove(os.path.abspath(args.output + '/H1.bed'))
+
+		with open(os.path.abspath(args.output + '/TRiCoLOR.srt.bed'), 'a') as finalbedout:
+
+			subprocess.call(['bedtools', 'merge', '-i', os.path.abspath(args.output + '/TRiCoLOR.srt.bed.tmp'), '-c', '4,4,4', '-o', 'mean,stdev,collapse', '-d', str(args.innerdistance)],stdout=finalbedout, stderr=open(os.devnull, 'wb'))
+
+		os.remove(os.path.abspath(args.output + '/TRiCoLOR.srt.bed.tmp'))
 
 	else:
 
@@ -147,21 +160,38 @@ def run(parser, args):
 
 		with open(os.path.abspath(args.output + '/H1.srt.bed'), 'w') as srtbed1:
 		
-			subprocess.call(['sort-bed', os.path.abspath(args.output + '/H1.bed')],stdout=srtbed1, stderr=open(os.devnull, 'wb'))
+			subprocess.call(['bedtools', 'sort', '-i', os.path.abspath(args.output + '/H1.bed')],stdout=srtbed1, stderr=open(os.devnull, 'wb'))
 
 		with open(os.path.abspath(args.output + '/H2.srt.bed'), 'w') as srtbed2:
 		
-			subprocess.call(['sort-bed', os.path.abspath(args.output + '/H2.bed')],stdout=srtbed2, stderr=open(os.devnull, 'wb'))
+			subprocess.call(['bedtools', 'sort', '-i', os.path.abspath(args.output + '/H2.bed')],stdout=srtbed2, stderr=open(os.devnull, 'wb'))
 
 		os.remove(os.path.abspath(args.output + '/H1.bed'))
 		os.remove(os.path.abspath(args.output + '/H2.bed'))
 
-		with open(os.path.abspath(args.output + '/TRiCoLOR.srt.bed'), 'w') as bedout:
+		with open(os.path.abspath(args.output + '/H1.srt.merged.bed'), 'w') as mergedbed1:
+		
+			subprocess.call(['bedtools', 'merge', '-i', os.path.abspath(args.output + '/H1.srt.bed'), '-c', '4,4,4', '-o', 'mean,stdev,collapse', '-d', str(args.innerdistance)],stdout=mergedbed1, stderr=open(os.devnull, 'wb'))
 
-			subprocess.call(['bedops', '-m', os.path.abspath(args.output + '/H1.srt.bed'), os.path.abspath(args.output + '/H2.srt.bed')], stderr=open(os.devnull, 'wb'), stdout=bedout)
+		with open(os.path.abspath(args.output + '/H2.srt.merged.bed'), 'w') as mergedbed2:
+		
+			subprocess.call(['bedtools', 'merge', '-i', os.path.abspath(args.output + '/H2.srt.bed'), '-c', '4,4,4', '-o', 'mean,stdev,collapse', '-d', str(args.innerdistance)],stdout=mergedbed2, stderr=open(os.devnull, 'wb'))
 
 		os.remove(os.path.abspath(args.output + '/H1.srt.bed'))
 		os.remove(os.path.abspath(args.output + '/H2.srt.bed'))
+
+		with open(os.path.abspath(args.output + '/TRiCoLOR.srt.bed.tmp'), 'w') as bedout:
+
+			subprocess.call(['bedops', '-u', os.path.abspath(args.output + '/H1.srt.merged.bed'), os.path.abspath(args.output + '/H2.srt.merged.bed')], stderr=open(os.devnull, 'wb'), stdout=bedout)
+
+		os.remove(os.path.abspath(args.output + '/H1.srt.merged.bed'))
+		os.remove(os.path.abspath(args.output + '/H2.srt.merged.bed'))
+
+		with open(os.path.abspath(args.output + '/TRiCoLOR.srt.bed'), 'a') as finalbedout:
+
+			subprocess.call(['bedtools', 'merge', '-i', os.path.abspath(args.output + '/TRiCoLOR.srt.bed.tmp'), '-c', '4,4,4', '-o', 'mean,stdev,collapse', '-d', str(args.outerdistance)],stderr=open(os.devnull, 'wb'), stdout=finalbedout)
+
+		os.remove(os.path.abspath(args.output + '/TRiCoLOR.srt.bed.tmp'))
 
 	logging.info('Done')
 	print('Done')
@@ -176,7 +206,7 @@ def exitonerror():
 	sys.exit(1)
 
 
-def runInParallel(function, *arguments): #? AS THIS DOES NOT TAKE TOO MUCH TIME EVEN TO SCAN ENTIRE GENOMES, SIMPLY RUN IN PARALLEL THE 2 HAPLOTYPES WHEN 2 HAPLOTYPES ARE PROVIDED. DO WE NEED THIS TO BE FASTER? NOT A PRIORITY.
+def runInParallel(function, *arguments): #? AS THIS DOES NOT REQUIRE TOO MUCH TIME EVEN TO SCAN ENTIRE GENOMES AT HIGH COVERAGES (~10 HRS FOR SPLITTED 56X BAM), SIMPLY RUN IN PARALLEL THE 2 HAPLOTYPES WHEN 2 HAPLOTYPES ARE PROVIDED. DO WE NEED THIS TO BE EVEN FASTER? NOT A PRIORITY.
 
 
 	proc = []
@@ -247,32 +277,32 @@ def entropy_finder(sequence,coordinates,scansize,entropy_treshold):
 	return hit
 
 
-def merge_intervals(intervals):
+#def merge_intervals(intervals):
 
 
-	sorted_by_lower_bound = sorted(intervals, key=itemgetter(0))
-	merged = []
+	#sorted_by_lower_bound = sorted(intervals, key=itemgetter(0))
+	#merged = []
 
-	for higher in sorted_by_lower_bound:
+	#for higher in sorted_by_lower_bound:
 	
-		if not merged:
+		#if not merged:
 			
-			merged.append(higher)
+			#merged.append(higher)
 		
-		else:
+		#else:
 
-			lower = merged[-1]
+			#lower = merged[-1]
 
-			if higher[0] <= lower[1]:
+			#if higher[0] <= lower[1]:
 			
-				upper_bound = max(lower[1], higher[1])
-				merged[-1] = (lower[0], upper_bound)  
+				#upper_bound = max(lower[1], higher[1])
+				#merged[-1] = (lower[0], upper_bound)  
 		
-			else:
+			#else:
 			
-				merged.append(higher)
+				#merged.append(higher)
 
-	return merged
+	#return merged
 
 
 def BScanner(bamfilein, chromosomes, bedfileout,scansize,entropy_treshold,call_treshold, dist_treshold):
@@ -320,14 +350,15 @@ def BScanner(bamfilein, chromosomes, bedfileout,scansize,entropy_treshold,call_t
 
 			if len(group) >= dist_treshold:
 
-				intervals.append((group[0]-350,group[-1]+350))
+				value=np.median(chr_array[group])
+				intervals.append((group[0],group[-1], value))
 
-		intervals=merge_intervals(intervals)
+		#intervals=merge_intervals(intervals)
 
-		with open (bedfileout, 'a') as bedout:
+		with open (bedfileout, 'w') as bedout:
 
 			for inter in intervals:
 
-					bedout.write(chromosome + '\t' +  str(inter[0]) + '\t' + str(inter[1]) + '\n') 
+					bedout.write(chromosome + '\t' +  str(inter[0]-350) + '\t' + str(inter[1]+350) + '\t' + str(inter[2]) + '\n') 
 
 	bamfile.close()
