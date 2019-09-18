@@ -3,8 +3,8 @@
 #python 3 standard library
 
 import argparse
+import sys
 from argparse import HelpFormatter
-
 
 def main():
 
@@ -195,9 +195,10 @@ def run_subtool(parser, args):
 
 		from .REFER import REFER as submodule
 
-	#elif args.command == 'SAGE': #SAmple GEnotyper
+	elif args.command == 'SAGE': #SAmple GEnotyper
 
-		#from .SAGE import SAGE as submodule
+		print('SAGE module is still under development')
+		sys.exit(1)
 
 	elif args.command == 'ApP': #Alignment Plotter
 
