@@ -52,9 +52,9 @@ def run(parser, args):
 	
 	notkey=['func']
 	command_string= ' '.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey)
-	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR_ApP.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR.ApP.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 	
-	print('Initialized .log file ' + os.path.abspath(args.output + '/TRiCoLOR_ApP.log'))
+	print('Initialized .log file ' + os.path.abspath(args.output + '/TRiCoLOR.ApP.log'))
 
 	logging.info('main=TRiCoLOR ' + command_string)
 
