@@ -108,7 +108,7 @@ def run(parser, args):
 
 		logging.info('Chromosomes: ' + '-'.join(x for x in args.chromosomes[0]))
 
-	header='#CHROM\tSTART\tEND\tMEANCOV\tSTDCOV\tCOLLAPSEDCOV\n'
+	header='#CHROM\tSTART\tEND\tMEANCOV\tSTDEVCOV\tCOLLAPSEDCOV\n'
 
 	with open(os.path.abspath(args.output + '/TRiCoLOR.srt.bed'), 'w') as finalbedout:
 
