@@ -53,7 +53,7 @@ def run(parser, args):
 	print('Initialized .log file ' + os.path.abspath(args.output + '/TRiCoLOR.SENSoR.log'))
 
 	logging.info('main=TRiCoLOR ' + command_string)
-	external_tools=['samtools', 'bedops', 'bedtools']
+	external_tools=['samtools', 'bedtools', 'bedops']
 
 	for tools in external_tools:
 
@@ -206,7 +206,7 @@ def exitonerror():
 	sys.exit(1)
 
 
-def runInParallel(function, *arguments): #? AS THIS DOES NOT REQUIRE TOO MUCH TIME EVEN TO SCAN ENTIRE GENOMES AT HIGH COVERAGES (~10 HRS FOR SPLITTED 56X BAM), SIMPLY RUN IN PARALLEL THE 2 HAPLOTYPES WHEN 2 HAPLOTYPES ARE PROVIDED. DO WE NEED THIS TO BE EVEN FASTER? NOT A PRIORITY.
+def runInParallel(function, *arguments): #? AS THIS DOES NOT REQUIRE TOO MUCH TIME EVEN TO SCAN ENTIRE GENOMES AT HIGH COVERAGES (~10 HRS FOR INITIAL 56X BAM), SIMPLY RUN IN PARALLEL THE 2 HAPLOTYPES WHEN 2 HAPLOTYPES ARE PROVIDED. DO WE NEED THIS TO BE EVEN FASTER? NOT A PRIORITY.
 
 
 	proc = []
@@ -351,7 +351,7 @@ def BScanner(bamfilein, chromosomes, bedfileout,scansize,entropy_treshold,call_t
 			if len(group) >= dist_treshold:
 
 				value=np.median(chr_array[group])
-				intervals.append((group[0],group[-1], value))
+				intervals.append((group[0]-350,group[-1]+350, value))
 
 		#intervals=merge_intervals(intervals)
 
@@ -359,6 +359,6 @@ def BScanner(bamfilein, chromosomes, bedfileout,scansize,entropy_treshold,call_t
 
 			for inter in intervals:
 
-					bedout.write(chromosome + '\t' +  str(inter[0]-350) + '\t' + str(inter[1]+350) + '\t' + str(inter[2]) + '\n') 
+					bedout.write(chromosome + '\t' +  str(inter[0]) + '\t' + str(inter[1]) + '\t' + str(inter[2]) + '\n') 
 
 	bamfile.close()
