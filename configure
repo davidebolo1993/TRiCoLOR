@@ -9,6 +9,6 @@ cd ..
 if [ -f ../../TRiCoLOR/REFER/consensus.cpp ]
 then
     mv ../../TRiCoLOR/REFER/consensus.cpp .
+    g++ consensus.cpp -std=c++11 -Iinclude/ -Lbuild/lib/ -lspoa -o consensus
+    mv consensus ../../TRiCoLOR/REFER/ && rm consensus.cpp
 fi
-g++ consensus.cpp -std=c++11 -Iinclude/ -Lbuild/lib/ -lspoa -o consensus
-mv consensus ../../TRiCoLOR/REFER/ && rm consensus.cpp
