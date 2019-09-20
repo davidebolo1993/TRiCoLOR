@@ -114,7 +114,6 @@ def run(parser, args):
 
 		finalbedout.write(header)
 
-
 	logging.info('Scanning ...')
 	print('Scanning ...')
 
@@ -355,7 +354,7 @@ def BScanner(bamfilein, chromosomes, bedfileout,scansize,entropy_treshold,call_t
 
 		#intervals=merge_intervals(intervals)
 
-		with open (bedfileout, 'w') as bedout:
+		with open (bedfileout, 'a') as bedout:
 
 			for inter in intervals:
 
