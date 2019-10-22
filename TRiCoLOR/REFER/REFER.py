@@ -273,13 +273,15 @@ def run(parser, args):
 
 			processor='p'+str(i+1)
 
-			if len(bams) == 2:
+			if not os.path.exists(os.path.abspath(args.output + '/' + processor + '.TRiCoLOR.vcf')):
 
-				writer.VCF_headerwriter(os.path.abspath(bams[0]), os.path.abspath(bams[1]), args.samplename, ','.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey), os.path.abspath(args.output), processor)
+				if len(bams) == 2:
 
-			else:
+					writer.VCF_headerwriter(os.path.abspath(bams[0]), os.path.abspath(bams[1]), args.samplename, ','.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey), os.path.abspath(args.output), processor)
 
-				writer.VCF_headerwriter(os.path.abspath(bams[0]), None, args.samplename, ','.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey), os.path.abspath(args.output), processor)				
+				else:
+
+					writer.VCF_headerwriter(os.path.abspath(bams[0]), None, args.samplename, ','.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey), os.path.abspath(args.output), processor)				
 
 			p=multiprocessing.Process(target=Runner, args=(processor,sli,refseq,regex,args.maxmotif,args.size,bamfile1,bamfile2,args.coverage,args.editdistance,chromind,args.readstype,os.path.abspath(args.output),Rrep,H1rep,H2rep,Cpath,SHCpath,args.match,args.mismatch,args.gapopen,args.gapextend))
 			p.start()
@@ -315,15 +317,13 @@ def run(parser, args):
 
 	bcfs=[]
 
-	for i in range(cores):
+	for i in range(len(glob.glob(os.path.abspath(args.output) + '/*.vcf'))):
 
 		key='p' + str(i+1)
-
 		bcfs.append(os.path.abspath(args.output + '/' + key +  '.TRiCoLOR.bcf'))
 		subprocess.call(['bcftools', 'sort', '-o', os.path.abspath(args.output + '/' + key +  '.TRiCoLOR.bcf'), '-O', 'b', os.path.abspath(args.output + '/' + key + '.TRiCoLOR.vcf')],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
 		subprocess.call(['bcftools', 'index', os.path.abspath(args.output + '/' + key +  '.TRiCoLOR.bcf')],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
 		os.remove(os.path.abspath(args.output + '/' + key + '.TRiCoLOR.vcf'))
-
 
 	with open(os.path.abspath(args.output + '/TRiCoLOR.bcf.txt'), 'w') as filebcfout:
 
@@ -457,7 +457,6 @@ def Runner(processor,sli,refseq,regex,maxmotif,size,bamfile1,bamfile2,coverage,a
 
 					open(os.path.abspath(out2 +'/' + processor + '.' + str(i +1) + '.srt.bam'), 'w').close()
 					open(os.path.abspath(out2 +'/' + processor + '.' + str(i +1) + '.srt.bam.bai'), 'w').close()
-
 
 				writer.VCF_writer(s[0], pR, refseq, pH1, pS1,pC1,pCOV1, pH2, pS2,pC2,pCOV2, output, processor)
 
