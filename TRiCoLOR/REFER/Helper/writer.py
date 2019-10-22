@@ -139,7 +139,6 @@ def VCF_variantwriter(CHROM, POS, REF, ALT, INFO, FORMAT, out, processor):
 		vcfout.write(CHROM + '\t' + str(POS) + '\t' + ID + '\t' + REF + '\t' + ALT + '\t' + QUAL + '\t' + FILTER + '\t' + 'SVEND='+INFO_SVEND + ';'+ 'RAED='+ INFO_RAED + ';' + 'AED=' + INFO_AED  + ';' + 'H1M='+INFO_H1M + ';' + 'H1N='+INFO_H1N + ';' + 'H2M='+INFO_H2M + ';' + 'H2N='+INFO_H2N + '\t' + GEN + '\t' + FORMAT_GT + ':' + FORMAT_DP1 + ':' + FORMAT_DP2 + '\n')
 
 
-
 def modifier2(seq,coords,POS,SVEND):
 
 	NewSeq=''
@@ -334,7 +333,6 @@ def Merger(sorted_int, refreps, h1reps, h2reps):
 
 def VCF_writer(chromosome, repref, reference_sequence, repsh1, seqh1, coordsh1, covh1, repsh2, seqh2, coordsh2, covh2, out, processor):
 
-
 	intersection=list(set(repref+ repsh1 + repsh2))
 
 	if len(intersection) != 0:
@@ -450,7 +448,8 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, seqh1, coordsh1, 
 
 					GEN1 = '0'
 					GEN2 = '0'
-					ALT = '.'
+					ALT= '.'
+					continue
 
 				elif ALT1 == REF and ALT2 != REF:
 
