@@ -194,7 +194,7 @@ def run(parser, args):
 	ref=pyfaidx.Fasta(os.path.abspath(args.genome))
 	gendir=os.path.abspath(os.path.dirname(args.genome))
 	b_in=Bed_Reader(os.path.abspath(args.bedfile))
-	b_chroms=set(iter(b_in))
+	b_chroms=sorted(set(iter(b_in)), key=natural_keys)
 
 	for b_chrom in b_chroms:
 
