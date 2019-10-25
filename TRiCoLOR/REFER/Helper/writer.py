@@ -363,7 +363,14 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, seqh1, coordsh1, 
 					ALT1='.'
 					H1N='.'
 					H1M='.'
-					DP1=covh1
+					
+					if covh1 == []:
+
+						DP1='.'
+
+					else:
+
+						DP1=covh1
 
 				else:
 
@@ -446,9 +453,9 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, seqh1, coordsh1, 
 
 				if ALT1 == REF and ALT2 == REF:
 
-					GEN1 = '0'
-					GEN2 = '0'
-					ALT= '.'
+					#GEN1 = '0'
+					#GEN2 = '0'
+					#ALT= '.'
 					continue
 
 				elif ALT1 == REF and ALT2 != REF:
