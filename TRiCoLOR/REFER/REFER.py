@@ -555,7 +555,7 @@ def HaploReps(SHCpath,Cpath, bamfile,s, coverage, regex, maxmotif, size, allowed
 			os.rename(c_bam + '.bai',os.path.abspath(out +'/' + processor + '.' + str(iteration +1) + '.srt.bam.bai'))
 			cor_coord_reps,consensus_string,consensus_coordinates=finder.corrector(refseq, seq,repetitions, coords, size, allowed)
 
-			if set(list(range(start,end))).intersection(consensus_coordinates):
+			if set(consensus_coordinates).intersection(list(range(start,end))):
 
 				return cor_coord_reps, consensus_string, consensus_coordinates, cov_inbam
 
