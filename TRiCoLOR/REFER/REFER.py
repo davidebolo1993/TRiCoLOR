@@ -553,9 +553,15 @@ def HaploReps(SHCpath,Cpath, bamfile,s, coverage, regex, maxmotif, size, allowed
 			repetitions=list(finder.RepeatsFinder(seq,regex,maxmotif))
 			os.rename(c_bam,os.path.abspath(out +'/' + processor + '.' + str(iteration +1) + '.srt.bam'))
 			os.rename(c_bam + '.bai',os.path.abspath(out +'/' + processor + '.' + str(iteration +1) + '.srt.bam.bai'))
-			cor_coord_reps,consensus_string,consensus_coordinates=finder.corrector(refseq, seq, repetitions, coords, size, allowed)
+			cor_coord_reps,consensus_string,consensus_coordinates=finder.corrector(refseq, seq,repetitions, coords, size, allowed)
 
-			return cor_coord_reps, consensus_string, consensus_coordinates, cov_inbam
+			if set(list(range(start,end))).intersection(consensus_coordinates):
+
+				return cor_coord_reps, consensus_string, consensus_coordinates, cov_inbam
+
+			else:
+
+				return empty, empty, empty, empty
 
 
 
