@@ -197,8 +197,7 @@ def run_subtool(parser, args):
 
 	elif args.command == 'SAGE': #SAmple GEnotyper
 
-		print('SAGE module is still under development')
-		sys.exit(1)
+		from .SAGE import SAGE as submodule
 
 	elif args.command == 'ApP': #Alignment Plotter
 
