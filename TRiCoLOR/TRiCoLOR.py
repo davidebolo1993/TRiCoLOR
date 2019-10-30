@@ -91,6 +91,13 @@ def main():
 	required.add_argument('-bam', '--bamfile', help='one or more comma-separated couples of haplotype-resolved BAM from individuals related to the one already genotyped with REFER', dest='bamfile', metavar='BAM', type=BAM, nargs='+', required=True)
 	required.add_argument('-o','--output', help='output folder',metavar='folder',required=True)
 
+	consensus = parser_sage.add_argument_group('Consensus-building parameters')
+
+	consensus.add_argument('--match', type=int, help='reward for a matching base [5]', metavar='', default = 5)
+	consensus.add_argument('--mismatch', type=int, help='penalty for a base not matching [-4]', metavar='', default = -4)
+	consensus.add_argument('--gapopen', type=int, help='penalty for gap opening [-8]', metavar='', default = -8)
+	consensus.add_argument('--gapextend', type=int, help='penalty for gap extending [-6]', metavar='', default = -6)
+
 	utilities = parser_sage.add_argument_group('Coverage treshold')
 
 	utilities.add_argument('-c', '--coverage', type=int, help='minimum number of reads to call a consensus sequence in region [5]', metavar='', default=5)
@@ -100,6 +107,7 @@ def main():
 	additionals.add_argument('--samplename', help='one name for each couple of BAM specified in -bam/--bamfile', metavar='',default=None, nargs='+', action='append')
 	additionals.add_argument('--readstype', help='long reads technology (ONT, PB) [ONT]', metavar='', default='ONT', choices=['ONT', 'PB'])
 	additionals.add_argument('--threads', help='number of cores [1]',metavar='', default=1, type=int)
+	additionals.add_argument('--store', help=argparse.SUPPRESS, action='store_true')
 
 	parser_sage.set_defaults(func=run_subtool)
 
