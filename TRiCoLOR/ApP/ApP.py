@@ -45,7 +45,7 @@ def run(parser, args):
 			
 		elif os.listdir(os.path.abspath(args.output)):
 
-			print('The output folder is not empty. Specify another output folder or clean the previsouly chosen')
+			print('The output folder is not empty. Specify another output folder or clean the one previsouly chosen')
 			sys.exit(1)
 
 	command_dict= vars(args)
