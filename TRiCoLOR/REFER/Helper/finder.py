@@ -367,21 +367,13 @@ def Markovchain(motif,string):
         next_ = string[i + STATE_LEN :i + STATE_LEN*2]
         model[state][next_] += 1
 
-    motif_probability=(model[motif][motif]/len(string))*len(motif) + len(motif)/len(string)
+    motif_probability=((model[motif][motif]+1)/len(string))*STATE_LEN + STATE_LEN/len(string)
 
     return motif_probability, model[motif][motif]+1
 
 
-#def check_ref(string1, string2): 
-
-
-    #return string1 != string2
-
 
 def corrector(reference, string, repetitions, coordinates, size, allowed):
-
-
-    #print(string, repetitions, coordinates, size, allowed)
 
     corr_=[]
     coords=modifier(coordinates)
