@@ -19,225 +19,225 @@ from cyvcf2 import VCF
 def run(parser, args):
 
 
-    if not os.path.exists(os.path.abspath(args.output)):
+	if not os.path.exists(os.path.abspath(args.output)):
 
-        try:
+		try:
 
-            os.makedirs(os.path.abspath(args.output))
+			os.makedirs(os.path.abspath(args.output))
 
-        except:
+		except:
 
-            print('Cannot create the output folder')	
-            sys.exit(1)
+			print('Cannot create the output folder')	
+			sys.exit(1)
 
-    else:
+	else:
 
-        if not os.access(os.path.abspath(args.output),os.W_OK):
+		if not os.access(os.path.abspath(args.output),os.W_OK):
 
-            print('Missing write permissions on the output folder')	
-            sys.exit(1)
+			print('Missing write permissions on the output folder')	
+			sys.exit(1)
 
-        elif os.listdir(os.path.abspath(args.output)):
+		elif os.listdir(os.path.abspath(args.output)):
 
-            print('The output folder is not empty. Specify another output folder or clean the one previsouly chosen')
-            sys.exit(1)
+			print('The output folder is not empty. Specify another output folder or clean the one previsouly chosen')
+			sys.exit(1)
 
-    command_dict= vars(args)
-    notkey=['func']
-    command_string= ' '.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey)
-    logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR.SAGE.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-    print('Initialized .log file ' + os.path.abspath(args.output + '/TRiCoLOR.SAGE.log'))
-    logging.info('main=TRiCoLOR ' + command_string)
+	command_dict= vars(args)
+	notkey=['func']
+	command_string= ' '.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey)
+	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR.SAGE.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+	print('Initialized .log file ' + os.path.abspath(args.output + '/TRiCoLOR.SAGE.log'))
+	logging.info('main=TRiCoLOR ' + command_string)
 
-    if which('samtools') is None:
+	if which('samtools') is None:
 
-        logging.error('samtools cannot be executed. Install samtools and re-run TRiCoLOR SAGE')
-        exitonerror()
+		logging.error('samtools cannot be executed. Install samtools and re-run TRiCoLOR SAGE')
+		exitonerror()
 
-    for couples in args.bamfile:
+	for couples in args.bamfile:
 
-        try:
+		try:
 
-            subprocess.call(['samtools','quickcheck', os.path.abspath(couples[0])],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
+			subprocess.call(['samtools','quickcheck', os.path.abspath(couples[0])],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
 
-        except:
+		except:
 
-            logging.error(('BAM ' + couples[0] + ' does not exist, is not readable or is not a valid BAM'))
-            exitonerror()
+			logging.error(('BAM ' + couples[0] + ' does not exist, is not readable or is not a valid BAM'))
+			exitonerror()
 
-        if not os.path.exists(os.path.abspath(couples[0] + '.bai')):
+		if not os.path.exists(os.path.abspath(couples[0] + '.bai')):
 
-            logging.warning('Missing index for BAM ' + couples[0] + '. Creating index ...')
+			logging.warning('Missing index for BAM ' + couples[0] + '. Creating index ...')
 
-            try:
+			try:
 
-                subprocess.call(['samtools', 'index', os.path.abspath(couples[0])], stdout=open(os.devnull,'wb'), stderr=open(os.devnull, 'wb'))
+				subprocess.call(['samtools', 'index', os.path.abspath(couples[0])], stdout=open(os.devnull,'wb'), stderr=open(os.devnull, 'wb'))
 
-            except:
+			except:
 
-                logging.error('BAM ' + couples[0] + ' could not be indexed')
-                exitonerror()
+				logging.error('BAM ' + couples[0] + ' could not be indexed')
+				exitonerror()
 
-        try:
+		try:
 
-            subprocess.call(['samtools','quickcheck', os.path.abspath(couples[1])],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
+			subprocess.call(['samtools','quickcheck', os.path.abspath(couples[1])],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
 
-        except:
+		except:
 
-            logging.error(('BAM ' + couples[1] + ' does not exist, is not readable or is not a valid BAM'))
-            exitonerror()
+			logging.error(('BAM ' + couples[1] + ' does not exist, is not readable or is not a valid BAM'))
+			exitonerror()
 
-        if not os.path.exists(os.path.abspath(couples[1] + '.bai')):
+		if not os.path.exists(os.path.abspath(couples[1] + '.bai')):
 
-            logging.warning('Missing index for BAM ' + couples[1] + '. Creating index ...')
+			logging.warning('Missing index for BAM ' + couples[1] + '. Creating index ...')
 
-            try:
+			try:
 
-                subprocess.call(['samtools', 'index', os.path.abspath(couples[1])], stdout=open(os.devnull,'wb'), stderr=open(os.devnull, 'wb'))
+				subprocess.call(['samtools', 'index', os.path.abspath(couples[1])], stdout=open(os.devnull,'wb'), stderr=open(os.devnull, 'wb'))
 
-            except:
+			except:
 
-                logging.error('BAM ' + couples[1] + ' could not be indexed')
-                exitonerror()
+				logging.error('BAM ' + couples[1] + ' could not be indexed')
+				exitonerror()
 
-    snames=[]
+	snames=[]
 
-    if args.samplename is None:
+	if args.samplename is None:
 
-        for i in range(len(args.bamfile)):
+		for i in range(len(args.bamfile)):
 
-            snames.append('SAMPLE' + str(i+1))
+			snames.append('SAMPLE' + str(i+1))
 
-        else:
+	else:
 
-            snames=args.samplename[0]
+		snames=args.samplename[0]
 
-    if not os.path.exists(os.path.abspath(args.bcffile)):
+	if not os.path.exists(os.path.abspath(args.bcffile)):
 
-        logging.error('BCF ' + args.bcffile + ' does not exist')
-        exitonerror()
+		logging.error('BCF ' + args.bcffile + ' does not exist')
+		exitonerror()
 
-    try:
+	try:
 
-        with open(os.path.abspath(args.genome),'r') as file:
+		with open(os.path.abspath(args.genome),'r') as file:
 
-            assert(file.readline().startswith('>'))
+			assert(file.readline().startswith('>'))
 
-    except:
+	except:
 
-        logging.error('Reference file does not exist, is not readable or is not a valid FASTA')
-        exitonerror()
+		logging.error('Reference file does not exist, is not readable or is not a valid FASTA')
+		exitonerror()
 
-    Cpath=os.path.abspath(os.path.dirname(os.path.dirname(__file__)) + '/REFER/consensus')
-    SHCpath=os.path.abspath(os.path.dirname(os.path.dirname(__file__)) + '/REFER/consensus.sh')
-    gendir=os.path.abspath(os.path.dirname(args.genome))
+	Cpath=os.path.abspath(os.path.dirname(os.path.dirname(__file__)) + '/REFER/consensus')
+	SHCpath=os.path.abspath(os.path.dirname(os.path.dirname(__file__)) + '/REFER/consensus.sh')
+	gendir=os.path.abspath(os.path.dirname(args.genome))
 
-    logging.info('Related individuals to genotype: ' + str(len(snames)))
+	logging.info('Related individuals to genotype: ' + str(len(snames)))
 
-    if args.threads > multiprocessing.cpu_count():
+	if args.threads > multiprocessing.cpu_count():
 
-        cores=multiprocessing.cpu_count()
-        logging.warning(str(args.threads) + ' cores specified but only ' + str(cores) + ' available. Using all cores available')
+		cores=multiprocessing.cpu_count()
+		logging.warning(str(args.threads) + ' cores specified but only ' + str(cores) + ' available. Using all cores available')
 
-    else:
+	else:
 
-        cores=args.threads
+		cores=args.threads
 
-    logging.info('Match reward for consensus computation: ' +str(args.match))
-    logging.info('Mismatch penalty for consensus computation: '+ str(args.mismatch))
-    logging.info('Gap opening penalty for consensus computation: ' + str(args.gapopen))
-    logging.info('Gap extending penalty for consensus computation: ' + str(args.gapextend))
-    logging.info('Coverage treshold: ' + str(args.coverage))
-    logging.info('Long reads type: ' + str(args.readstype))
-    logging.info('Cores: ' + str(cores))
-    
-    logging.info('Parsing input BCF ...')
+	logging.info('Match reward for consensus computation: ' +str(args.match))
+	logging.info('Mismatch penalty for consensus computation: '+ str(args.mismatch))
+	logging.info('Gap opening penalty for consensus computation: ' + str(args.gapopen))
+	logging.info('Gap extending penalty for consensus computation: ' + str(args.gapextend))
+	logging.info('Coverage treshold: ' + str(args.coverage))
+	logging.info('Long reads type: ' + str(args.readstype))
+	logging.info('Cores: ' + str(cores))
+	
+	logging.info('Parsing input BCF ...')
 
-    infos,header=ParseBCF(os.path.abspath(args.bcffile))
+	infos,header=ParseBCF(os.path.abspath(args.bcffile))
 
-    logging.info('Done')
+	logging.info('Done')
 
-    VCF_HeaderModifier(header,snames,os.path.abspath(args.output))
+	VCF_HeaderModifier(header,snames,os.path.abspath(args.output))
 
-    entries=len(infos)
-    chunk_size=entries/cores
-    slices=Chunks(infos,math.ceil(chunk_size))
+	entries=len(infos)
+	chunk_size=entries/cores
+	slices=Chunks(infos,math.ceil(chunk_size))
 
-    Namesdict=dict()
+	Namesdict=dict()
 
-    logging.info('Genotyping samples ...')
+	logging.info('Genotyping samples ...')
 
-    for names,couples in zip(snames,args.bamfile):
+	for names,couples in zip(snames,args.bamfile):
 
-        logging.info('Genotyping ' + names + ' ...')
-        print('Genotyping ' + names + ' ...')
+		logging.info('Genotyping ' + names + ' ...')
+		print('Genotyping ' + names + ' ...')
 
-        os.makedirs(os.path.abspath(args.output) + '/' + names + '/haplotype1')
-        os.makedirs(os.path.abspath(args.output) + '/' + names + '/haplotype2')
+		os.makedirs(os.path.abspath(args.output) + '/' + names + '/haplotype1')
+		os.makedirs(os.path.abspath(args.output) + '/' + names + '/haplotype2')
 
-        manager = multiprocessing.Manager()
-        PROC_ENTRIES=manager.dict()
-        processes=[]
+		manager = multiprocessing.Manager()
+		PROC_ENTRIES=manager.dict()
+		processes=[]
 
-        for i,sli in enumerate(slices):
+		for i,sli in enumerate(slices):
 
-            processor='p'+str(i+1)
-            p=multiprocessing.Process(target=Runner, args=(SHCpath,Cpath,gendir,processor,names,PROC_ENTRIES,sli,couples[0],couples[1],args.coverage,args.match, args.mismatch, args.gapopen, args.gapextend,os.path.abspath(args.output)))
-            p.start()
-            processes.append(p)
+			processor='p'+str(i+1)
+			p=multiprocessing.Process(target=Runner, args=(SHCpath,Cpath,gendir,processor,names,PROC_ENTRIES,sli,couples[0],couples[1],args.coverage,args.match, args.mismatch, args.gapopen, args.gapextend,os.path.abspath(args.output)))
+			p.start()
+			processes.append(p)
 
-        for p in processes:
+		for p in processes:
 
-            p.join()
+			p.join()
 
-        Namesdict[names] = []
+		Namesdict[names] = []
 
-        for key in sorted(PROC_ENTRIES.keys(), key=natural_keys):
+		for key in sorted(PROC_ENTRIES.keys(), key=natural_keys):
 
-            Namesdict[names].extend(PROC_ENTRIES[key])
+			Namesdict[names].extend(PROC_ENTRIES[key])
 
-    logging.info('Done')
-    
-    logging.info('Writing to BCF ...')
+	logging.info('Done')
+	
+	logging.info('Writing to BCF ...')
 
-    FILTER='.'
-    QUAL='.'
-    ID='.'
-    FORMAT='GT:DP1:DP2:GS'
-    QUALCHILD=1.0
+	FILTER='.'
+	QUAL='.'
+	ID='.'
+	FORMAT='GT:DP1:DP2:GS'
+	QUALCHILD=1.0
 
-    with open(os.path.abspath(args.output + '/TRiCoLOR.vcf'), 'a') as vcfout:
+	with open(os.path.abspath(args.output + '/TRiCoLOR.vcf'), 'a') as vcfout:
 
-        for i in range(len(infos)):
+		for i in range(len(infos)):
 
-            CHROM,POS,END,REF,ALT,RAED,AED,GENCHILD,DP1,DP2=Namesdict[snames[0]][i][0], str(Namesdict[snames[0]][i][1]), str(Namesdict[snames[0]][i][2]), Namesdict[snames[0]][i][3], ','.join(x for x in Namesdict[snames[0]][i][4]), str(Namesdict[snames[0]][i][5]), str(Namesdict[snames[0]][i][6]),'|'.join(str(x) for x in Namesdict[snames[0]][i][7][:-1]).replace('-1', '.'), str(Namesdict[snames[0]][i][8]), str(Namesdict[snames[0]][i][9])
+			CHROM,POS,END,REF,ALT,RAED,AED,GENCHILD,DP1,DP2=Namesdict[snames[0]][i][0], str(Namesdict[snames[0]][i][1]), str(Namesdict[snames[0]][i][2]), Namesdict[snames[0]][i][3], ','.join(x for x in Namesdict[snames[0]][i][4]), str(Namesdict[snames[0]][i][5]), str(Namesdict[snames[0]][i][6]),'|'.join(str(x) for x in Namesdict[snames[0]][i][7][:-1]).replace('-1', '.'), str(Namesdict[snames[0]][i][8]), str(Namesdict[snames[0]][i][9])
 
-            toadd=[]
-            seqs=[]
-            missing=0
+			toadd=[]
+			seqs=[]
+			missing=0
 
-            for names in snames:
+			for names in snames:
 
-                toadd.append(Namesdict[names][i][10] + ':' + str(Namesdict[names][i][14])  + ':' + str(Namesdict[names][i][15]) + ':' + repr(Namesdict[names][i][11]))
-                seqs.append(names + ':' + Namesdict[names][i][12] + ',' + Namesdict[names][i][13])
-                missing += Namesdict[names][i][10].count('.')
+				toadd.append(Namesdict[names][i][10] + ':' + str(Namesdict[names][i][14])  + ':' + str(Namesdict[names][i][15]) + ':' + repr(Namesdict[names][i][11]))
+				seqs.append(names + ':' + Namesdict[names][i][12] + ',' + Namesdict[names][i][13])
+				missing += Namesdict[names][i][10].count('.')
 
-            MISSR=missing/(len(snames+1)*2)
+			MISSR=missing/(len(snames+1)*2)
 
-            vcfout.write(CHROM + '\t' + POS + '\t' + ID + '\t' + REF + '\t' + ALT + '\t' + QUAL + '\t' + FILTER + '\t' + 'SVEND='+END + ';RAED=' +RAED + ';AED=' + AED + ';MISSR=' + str(MISSR) + '\t' + FORMAT + '\t' + GENCHILD + ':'+ DP1 + ':' + DP2 + ':' + str(QUALCHILD) + '\t' + '\t'.join(x for x in toadd) + '\n')
+			vcfout.write(CHROM + '\t' + POS + '\t' + ID + '\t' + REF + '\t' + ALT + '\t' + QUAL + '\t' + FILTER + '\t' + 'SVEND='+END + ';RAED=' +RAED + ';AED=' + AED + ';MISSR=' + str(MISSR) + '\t' + FORMAT + '\t' + GENCHILD + ':'+ DP1 + ':' + DP2 + ':' + str(QUALCHILD) + '\t' + '\t'.join(x for x in toadd) + '\n')
 
-        if args.store:
+		if args.store:
 
-            with open(os.path.abspath(args.output + '/sequences.tsv'), 'a') as relatedout:
+			with open(os.path.abspath(args.output + '/sequences.tsv'), 'a') as relatedout:
 
-                relatedout.write(CHROM + '\t' + POS + '\t' + END + '\t' + '\t'.join(x for x in seqs) + '\n')
+				relatedout.write(CHROM + '\t' + POS + '\t' + END + '\t' + '\t'.join(x for x in seqs) + '\n')
 
-    subprocess.call(['bcftools', 'sort', '-o', os.path.abspath(args.output + '/TRiCoLOR.srt.bcf'), '-O', 'b', os.path.abspath(args.output + '/TRiCoLOR.vcf')],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
-    subprocess.call(['bcftools', 'index', os.path.abspath(args.output + '/TRiCoLOR.srt.bcf')],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
-    os.remove(os.path.abspath(args.output + '/TRiCoLOR.vcf'))
+	subprocess.call(['bcftools', 'sort', '-o', os.path.abspath(args.output + '/TRiCoLOR.srt.bcf'), '-O', 'b', os.path.abspath(args.output + '/TRiCoLOR.vcf')],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
+	subprocess.call(['bcftools', 'index', os.path.abspath(args.output + '/TRiCoLOR.srt.bcf')],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
+	os.remove(os.path.abspath(args.output + '/TRiCoLOR.vcf'))
 
-    logging.info('Done')
-    print('Done')
+	logging.info('Done')
+	print('Done')
 
 
 #FUNCTIONS
@@ -246,195 +246,195 @@ def run(parser, args):
 def exitonerror():
 
 
-    print('An error occured. Check the log file for more details')
-    sys.exit(1)
+	print('An error occured. Check the log file for more details')
+	sys.exit(1)
 
 
 def atoi(text):
 
 
-    return int(text) if text.isdigit() else text
+	return int(text) if text.isdigit() else text
 
 
 def natural_keys(text):
 
 
-    return [ atoi(c) for c in re.split(r'(\d+)', text)]
+	return [ atoi(c) for c in re.split(r'(\d+)', text)]
 
 
 def Chunks(l,n):
 
 
-    return [l[i:i+n] for i in range(0, len(l), n)]
+	return [l[i:i+n] for i in range(0, len(l), n)]
 
 
 
 def sub_none(list_of_coord):
 
 
-    return [-999999 if v is None else v for v in list_of_coord]
+	return [-999999 if v is None else v for v in list_of_coord]
 
 
 def check_coverage(pysam_AlignmentFile, chromosome, start, end, coverage):
 
 
-    counter = 0
+	counter = 0
 
-    for read in pysam_AlignmentFile.fetch(chromosome, start, end):
+	for read in pysam_AlignmentFile.fetch(chromosome, start, end):
 
-        if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
+		if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
 
-            if read.reference_start <= start and read.reference_end >= end: 
+			if read.reference_start <= start and read.reference_end >= end: 
 
-                counter +=1
+				counter +=1
 
-    if counter >= coverage:
+	if counter >= coverage:
 
-        return True,counter
+		return True,counter
    
-    else:
+	else:
 
-        return False,counter
+		return False,counter
 
 
 def Bamfile_Analyzer(bamfilein,chromosome,start,end, coverage, out, processor):
 
 
-    start=start-350
-    end=end+350
-    bamfile=pysam.AlignmentFile(bamfilein,'rb')
-    progress,cov=check_coverage(bamfile, chromosome, start, end, coverage)
+	start=start-350
+	end=end+350
+	bamfile=pysam.AlignmentFile(bamfilein,'rb')
+	progress,cov=check_coverage(bamfile, chromosome, start, end, coverage)
 
-    if progress:
+	if progress:
 
-        for read in bamfile.fetch(chromosome,start,end):
+		for read in bamfile.fetch(chromosome,start,end):
 
-            if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
+			if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
 
-                read_start=read.reference_start
-                read_end=read.reference_end
+				read_start=read.reference_start
+				read_end=read.reference_end
 
-                if read_start <= start and read_end >= end:
+				if read_start <= start and read_end >= end:
 
-                    sequence=read.seq
-                    coord=sub_none(read.get_reference_positions(full_length=True))
-                    header=read.query_name
+					sequence=read.seq
+					coord=sub_none(read.get_reference_positions(full_length=True))
+					header=read.query_name
 
-                    s_,e_=min(coord, key=lambda x:abs(x-start)), min(coord, key=lambda x:abs(x-end)) 
-                    s_i,e_i = [i for i,e in enumerate(coord) if e == s_][0], [i for i,e in enumerate(coord) if e == e_][0] 
+					s_,e_=min(coord, key=lambda x:abs(x-start)), min(coord, key=lambda x:abs(x-end)) 
+					s_i,e_i = [i for i,e in enumerate(coord) if e == s_][0], [i for i,e in enumerate(coord) if e == e_][0] 
 
-                    with open(os.path.abspath(out+'/' + processor + '.unaligned.fa'),'a') as fastaout:
+					with open(os.path.abspath(out+'/' + processor + '.unaligned.fa'),'a') as fastaout:
 
-                        fastaout.write('>' + header + '\n' + sequence[s_i:e_i+1] + '\n')
+						fastaout.write('>' + header + '\n' + sequence[s_i:e_i+1] + '\n')
 
-    bamfile.close()
-    return cov
+	bamfile.close()
+	return cov
 
 
 def Get_Alignment_Positions(bamfilein):
 
-      
-    coords=[]
-    seq=[]
+	  
+	coords=[]
+	seq=[]
 
-    bamfile=pysam.AlignmentFile(bamfilein,'rb')
+	bamfile=pysam.AlignmentFile(bamfilein,'rb')
 
-    for read in bamfile.fetch():
+	for read in bamfile.fetch():
 
-        if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
+		if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
 
-            coords = read.get_reference_positions(full_length=True)
-            seq=read.seq
+			coords = read.get_reference_positions(full_length=True)
+			seq=read.seq
 
-    bamfile.close()
+	bamfile.close()
 
-    return coords,seq
+	return coords,seq
 
 
 def modifier(coordinates):
 
-        
-    coordinates=[el+1 if el is not None else el for el in coordinates]
-    start=next(ele for ele in coordinates if ele is not None)
+		
+	coordinates=[el+1 if el is not None else el for el in coordinates]
+	start=next(ele for ele in coordinates if ele is not None)
 
-    for ind, ele in enumerate(coordinates):
-            
-        if ele is None:
+	for ind, ele in enumerate(coordinates):
+			
+		if ele is None:
 
-            coordinates[ind] = start
-            
-        else:
+			coordinates[ind] = start
+			
+		else:
 
-            start = ele
+			start = ele
 
-    return coordinates
+	return coordinates
 
 
 def ParseBCF(bcfile):
 
 
-    infos=[]
-    it=VCF(bcfile)
-    header=it.raw_header
+	infos=[]
+	it=VCF(bcfile)
+	header=it.raw_header
 
-    for variant in it:
+	for variant in it:
 
-        if variant.ALT == []:
+		if variant.ALT == []:
 
-            continue
+			continue
 
-        else:
+		else:
 
-            infos.append((variant.CHROM, variant.start+1, variant.end, variant.REF, variant.ALT, variant.genotypes[0], variant.INFO.get('RAED'), variant.INFO.get('AED'), int(variant.format('DP1')), int(variant.format('DP2'))))
+			infos.append((variant.CHROM, variant.start+1, variant.end, variant.REF, variant.ALT, variant.genotypes[0], variant.INFO.get('RAED'), variant.INFO.get('AED'), int(variant.format('DP1')), int(variant.format('DP2'))))
 
-    it.close()
+	it.close()
 
-    return infos, header
+	return infos, header
 
 
 def VCF_HeaderModifier(rawheader, samples, output):
 
 
-    headlist=rawheader.split('\n')[:-1]
-    newheader=''
+	headlist=rawheader.split('\n')[:-1]
+	newheader=''
 
-    for el in headlist:
+	for el in headlist:
 
-        if el.startswith('##filedate') or el.startswith('##bcftools') or el.startswith('##source') or el.startswith('##INFO=<ID=H') :
+		if el.startswith('##filedate') or el.startswith('##bcftools') or el.startswith('##source') or el.startswith('##INFO=<ID=H') :
 
-            continue
+			continue
 
-        elif el.startswith('##FORMAT=<ID=DP2'):
+		elif el.startswith('##FORMAT=<ID=DP2'):
 
-            newheader+=el + '\n' + '##FORMAT=<ID=GS,Number=1,Type=Float,Description="Genotype Score (>=0 and <=1)">' + '\n'
+			newheader+=el + '\n' + '##FORMAT=<ID=GS,Number=1,Type=Float,Description="Genotype Score (>=0 and <=1)">' + '\n'
 
-        elif el.startswith('##SAMPLE'):
+		elif el.startswith('##SAMPLE'):
 
-            newheader+=el + '\n'
+			newheader+=el + '\n'
 
-            for name in samples:
+			for name in samples:
 
-                newheader+= '##SAMPLE=<ID=' + name + '>' + '\n'
+				newheader+= '##SAMPLE=<ID=' + name + '>' + '\n'
 
-        elif el.startswith('#CHROM'):
+		elif el.startswith('#CHROM'):
 
-            for name in samples:
+			for name in samples:
 
-                el+='\t' + name
+				el+='\t' + name
 
-            newheader+=el + '\n'
+			newheader+=el + '\n'
 
-        elif el.startswith('##INFO=<ID=AED'):
+		elif el.startswith('##INFO=<ID=AED'):
 
-            newheader += el + '\n' + '##INFO=<ID=MISSR,Number=1,Type=Float,Description="Missing genotypes (ratio)">' +'\n'
+			newheader += el + '\n' + '##INFO=<ID=MISSR,Number=1,Type=Float,Description="Missing genotypes (ratio)">' +'\n'
 
-        else:
+		else:
 
-            newheader+=el + '\n'
+			newheader+=el + '\n'
 
-        with open(os.path.abspath(output + '/TRiCoLOR.vcf'), 'w') as vcfout:
+		with open(os.path.abspath(output + '/TRiCoLOR.vcf'), 'w') as vcfout:
 
-            vcfout.write(newheader)
+			vcfout.write(newheader)
 
 
 
@@ -442,169 +442,169 @@ def VCF_HeaderModifier(rawheader, samples, output):
 def GetGTandGS(test,ref,alts):
 
 
-    Redit=editdistance.eval(ref,test)
-    Rscore=Redit/len(max([test,ref], key=len)) #edit distance between test and reference 
-    iRscore=1.0-Rscore #inverted score. max 1 (ref==test), min 0 if difference is max
+	Redit=editdistance.eval(ref,test)
+	Rscore=Redit/len(max([test,ref], key=len)) #edit distance between test and reference 
+	iRscore=1.0-Rscore #inverted score. max 1 (ref==test), min 0 if difference is max
 
-    altscores=[]
+	altscores=[]
 
-    for alt in alts:
+	for alt in alts:
 
-        Aedit=editdistance.eval(alt,test)
-        Ascore=Aedit/len(max([test,alt], key=len)) #edit distance between test and reference
-        iAscore=1.0-Ascore #inverted score. max 1 (alt==test), min 0 if difference is max
-        altscores.append(iAscore)
+		Aedit=editdistance.eval(alt,test)
+		Ascore=Aedit/len(max([test,alt], key=len)) #edit distance between test and reference
+		iAscore=1.0-Ascore #inverted score. max 1 (alt==test), min 0 if difference is max
+		altscores.append(iAscore)
 
-    iAlt=altscores.index(max(altscores))
+	iAlt=altscores.index(max(altscores))
 
-    if altscores[iAlt] > iRscore: #choose iAlt
+	if altscores[iAlt] > iRscore: #choose iAlt
 
-        return str(iAlt +1),round(float(altscores[iAlt]),2)
+		return str(iAlt +1),round(float(altscores[iAlt]),2)
 
-    elif altscores[iAlt] < iRscore: #choose iRscore
+	elif altscores[iAlt] < iRscore: #choose iRscore
 
-        return '0', round(float(iRscore),2)
+		return '0', round(float(iRscore),2)
 
-    else: #if the same, uknown
+	else: #if the same, uknown
 
-        return '.', float(0)
+		return '.', float(0)
 
 
 
 def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,coverage,match, mismatch, gapopen, gapextend, output):
 
 
-    Entries = PROC_ENTRIES[processor] = list()
+	Entries = PROC_ENTRIES[processor] = list()
 
-    for s in sli:
+	for s in sli:
 
-        chromosome,start,end,ref,alt,genchild,raed,aed,dp1,dp2=s
+		chromosome,start,end,ref,alt,genchild,raed,aed,dp1,dp2=s
 
-        if readtype == 'ONT':
+		if readtype == 'ONT':
 
-            mmivar='map-ont'
-            chromind= os.path.abspath(gendir + '/' + chromosome + '.ont.mmi')
+			mmivar='map-ont'
+			chromind= os.path.abspath(gendir + '/' + chromosome + '.ont.mmi')
 
-        else:
+		else:
 
-            mmivar='map-pb'
-            chromind= os.path.abspath(gendir + '/' + chromosome + '.pb.mmi')
+			mmivar='map-pb'
+			chromind= os.path.abspath(gendir + '/' + chromosome + '.pb.mmi')
 
-        out1=os.path.abspath(output + '/' + name +'/haplotype1')
-        out2=os.path.abspath(output + '/' + name +'/haplotype2')
+		out1=os.path.abspath(output + '/' + name +'/haplotype1')
+		out2=os.path.abspath(output + '/' + name +'/haplotype2')
 
-        cov1=Bamfile_Analyzer(bam1,chromosome,start,end, coverage, out1, processor)
-        cov2=Bamfile_Analyzer(bam2,chromosome,start,end, coverage, out2, processor)
+		cov1=Bamfile_Analyzer(bam1,chromosome,start,end, coverage, out1, processor)
+		cov2=Bamfile_Analyzer(bam2,chromosome,start,end, coverage, out2, processor)
 
-        file1=os.path.abspath(out1 + '/' + processor + '.unaligned.fa')
-        file2=os.path.abspath(out2 + '/' + processor + '.unaligned.fa')
+		file1=os.path.abspath(out1 + '/' + processor + '.unaligned.fa')
+		file2=os.path.abspath(out2 + '/' + processor + '.unaligned.fa')
 
-        if os.path.exists(file1):
+		if os.path.exists(file1):
 
-            subprocess.call(['bash', SHCpath, out1, Cpath, processor, os.path.basename(file1), mmivar, chromind, str(match), str(mismatch), str(gapopen), str(gapextend)],stdout=open(os.devnull, 'wb'),stderr=open(os.devnull, 'wb'))
-            c_bam1=os.path.abspath(out1 + '/' + processor + '.cs.srt.bam')
-            coords,seq=Get_Alignment_Positions(c_bam1)
+			subprocess.call(['bash', SHCpath, out1, Cpath, processor, os.path.basename(file1), mmivar, chromind, str(match), str(mismatch), str(gapopen), str(gapextend)],stdout=open(os.devnull, 'wb'),stderr=open(os.devnull, 'wb'))
+			c_bam1=os.path.abspath(out1 + '/' + processor + '.cs.srt.bam')
+			coords,seq=Get_Alignment_Positions(c_bam1)
 
-            if seq == []:
+			if seq == []:
 
-                seq1 = ''
+				seq1 = ''
 
-            else:
+			else:
 
-                coords1=modifier(coords)
-                si=bisect_left(coords1, start)
-                ei=bisect_right(coords1,end)
-                seq1=seq[si:ei]
+				coords1=modifier(coords)
+				si=bisect_left(coords1, start)
+				ei=bisect_right(coords1,end)
+				seq1=seq[si:ei]
 
-        else:
+		else:
 
-            seq1=''
+			seq1=''
 
-        if os.path.exists(file2):
+		if os.path.exists(file2):
 
-            subprocess.call(['bash', SHCpath, out2, Cpath, processor, os.path.basename(file2), mmivar, chromind, str(match), str(mismatch), str(gapopen), str(gapextend)],stdout=open(os.devnull, 'wb'),stderr=open(os.devnull, 'wb'))
-            c_bam2=os.path.abspath(out2 + '/' + processor + '.cs.srt.bam')
-            coords,seq=Get_Alignment_Positions(c_bam2)
+			subprocess.call(['bash', SHCpath, out2, Cpath, processor, os.path.basename(file2), mmivar, chromind, str(match), str(mismatch), str(gapopen), str(gapextend)],stdout=open(os.devnull, 'wb'),stderr=open(os.devnull, 'wb'))
+			c_bam2=os.path.abspath(out2 + '/' + processor + '.cs.srt.bam')
+			coords,seq=Get_Alignment_Positions(c_bam2)
 
-            if seq == []:
+			if seq == []:
 
-                seq2 = ''
+				seq2 = ''
 
-            else:
+			else:
 
-                coords2=modifier(coords)
-                si=bisect_left(coords2, start)
-                ei=bisect_right(coords2, end)
-                seq2=seq[si:ei]
+				coords2=modifier(coords)
+				si=bisect_left(coords2, start)
+				ei=bisect_right(coords2, end)
+				seq2=seq[si:ei]
 
-        else:
+		else:
 
-            seq2=''
+			seq2=''
 
-        
-        if seq1 == '' and seq2 == '':
+		
+		if seq1 == '' and seq2 == '':
 
-            genotype='.|.'
-            quality= float(0)
+			genotype='.|.'
+			quality= float(0)
 
-        elif seq1 != '' and seq2 == '':
+		elif seq1 != '' and seq2 == '':
 
-            gen1,qual1=GetGTandGS(seq1,ref,alt)
-            genotype=gen1 + '|.'
+			gen1,qual1=GetGTandGS(seq1,ref,alt)
+			genotype=gen1 + '|.'
 
-            if qual1 == '.':
+			if qual1 == '.':
 
-                quality=float(0)
+				quality=float(0)
 
-            else:
+			else:
 
-                quality=qual1
+				quality=qual1
 
-        elif seq1 == '' and seq2 != '':
+		elif seq1 == '' and seq2 != '':
 
-            gen2,qual2=GetGTandGS(seq2,ref,alt)
-            genotype='.|' + gen2
+			gen2,qual2=GetGTandGS(seq2,ref,alt)
+			genotype='.|' + gen2
 
-            if qual2 == '.':
+			if qual2 == '.':
 
-                quality=float(0)
+				quality=float(0)
 
-            else:
+			else:
 
-                quality=qual2
+				quality=qual2
 
-        else:
+		else:
 
-            gen1,qual1=GetGTandGS(seq1,ref,alt)
-            gen2,qual2=GetGTandGS(seq2,ref,alt)
+			gen1,qual1=GetGTandGS(seq1,ref,alt)
+			gen2,qual2=GetGTandGS(seq2,ref,alt)
 
-            genotype= gen1 + '|' + gen2
+			genotype= gen1 + '|' + gen2
 
-            if qual1 == '.':
+			if qual1 == '.':
 
-                if qual2 == '.':
+				if qual2 == '.':
 
-                    quality = float(0)
+					quality = float(0)
 
-                else:
+				else:
 
-                    quality=qual2
+					quality=qual2
 
-            else:
+			else:
 
-                if qual2 == '.':
+				if qual2 == '.':
 
-                    quality=qual1
+					quality=qual1
 
-                else:
+				else:
 
-                    quality=round(float(qual1+qual2),2)
+					quality=round(float(qual1+qual2),2)
 
-        Entries.append((chromosome,start,end,ref,alt,genchild,raed,aed,dp1,dp2,genotype,quality,seq1,seq2,cov1,cov2))
+		Entries.append((chromosome,start,end,ref,alt,genchild,raed,aed,dp1,dp2,genotype,quality,seq1,seq2,cov1,cov2))
 
-    PROC_ENTRIES[processor]=Entries
+	PROC_ENTRIES[processor]=Entries
 
 
 if __name__ == '__main__':
 
-    main()
+	main()
