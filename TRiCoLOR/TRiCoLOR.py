@@ -74,7 +74,7 @@ def main():
 	
 	additionals = parser_refer.add_argument_group('Additional parameters')
 
-	additionals.add_argument('--samplename', help='sample name in BCF header [sample]', metavar='',default='sample')
+	additionals.add_argument('--samplename', help='sample name in BCF header [SAMPLE]', metavar='',default='SAMPLE')
 	additionals.add_argument('--readstype', help='long reads technology (ONT, PB) [ONT]', metavar='', default='ONT', choices=['ONT', 'PB'])
 	additionals.add_argument('--threads', help='number of cores [1]',metavar='', default=1, type=int)
 
