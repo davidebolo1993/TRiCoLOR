@@ -5,6 +5,7 @@ import os
 import re
 import subprocess
 import logging
+import math
 import multiprocessing
 from shutil import which
 from bisect import bisect_left,bisect_right
@@ -150,7 +151,21 @@ def run(parser, args):
 	logging.info('Coverage treshold: ' + str(args.coverage))
 	logging.info('Long reads type: ' + str(args.readstype))
 	logging.info('Cores: ' + str(cores))
-	
+
+	if args.mendel:
+
+		if len(snames) == 2:
+
+			logging.info('Check mendelian consistency: True')
+
+		else:
+
+			logging.warning('Checking mendelian consistency is possible only when both parents are provided. Switching to False.')
+
+	else:
+
+		logging.info('Check mendelian consistency: False')
+
 	logging.info('Parsing input BCF ...')
 
 	infos,header=ParseBCF(os.path.abspath(args.bcffile))
@@ -182,7 +197,7 @@ def run(parser, args):
 		for i,sli in enumerate(slices):
 
 			processor='p'+str(i+1)
-			p=multiprocessing.Process(target=Runner, args=(SHCpath,Cpath,gendir,processor,names,PROC_ENTRIES,sli,couples[0],couples[1],args.coverage,args.match, args.mismatch, args.gapopen, args.gapextend,os.path.abspath(args.output)))
+			p=multiprocessing.Process(target=Runner, args=(SHCpath,Cpath,gendir,processor,names,PROC_ENTRIES,sli,couples[0],couples[1],args.coverage,args.match, args.mismatch, args.gapopen, args.gapextend,os.path.abspath(args.output), args.readstype))
 			p.start()
 			processes.append(p)
 
@@ -196,15 +211,14 @@ def run(parser, args):
 
 			Namesdict[names].extend(PROC_ENTRIES[key])
 
-	logging.info('Done')
-	
+	logging.info('Done')	
 	logging.info('Writing to BCF ...')
 
 	FILTER='.'
 	QUAL='.'
 	ID='.'
 	FORMAT='GT:DP1:DP2:GS'
-	QUALCHILD=1.0
+	QUALCHILD=2.0
 
 	with open(os.path.abspath(args.output + '/TRiCoLOR.vcf'), 'a') as vcfout:
 
@@ -222,9 +236,17 @@ def run(parser, args):
 				seqs.append(names + ':' + Namesdict[names][i][12] + ',' + Namesdict[names][i][13])
 				missing += Namesdict[names][i][10].count('.')
 
-			MISSR=missing/(len(snames+1)*2)
+			MISSR=missing/((len(snames)+1)*2)
+			
+			if args.mendel:
 
-			vcfout.write(CHROM + '\t' + POS + '\t' + ID + '\t' + REF + '\t' + ALT + '\t' + QUAL + '\t' + FILTER + '\t' + 'SVEND='+END + ';RAED=' +RAED + ';AED=' + AED + ';MISSR=' + str(MISSR) + '\t' + FORMAT + '\t' + GENCHILD + ':'+ DP1 + ':' + DP2 + ':' + str(QUALCHILD) + '\t' + '\t'.join(x for x in toadd) + '\n')
+				MENDEL=CheckMendelian(GENCHILD, toadd[0].split(':')[0], toadd[1].split(':')[0])
+
+			else:
+
+				MENDEL='.'
+
+			vcfout.write(CHROM + '\t' + POS + '\t' + ID + '\t' + REF + '\t' + ALT + '\t' + QUAL + '\t' + FILTER + '\t' + 'SVEND='+END + ';RAED=' +RAED + ';AED=' + AED + ';MISSR=' + str(MISSR) + ';MENDEL=' + str(MENDEL) + '\t' + FORMAT + '\t' + GENCHILD + ':'+ DP1 + ':' + DP2 + ':' + str(QUALCHILD) + '\t' + '\t'.join(x for x in toadd) + '\n')
 
 		if args.store:
 
@@ -235,6 +257,12 @@ def run(parser, args):
 	subprocess.call(['bcftools', 'sort', '-o', os.path.abspath(args.output + '/TRiCoLOR.srt.bcf'), '-O', 'b', os.path.abspath(args.output + '/TRiCoLOR.vcf')],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
 	subprocess.call(['bcftools', 'index', os.path.abspath(args.output + '/TRiCoLOR.srt.bcf')],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
 	os.remove(os.path.abspath(args.output + '/TRiCoLOR.vcf'))
+	
+	for x in snames:
+
+		os.rmdir(os.path.abspath(args.output + '/' + x + '/haplotype1'))
+		os.rmdir(os.path.abspath(args.output + '/' + x + '/haplotype2'))
+		os.rmdir(os.path.abspath(args.output + '/' + x ))
 
 	logging.info('Done')
 	print('Done')
@@ -406,7 +434,7 @@ def VCF_HeaderModifier(rawheader, samples, output):
 
 		elif el.startswith('##FORMAT=<ID=DP2'):
 
-			newheader+=el + '\n' + '##FORMAT=<ID=GS,Number=1,Type=Float,Description="Genotype Score (>=0 and <=1)">' + '\n'
+			newheader+=el + '\n' + '##FORMAT=<ID=GS,Number=1,Type=Float,Description="Genotype Score (>=0 and <=2)">' + '\n'
 
 		elif el.startswith('##SAMPLE'):
 
@@ -426,7 +454,7 @@ def VCF_HeaderModifier(rawheader, samples, output):
 
 		elif el.startswith('##INFO=<ID=AED'):
 
-			newheader += el + '\n' + '##INFO=<ID=MISSR,Number=1,Type=Float,Description="Missing genotypes (ratio)">' +'\n'
+			newheader += el + '\n' + '##INFO=<ID=MISSR,Number=1,Type=Float,Description="Missing genotypes (ratio)">' +'\n' + '##INFO=<ID=MENDEL,Number=1,Type=Integer,Description="Mendelian consistency [.=Unknown;0=Consistent;1=Inconsistent]">' + '\n'
 
 		else:
 
@@ -442,16 +470,16 @@ def VCF_HeaderModifier(rawheader, samples, output):
 def GetGTandGS(test,ref,alts):
 
 
-	Redit=editdistance.eval(ref,test)
-	Rscore=Redit/len(max([test,ref], key=len)) #edit distance between test and reference 
+	Redit=editdistance.eval(ref,test) #edit distance between test and reference 
+	Rscore=Redit/len(max([test,ref], key=len)) #calculate an edit-distance score
 	iRscore=1.0-Rscore #inverted score. max 1 (ref==test), min 0 if difference is max
 
 	altscores=[]
 
 	for alt in alts:
 
-		Aedit=editdistance.eval(alt,test)
-		Ascore=Aedit/len(max([test,alt], key=len)) #edit distance between test and reference
+		Aedit=editdistance.eval(alt,test) #edit distance between test and alteration
+		Ascore=Aedit/len(max([test,alt], key=len)) #calculate an edit-distance score
 		iAscore=1.0-Ascore #inverted score. max 1 (alt==test), min 0 if difference is max
 		altscores.append(iAscore)
 
@@ -465,13 +493,13 @@ def GetGTandGS(test,ref,alts):
 
 		return '0', round(float(iRscore),2)
 
-	else: #if the same, uknown
+	else: #if the same, do not choose
 
 		return '.', float(0)
 
 
 
-def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,coverage,match, mismatch, gapopen, gapextend, output):
+def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,coverage,match, mismatch, gapopen, gapextend, output, readstype):
 
 
 	Entries = PROC_ENTRIES[processor] = list()
@@ -480,7 +508,7 @@ def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,covera
 
 		chromosome,start,end,ref,alt,genchild,raed,aed,dp1,dp2=s
 
-		if readtype == 'ONT':
+		if readstype == 'ONT':
 
 			mmivar='map-ont'
 			chromind= os.path.abspath(gendir + '/' + chromosome + '.ont.mmi')
@@ -504,6 +532,8 @@ def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,covera
 			subprocess.call(['bash', SHCpath, out1, Cpath, processor, os.path.basename(file1), mmivar, chromind, str(match), str(mismatch), str(gapopen), str(gapextend)],stdout=open(os.devnull, 'wb'),stderr=open(os.devnull, 'wb'))
 			c_bam1=os.path.abspath(out1 + '/' + processor + '.cs.srt.bam')
 			coords,seq=Get_Alignment_Positions(c_bam1)
+			os.remove(c_bam1)
+			os.remove(c_bam1+'.bai')
 
 			if seq == []:
 
@@ -525,6 +555,8 @@ def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,covera
 			subprocess.call(['bash', SHCpath, out2, Cpath, processor, os.path.basename(file2), mmivar, chromind, str(match), str(mismatch), str(gapopen), str(gapextend)],stdout=open(os.devnull, 'wb'),stderr=open(os.devnull, 'wb'))
 			c_bam2=os.path.abspath(out2 + '/' + processor + '.cs.srt.bam')
 			coords,seq=Get_Alignment_Positions(c_bam2)
+			os.remove(c_bam2)
+			os.remove(c_bam2+'.bai')
 
 			if seq == []:
 
@@ -600,9 +632,27 @@ def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,covera
 
 					quality=round(float(qual1+qual2),2)
 
-		Entries.append((chromosome,start,end,ref,alt,genchild,raed,aed,dp1,dp2,genotype,quality,seq1,seq2,cov1,cov2))
+		Entries.append((chromosome,start,end,ref,alt,raed,aed,genchild,dp1,dp2,genotype,quality,seq1,seq2,cov1,cov2))
 
 	PROC_ENTRIES[processor]=Entries
+
+
+
+def CheckMendelian(genc,genp1,genp2):
+
+	
+	#GENdict=dict()
+
+	#possible full-resolved child genotypes in REFER BCF (0|1, 1|0, 1|1 and 1|2)
+
+	#GENdict['0|1'] = ['0|0-0|1', '0|0-1|0', '0|1-0|0', '1|0-0|0', '0|1-0|1', '0|1-1|0', '1|0-0|1', '1|0-1|0']
+	#GENdict['1|0'] = GENdict['0|1']
+	#GENdict['1|1'] = ['0|1-0|1', '0|1-1|0', '1|0-0|1', '1|0-1|0', '1|1-0|1', '1|1-1|0', '0|1-1|1', '1|0-1|1', '1|1-1|1']
+	#GENdict['1|2'] = ['0|1-0|2', '0|1-2|0', '1|0-0|2', '1|0-2|0', '1|1-2|2', '2|2-1|1', '1|1-1|2', '1|1-2|1', '1|2-1|1', '2|1-1|1', '0|2-0|1', '2|0-0|1', '0|2-0|1', '2|0-1|0', '1|2-1|2', '1|2-2|1', '2|1-1|2', '1|2-2|2', '2|2-1|2', '1|0-1|2', '1|0-2|1', '1|2-1|0', '2|1-1|0', '0|1-1|2', '0|1-2|1', '1|2-0|1', '2|1-0|1']
+
+
+	return '.'
+
 
 
 if __name__ == '__main__':
