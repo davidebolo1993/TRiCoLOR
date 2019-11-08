@@ -182,15 +182,15 @@ class CustomFormat(HelpFormatter):
 def BAM(s):
 
 
-    try:
+	try:
 
-        x,y= map(str, s.split(','))
-        
-        return x,y
-    
-    except:
+		x,y= map(str, s.split(','))
+		
+		return x,y
+	
+	except:
 
-        raise argparse.ArgumentTypeError('BAM files to SAGE -bam/--bamfile must be given as couples of BAM files: BAM1h1,BAM1h2 BAM2h1,BAM2h2 ...')
+		raise argparse.ArgumentTypeError('BAM files to SAGE -bam/--bamfile must be given as couples of BAM files: BAM1h1,BAM1h2 BAM2h1,BAM2h2 ...')
 
 
 def run_subtool(parser, args):
