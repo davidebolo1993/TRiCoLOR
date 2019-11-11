@@ -578,7 +578,6 @@ def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,covera
 		else:
 
 			seq2=''
-
 		
 		if seq1 == '' and seq2 == '':
 
