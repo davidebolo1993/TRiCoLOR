@@ -254,11 +254,11 @@ def run(parser, args):
 
 			vcfout.write(CHROM + '\t' + POS + '\t' + ID + '\t' + REF + '\t' + ALT + '\t' + QUAL + '\t' + FILTER + '\t' + 'SVEND='+END + ';RAED=' +RAED + ';AED=' + AED + ';MISSR=' + str(MISSR) + ';MENDEL=' + str(MENDEL) + '\t' + FORMAT + '\t' + GENCHILD + ':'+ DP1 + ':' + DP2 + ':' + str(QUALCHILD) + '\t' + '\t'.join(x for x in toadd) + '\n')
 
-		if args.store:
+			if args.store:
 
-			with open(os.path.abspath(args.output + '/sequences.tsv'), 'a') as relatedout:
+				with open(os.path.abspath(args.output + '/sequences.tsv'), 'a') as relatedout:
 
-				relatedout.write(CHROM + '\t' + POS + '\t' + END + '\t' + '\t'.join(x for x in seqs) + '\n')
+					relatedout.write(CHROM + '\t' + POS + '\t' + END + '\t' + '\t'.join(x for x in seqs) + '\n')
 
 	subprocess.call(['bcftools', 'sort', '-o', os.path.abspath(args.output + '/TRiCoLOR.srt.bcf'), '-O', 'b', os.path.abspath(args.output + '/TRiCoLOR.vcf')],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
 	subprocess.call(['bcftools', 'index', os.path.abspath(args.output + '/TRiCoLOR.srt.bcf')],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
