@@ -6,6 +6,7 @@ import re
 import subprocess
 import logging
 import math
+import itertools
 import multiprocessing
 from shutil import which
 from bisect import bisect_left,bisect_right
@@ -220,6 +221,11 @@ def run(parser, args):
 	FORMAT='GT:DP1:DP2:GS'
 	QUALCHILD=2.0
 
+	if args.mendel:
+
+		combos=GenotypeCombos()
+		childdict=GenotypeDict(combos)
+
 	with open(os.path.abspath(args.output + '/TRiCoLOR.vcf'), 'a') as vcfout:
 
 		for i in range(len(infos)):
@@ -240,7 +246,7 @@ def run(parser, args):
 			
 			if args.mendel:
 
-				MENDEL=CheckMendelian(GENCHILD, toadd[0].split(':')[0], toadd[1].split(':')[0])
+				MENDEL=CheckMendelian(GENCHILD, toadd[0].split(':')[0], toadd[1].split(':')[0],childdict)
 
 			else:
 
@@ -638,21 +644,108 @@ def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,covera
 
 
 
-def CheckMendelian(genc,genp1,genp2):
+def GenotypeCombos():
 
-	
-	#GENdict=dict()
+	alleles=['0', '1', '2', '.']
+	parent1=parent2=[x+'|'+y for x,y in itertools.product(alleles, alleles)]
+	combos=set([(x,y) for x,y in itertools.product(parent1,parent2)])
 
-	#possible full-resolved child genotypes in REFER BCF (0|1, 1|0, 1|1 and 1|2)
-
-	#GENdict['0|1'] = ['0|0-0|1', '0|0-1|0', '0|1-0|0', '1|0-0|0', '0|1-0|1', '0|1-1|0', '1|0-0|1', '1|0-1|0']
-	#GENdict['1|0'] = GENdict['0|1']
-	#GENdict['1|1'] = ['0|1-0|1', '0|1-1|0', '1|0-0|1', '1|0-1|0', '1|1-0|1', '1|1-1|0', '0|1-1|1', '1|0-1|1', '1|1-1|1']
-	#GENdict['1|2'] = ['0|1-0|2', '0|1-2|0', '1|0-0|2', '1|0-2|0', '1|1-2|2', '2|2-1|1', '1|1-1|2', '1|1-2|1', '1|2-1|1', '2|1-1|1', '0|2-0|1', '2|0-0|1', '0|2-0|1', '2|0-1|0', '1|2-1|2', '1|2-2|1', '2|1-1|2', '1|2-2|2', '2|2-1|2', '1|0-1|2', '1|0-2|1', '1|2-1|0', '2|1-1|0', '0|1-1|2', '0|1-2|1', '1|2-0|1', '2|1-0|1']
+	return combos
 
 
-	return '.'
+def GetPossibleGenotypes(genchild,combos):
 
+	correct=set()
+
+	if genchild=='.|.':
+
+		correct=combos
+
+	else:
+
+		if '.' in genchild:
+
+			if genchild[0] == '.':
+
+				for combo in combos:
+
+					parent1=combo[0]
+					parent2=combo[1]
+
+					if genchild[-1] in parent1 or '.' in parent1 or genchild[-1] in parent2 or '.' in parent2:
+
+						correct.add(combo)
+
+			else:
+
+				for combo in combos:
+
+					parent1=combo[0]
+					parent2=combo[1]
+
+					if genchild[0] in parent1 or '.' in parent1 or genchild[0] in parent2 or '.' in parent2:
+
+						correct.add(combo)
+
+		else:
+
+			for combo in combos:
+
+				parent1=combo[0]
+				parent2=combo[1]
+
+				if genchild[0] in parent1 or '.' in parent1:
+
+					if genchild[-1] in parent2 or '.' in parent2:
+
+						correct.add(combo)
+
+					else:
+
+						if genchild[-1] in parent1 or '.' in parent1:
+
+							if genchild[0] in parent2 or '.' in parent2:
+
+								correct.add(combo)
+
+				else:
+
+					if genchild[-1] in parent1 or '.' in parent1:
+
+						if genchild[0] in parent2 or '.' in parent2:
+
+							correct.add(combo)
+
+	return correct
+
+
+def GenotypeDict(combos):
+
+	childdict=dict()
+
+	genchildtype=['1|0', '0|1', '1|1', '1|2', '1|.', '.|1', '0|.', '.|0', '.|.']
+
+	for key in genchildtype:
+
+		childdict[key] = GetPossibleGenotypes(key, combos)
+
+	return childdict
+
+
+def CheckMendelian(genchild,genparent1,genparent2,childdict):
+
+
+	if genchild not in childdict.keys(): #should not happen
+
+		return '.'
+
+	elif (genparent1,genparent2) in childdict[genchild]:
+
+		return '0'
+
+	else:
+
+		return '1'
 
 
 if __name__ == '__main__':
