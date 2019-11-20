@@ -434,7 +434,7 @@ def VCF_HeaderModifier(rawheader, samples, output):
 
 	for el in headlist:
 
-		if el.startswith('##filedate') or el.startswith('##bcftools') or el.startswith('##source') or el.startswith('##INFO=<ID=H') :
+		if el.startswith('##filedate') or el.startswith('##bcftools') or el.startswith('##source') or el.startswith('##INFO=<ID=H') or el.startswith('##INFO=<ID=TR') :
 
 			continue
 
