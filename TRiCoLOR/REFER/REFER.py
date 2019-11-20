@@ -432,7 +432,7 @@ def Runner(processor,sli,refseq,regex,maxmotif,size,bamfile1,bamfile2,coverage,a
 					Ritem.extend(pR)
 
 				out1=os.path.abspath(output + '/haplotype1')
-				pH1,pS1,pC1,pCOV1=HaploReps(SHCpath,Cpath, bamfile1,s, coverage, regex, maxmotif, size, allowed, refseq, chromind, out1, processor,i,readtype,match,mismatch,gapopen, gapextend)
+				pH1,pS1,pC1,pCOV1,pQ1=HaploReps(SHCpath,Cpath, bamfile1,s, coverage, regex, maxmotif, size, allowed, refseq, chromind, out1, processor,i,readtype,match,mismatch,gapopen, gapextend)
 
 				if pH1 != []:
 
@@ -442,7 +442,7 @@ def Runner(processor,sli,refseq,regex,maxmotif,size,bamfile1,bamfile2,coverage,a
 
 				if bamfile2 is not None:
 					
-					pH2,pS2,pC2,pCOV2=HaploReps(SHCpath,Cpath, bamfile2,s, coverage, regex, maxmotif, size, allowed, refseq, chromind, out2, processor,i,readtype,match,mismatch,gapopen,gapextend)
+					pH2,pS2,pC2,pCOV2,pQ2=HaploReps(SHCpath,Cpath, bamfile2,s, coverage, regex, maxmotif, size, allowed, refseq, chromind, out2, processor,i,readtype,match,mismatch,gapopen,gapextend)
 
 					if pH2 != []:
 
@@ -454,11 +454,12 @@ def Runner(processor,sli,refseq,regex,maxmotif,size,bamfile1,bamfile2,coverage,a
 					pS2=[]
 					pC2=[]
 					pCOV2=[]
+					pQ2=[]
 
 					open(os.path.abspath(out2 +'/' + processor + '.' + str(i +1) + '.srt.bam'), 'w').close()
 					open(os.path.abspath(out2 +'/' + processor + '.' + str(i +1) + '.srt.bam.bai'), 'w').close()
 
-				writer.VCF_writer(s[0], pR, refseq, pH1, pS1,pC1,pCOV1, pH2, pS2,pC2,pCOV2, output, processor)
+				writer.VCF_writer(s[0], pR, refseq, pH1, pS1,pC1,pCOV1,pQ1,pH2, pS2,pC2,pCOV2,pQ2,output, processor)
 
 				if os.stat(os.path.abspath(out1 + '/' + processor + '.' + str(i+1) + '.srt.bam')).st_size == 0:
 
@@ -521,7 +522,7 @@ def HaploReps(SHCpath,Cpath, bamfile,s, coverage, regex, maxmotif, size, allowed
 		open(os.path.abspath(out +'/' + processor + '.' + str(iteration +1) + '.srt.bam'), 'w').close()
 		open(os.path.abspath(out +'/' + processor + '.' + str(iteration +1) + '.srt.bam.bai'), 'w').close()
 
-		return empty, empty, empty, empty
+		return empty, empty, empty, empty,empty
 
 	else:
 
@@ -537,7 +538,7 @@ def HaploReps(SHCpath,Cpath, bamfile,s, coverage, regex, maxmotif, size, allowed
 
 		subprocess.call(['bash', SHCpath, out, Cpath, processor, os.path.basename(file), mmivar, chromind, str(match), str(mismatch), str(gapopen), str(gapextend)],stdout=open(os.devnull, 'wb'),stderr=open(os.devnull, 'wb'))
 		c_bam=os.path.abspath(out + '/' + processor + '.cs.srt.bam')
-		coords,seq=finder.Get_Alignment_Positions(c_bam)
+		coords,seq,qual=finder.Get_Alignment_Positions(c_bam)
 
 		if seq==[]:
 
@@ -546,7 +547,7 @@ def HaploReps(SHCpath,Cpath, bamfile,s, coverage, regex, maxmotif, size, allowed
 			open(os.path.abspath(out +'/' + processor + '.' + str(iteration +1) + '.srt.bam'), 'w').close()
 			open(os.path.abspath(out +'/' + processor + '.' + str(iteration +1) + '.srt.bam.bai'), 'w').close()
 
-			return empty, empty, empty, empty
+			return empty, empty, empty, empty, empty
 
 		else:
 
@@ -557,11 +558,11 @@ def HaploReps(SHCpath,Cpath, bamfile,s, coverage, regex, maxmotif, size, allowed
 
 			if set(consensus_coordinates).intersection(list(range(start,end))):
 
-				return cor_coord_reps, consensus_string, consensus_coordinates, cov_inbam
+				return cor_coord_reps, consensus_string, consensus_coordinates, cov_inbam, qual
 
 			else:
 
-				return empty, empty, empty, empty
+				return empty, empty, empty, empty, empty
 
 
 
