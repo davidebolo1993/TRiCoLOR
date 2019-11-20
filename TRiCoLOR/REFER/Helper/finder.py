@@ -286,7 +286,6 @@ def Get_Alignment_Positions(bamfilein):
 			coords = read.get_reference_positions(full_length=True)
 			seq=read.seq
 			qual=read.mapping_quality
-			print(read.cigartuples)
 
 	bamfile.close()
 
