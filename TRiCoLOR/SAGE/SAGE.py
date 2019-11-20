@@ -230,7 +230,7 @@ def run(parser, args):
 
 		for i in range(len(infos)):
 
-			CHROM,POS,END,REF,ALT,RAED,AED,GENCHILD,DP1,DP2=Namesdict[snames[0]][i][0], str(Namesdict[snames[0]][i][1]), str(Namesdict[snames[0]][i][2]), Namesdict[snames[0]][i][3], ','.join(x for x in Namesdict[snames[0]][i][4]), str(Namesdict[snames[0]][i][5]), str(Namesdict[snames[0]][i][6]),'|'.join(str(x) for x in Namesdict[snames[0]][i][7][:-1]).replace('-1', '.'), str(Namesdict[snames[0]][i][8]), str(Namesdict[snames[0]][i][9])
+			CHROM,POS,END,REF,ALT,RAED,AED,GENCHILD,DP1,DP2,LENGTH=Namesdict[snames[0]][i][0], str(Namesdict[snames[0]][i][1]), str(Namesdict[snames[0]][i][2]), Namesdict[snames[0]][i][3], ','.join(x for x in Namesdict[snames[0]][i][4]), str(Namesdict[snames[0]][i][5]), str(Namesdict[snames[0]][i][6]),'|'.join(str(x) for x in Namesdict[snames[0]][i][7][:-1]).replace('-1', '.'), str(Namesdict[snames[0]][i][8]), str(Namesdict[snames[0]][i][9]),str(Namesdict[snames[0]][i][16])
 
 			toadd=[]
 			seqs=[]
@@ -252,7 +252,7 @@ def run(parser, args):
 
 				MENDEL='.'
 
-			vcfout.write(CHROM + '\t' + POS + '\t' + ID + '\t' + REF + '\t' + ALT + '\t' + QUAL + '\t' + FILTER + '\t' + 'SVEND='+END + ';RAED=' +RAED + ';AED=' + AED + ';MISSR=' + str(MISSR) + ';MENDEL=' + str(MENDEL) + '\t' + FORMAT + '\t' + GENCHILD + ':'+ DP1 + ':' + DP2 + ':' + str(QUALCHILD) + '\t' + '\t'.join(x for x in toadd) + '\n')
+			vcfout.write(CHROM + '\t' + POS + '\t' + ID + '\t' + REF + '\t' + ALT + '\t' + QUAL + '\t' + FILTER + '\t' + 'TREND='+END + ';TRLEN='+ LENGTH + ';RAED=' +RAED + ';AED=' + AED + ';MISSR=' + str(MISSR) + ';MENDEL=' + str(MENDEL) + '\t' + FORMAT + '\t' + GENCHILD + ':'+ DP1 + ':' + DP2 + ':' + str(QUALCHILD) + '\t' + '\t'.join(x for x in toadd) + '\n')
 
 			if args.store:
 
@@ -419,7 +419,7 @@ def ParseBCF(bcfile):
 
 		else:
 
-			infos.append((variant.CHROM, variant.start+1, variant.end, variant.REF, variant.ALT, variant.genotypes[0], variant.INFO.get('RAED'), variant.INFO.get('AED'), int(variant.format('DP1')), int(variant.format('DP2'))))
+			infos.append((variant.CHROM, variant.start+1, variant.INFO.get('TREND'), variant.REF, variant.ALT, variant.genotypes[0], variant.INFO.get('RAED'), variant.INFO.get('AED'), int(variant.format('DP1')), int(variant.format('DP2')), variant.INFO.get('TRLEN')))
 
 	it.close()
 
@@ -434,7 +434,7 @@ def VCF_HeaderModifier(rawheader, samples, output):
 
 	for el in headlist:
 
-		if el.startswith('##filedate') or el.startswith('##bcftools') or el.startswith('##source') or el.startswith('##INFO=<ID=H') or el.startswith('##INFO=<ID=TR') :
+		if el.startswith('##filedate') or el.startswith('##bcftools') or el.startswith('##source') or el.startswith('##INFO=<ID=H') or el.startswith('##INFO=<ID=MAPQ'):
 
 			continue
 
@@ -512,7 +512,7 @@ def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,covera
 
 	for s in sli:
 
-		chromosome,start,end,ref,alt,genchild,raed,aed,dp1,dp2=s
+		chromosome,start,end,ref,alt,genchild,raed,aed,dp1,dp2,length=s
 
 		if readstype == 'ONT':
 
@@ -637,7 +637,7 @@ def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,covera
 
 					quality=round(float(qual1+qual2),2)
 
-		Entries.append((chromosome,start,end,ref,alt,raed,aed,genchild,dp1,dp2,genotype,quality,seq1,seq2,cov1,cov2))
+		Entries.append((chromosome,start,end,ref,alt,raed,aed,genchild,dp1,dp2,genotype,quality,seq1,seq2,cov1,cov2,length))
 
 	PROC_ENTRIES[processor]=Entries
 
