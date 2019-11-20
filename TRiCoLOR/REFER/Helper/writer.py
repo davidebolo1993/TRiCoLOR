@@ -69,16 +69,19 @@ def VCF_headerwriter(bamfile1, bamfile2, samplename, commandline, out, processor
 
 	vcf_format='##fileformat=VCFv4.2'
 
-	SVEND='##INFO=<ID=SVEND,Number=1,Type=Integer,Description="Repetition end">'
+	SVEND='##INFO=<ID=TREND,Number=1,Type=Integer,Description="Repetition end">'
+	SVLEN='##INFO=<ID=TRLEN,Number=1,Type=Integer,Description="Length of the ALT allele (the shortest if multiple ALT alleles)">'
 	RAED = '##INFO=<ID=RAED,Number=1,Type=Integer,Description="Edit distance between REF and most similar ALT allele">'
 	AED = '##INFO=<ID=AED,Number=1,Type=Integer,Description="Edit distance between ALT alleles">'
-	H1M='##INFO=<ID=H1M,Number=.,Type=String,Description="Haplotype1 Repeated Motif">'
-	H1N='##INFO=<ID=H1N,Number=.,Type=Integer,Description="Haplotype1 Repetitions Number">'
-	H2M='##INFO=<ID=H2M,Number=.,Type=String,Description="Haplotype2 Repeated Motif">'
-	H2N='##INFO=<ID=H2N,Number=.,Type=Integer,Description="Haplotype2 Repetitions Number">'
+	MAPQ1 = '##INFO=<ID=MAPQ1,Number=1,Type=Integer,Description="Mapping quality of the consensus sequence from 1st haplotype">'
+	MAPQ2 = '##INFO=<ID=MAPQ2,Number=1,Type=Integer,Description="Mapping quality of the consensus sequence from 2nd haplotype">'	
+	H1M='##INFO=<ID=H1M,Number=.,Type=String,Description="Repeated Motif on 1st Haplotype">'
+	H1N='##INFO=<ID=H1N,Number=.,Type=Integer,Description="Repetitions Number on 1st Haplotype">'
+	H2M='##INFO=<ID=H2M,Number=.,Type=String,Description="Repeated Motif on 2nd Haplotype">'
+	H2N='##INFO=<ID=H2N,Number=.,Type=Integer,Description="Repetitions Number on 2nd Haplotype">'
 	FORMAT1='##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">'
-	FORMAT2 = '##FORMAT=<ID=DP1,Number=1,Type=Integer,Description="Coverage depth for 1st haplotype">'
-	FORMAT3 = '##FORMAT=<ID=DP2,Number=1,Type=Integer,Description="Coverage depth for 2nd haplotype">'
+	FORMAT2 = '##FORMAT=<ID=DP1,Number=1,Type=Integer,Description="Coverage depth on 1st haplotype">'
+	FORMAT3 = '##FORMAT=<ID=DP2,Number=1,Type=Integer,Description="Coverage depth on 2nd haplotype">'
 
 	classic_header='#CHROM' + '\t' + 'POS' '\t' + 'ID' + '\t' + 'REF' + '\t' + 'ALT' + '\t' + 'QUAL' + '\t' + 'FILTER' + '\t' + 'INFO' + '\t' + 'FORMAT' + '\t' + samplename.upper()
 
@@ -90,7 +93,7 @@ def VCF_headerwriter(bamfile1, bamfile2, samplename, commandline, out, processor
 
 			vcfout.write('##contig=<ID='+str(a)+',length='+str(b)+'>'+'\n')
 
-		vcfout.write(SVEND + '\n' + RAED + '\n' + AED + '\n' + H1M + '\n' + H1N + '\n' + H2M + '\n' + H2N + '\n')
+		vcfout.write(SVEND + '\n' + SVLEN + '\n' + RAED + '\n' + AED + '\n' + MAPQ1 + '\n' + MAPQ2 + '\n' + H1M + '\n' + H1N + '\n' + H2M + '\n' + H2N + '\n')
 		vcfout.write(FORMAT1 + '\n' + FORMAT2 + '\n' + FORMAT3 + '\n')
 		vcfout.write('##SAMPLE=<ID=' + samplename +'>' + '\n' + classic_header + '\n')
 
@@ -104,8 +107,12 @@ def VCF_variantwriter(CHROM, POS, REF, ALT, INFO, FORMAT, out, processor):
 	GEN='GT:DP1:DP2'
 	
 	INFO_SVEND=str(INFO['SVEND'])
+	INFO_SVLEN=str(INFO['SVLEN'])
 	INFO_RAED = str(INFO['RAED'])
 	INFO_AED = str(INFO['AED'])
+	INFO_MAPQ1=str(INFO['MAPQ1'])
+	INFO_MAPQ2=str(INFO['MAPQ2'])
+
 	INFO_H1M=INFO['H1M']
 
 	if type(INFO_H1M) == list:
@@ -136,7 +143,7 @@ def VCF_variantwriter(CHROM, POS, REF, ALT, INFO, FORMAT, out, processor):
 
 	with open(os.path.abspath(out + '/' + processor + '.TRiCoLOR.vcf'), 'a') as vcfout:
 
-		vcfout.write(CHROM + '\t' + str(POS) + '\t' + ID + '\t' + REF + '\t' + ALT + '\t' + QUAL + '\t' + FILTER + '\t' + 'SVEND='+INFO_SVEND + ';'+ 'RAED='+ INFO_RAED + ';' + 'AED=' + INFO_AED  + ';' + 'H1M='+INFO_H1M + ';' + 'H1N='+INFO_H1N + ';' + 'H2M='+INFO_H2M + ';' + 'H2N='+INFO_H2N + '\t' + GEN + '\t' + FORMAT_GT + ':' + FORMAT_DP1 + ':' + FORMAT_DP2 + '\n')
+		vcfout.write(CHROM + '\t' + str(POS) + '\t' + ID + '\t' + REF + '\t' + ALT + '\t' + QUAL + '\t' + FILTER + '\t' + 'TREND='+INFO_SVEND + ';'+ 'TRLEN='+ INFO_SVLEN + ';' + 'RAED='+ INFO_RAED + ';' + 'AED=' + INFO_AED + ';' + 'MAPQ1=' + INFO_MAPQ1 + ';' + 'MAPQ2=' + INFO_MAPQ2 + ';' + 'H1M='+INFO_H1M + ';' + 'H1N='+INFO_H1N + ';' + 'H2M='+INFO_H2M + ';' + 'H2N='+INFO_H2N + '\t' + GEN + '\t' + FORMAT_GT + ':' + FORMAT_DP1 + ':' + FORMAT_DP2 + '\n')
 
 
 def modifier2(seq,coords,POS,SVEND):
@@ -331,7 +338,7 @@ def Merger(sorted_int, refreps, h1reps, h2reps):
 	return sorted_ranges,ref_dict_number,ref_dict_motif,hap1_dict_number,hap1_dict_motif,hap2_dict_number,hap2_dict_motif
 
 
-def VCF_writer(chromosome, repref, reference_sequence, repsh1, seqh1, coordsh1, covh1, repsh2, seqh2, coordsh2, covh2, out, processor):
+def VCF_writer(chromosome, repref, reference_sequence, repsh1, seqh1, coordsh1, covh1, qual1, repsh2, seqh2, coordsh2, covh2, qual2, out, processor):
 
 	intersection=list(set(repref+ repsh1 + repsh2))
 
@@ -420,6 +427,9 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, seqh1, coordsh1, 
 				GEN1='.'
 				GEN2='.'
 				ALT = '.'
+				SVLEN='.'
+				MAPQ1='.'
+				MAPQ2='.'
 
 			elif seqh1 != [] and seqh2 == []:
 
@@ -435,6 +445,10 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, seqh1, coordsh1, 
 					GEN1 = '1'
 					ALT = ALT1
 
+				SVLEN=len(ALT1)
+				MAPQ1=qual1
+				MAPQ2='.'
+
 			elif seqh1 == [] and seqh2 != []:
 
 				GEN1='.'
@@ -448,6 +462,10 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, seqh1, coordsh1, 
 
 					GEN2 = '1'
 					ALT = ALT2
+
+				SVLEN=len(ALT2)
+				MAPQ1='.'
+				MAPQ2=qual2
 
 			else:
 
@@ -463,12 +481,17 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, seqh1, coordsh1, 
 					GEN1= '0'
 					GEN2 = '1'
 					ALT = ALT2
+					SVLEN=len(ALT2)
+					MAPQ1='.'
 
 				elif ALT1 != REF and ALT2 == REF:
 
 					GEN1= '1'
 					GEN2 = '0'
 					ALT = ALT1
+					SVLEN=len(ALT1)
+					MAPQ1=qual1
+
 
 				else:
 
@@ -483,6 +506,13 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, seqh1, coordsh1, 
 						GEN1 = '1'
 						GEN2 = '2'
 						ALT = ALT1 + ',' + ALT2
+
+					SVLEN=min(len(ALT1),len(ALT2))
+					
+				MAPQ1=qual1
+				MAPQ2=qual2
+
+
 
 			GEN = GEN1 + '|' + GEN2
 			INFO=dict()
@@ -518,8 +548,11 @@ def VCF_writer(chromosome, repref, reference_sequence, repsh1, seqh1, coordsh1, 
 
 				AED = editdistance.eval(ALT1,ALT2)
 
+			INFO['SVLEN'] = SVLEN 
 			INFO['RAED'] = RAED
 			INFO['AED'] = AED
+			INFO['MAPQ1'] = MAPQ1
+			INFO['MAPQ2'] = MAPQ2
 			INFO['H1M'] = H1M
 			INFO['H1N'] = H1N
 			INFO['H2M'] = H2M 
