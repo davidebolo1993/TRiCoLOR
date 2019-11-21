@@ -402,7 +402,6 @@ def corrector(reference, string, repetitions, coordinates, size, allowed):
 
 						ranges.append((self_[i][1],self_[i+1][1]))
 
-
 		collapsed_ranges= defaultdict(list)
 	  
 		for x, y in ranges:
