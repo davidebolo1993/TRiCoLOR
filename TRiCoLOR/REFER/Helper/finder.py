@@ -276,6 +276,8 @@ def Get_Alignment_Positions(bamfilein):
   
 	coords=[]
 	seq=[]
+	qual=[]
+
 
 	bamfile=pysam.AlignmentFile(bamfilein,'rb')
 
