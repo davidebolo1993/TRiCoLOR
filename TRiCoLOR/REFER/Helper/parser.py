@@ -53,23 +53,23 @@ def Bamfile_Analyzer(bamfilein,chromosome,start,end, coverage, out, processor):
 
 	if progress:
 
-		for read in bamfile.fetch(chromosome,start,end):
+		with open(os.path.abspath(out+'/' + processor + '.unaligned.fa'),'w') as fastaout:
 
-			if not read.is_unmapped and not read.is_secondary and not read.is_supplementary and read.mapping_quality >= 20:
+			for read in bamfile.fetch(chromosome,start,end):
 
-				read_start=read.reference_start
-				read_end=read.reference_end
+				if not read.is_unmapped and not read.is_secondary and not read.is_supplementary and read.mapping_quality >= 20:
 
-				if read_start <= start and read_end >= end:
+					read_start=read.reference_start
+					read_end=read.reference_end
 
-					sequence=read.seq
-					coord=sub_none(read.get_reference_positions(full_length=True))
-					header=read.query_name
+					if read_start <= start and read_end >= end:
 
-					s_,e_=min(coord, key=lambda x:abs(x-start)), min(coord, key=lambda x:abs(x-end)) 
-					s_i,e_i = [i for i,e in enumerate(coord) if e == s_][0], [i for i,e in enumerate(coord) if e == e_][0] 
+						sequence=read.seq
+						coord=sub_none(read.get_reference_positions(full_length=True))
+						header=read.query_name
 
-					with open(os.path.abspath(out+'/' + processor + '.unaligned.fa'),'a') as fastaout:
+						s_,e_=min(coord, key=lambda x:abs(x-start)), min(coord, key=lambda x:abs(x-end)) 
+						s_i,e_i = [i for i,e in enumerate(coord) if e == s_][0], [i for i,e in enumerate(coord) if e == e_][0] 
 
 						fastaout.write('>' + header + '\n' + sequence[s_i:e_i+1] + '\n')
 	
