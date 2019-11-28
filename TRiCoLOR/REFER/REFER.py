@@ -10,6 +10,7 @@ import subprocess
 import itertools
 import csv
 import math
+import statistics
 import multiprocessing
 import logging
 import datetime
