@@ -758,8 +758,3 @@ def CheckMendelian(genchild,genparent1,genparent2,childdict):
 	else:
 
 		return '1'
-
-
-if __name__ == '__main__':
-
-	main()
