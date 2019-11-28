@@ -276,34 +276,6 @@ def entropy_finder(sequence,coordinates,scansize,entropy_treshold):
 	return hit
 
 
-#def merge_intervals(intervals):
-
-
-	#sorted_by_lower_bound = sorted(intervals, key=itemgetter(0))
-	#merged = []
-
-	#for higher in sorted_by_lower_bound:
-	
-		#if not merged:
-			
-			#merged.append(higher)
-		
-		#else:
-
-			#lower = merged[-1]
-
-			#if higher[0] <= lower[1]:
-			
-				#upper_bound = max(lower[1], higher[1])
-				#merged[-1] = (lower[0], upper_bound)  
-		
-			#else:
-			
-				#merged.append(higher)
-
-	#return merged
-
-
 def BScanner(bamfilein, chromosomes, bedfileout,scansize,entropy_treshold,call_treshold, dist_treshold):
 
 
@@ -351,8 +323,6 @@ def BScanner(bamfilein, chromosomes, bedfileout,scansize,entropy_treshold,call_t
 
 				value=np.median(chr_array[group])
 				intervals.append((group[0]-350,group[-1]+350, value))
-
-		#intervals=merge_intervals(intervals)
 
 		with open (bedfileout, 'a') as bedout:
 
