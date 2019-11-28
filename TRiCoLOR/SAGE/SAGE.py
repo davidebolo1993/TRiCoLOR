@@ -1,3 +1,5 @@
+#!/usr/bin/python env
+
 #python 3 standard library
 
 import sys
@@ -6,6 +8,7 @@ import re
 import subprocess
 import logging
 import math
+import statistics
 import itertools
 import multiprocessing
 from shutil import which
@@ -302,66 +305,79 @@ def Chunks(l,n):
 	return [l[i:i+n] for i in range(0, len(l), n)]
 
 
-
 def sub_none(list_of_coord):
 
 
 	return [-999999 if v is None else v for v in list_of_coord]
 
 
-def check_coverage(pysam_AlignmentFile, chromosome, start, end, coverage):
+def Bamfile_Analyzer(bamfilein,chromosome,start,end, coverage, out, processor):
 
+	cov=0
+	
+	start=start-350
+	end=end+350
 
-	counter = 0
+	headers=[]
+	sequences=[]
+	lengths=[]
 
-	for read in pysam_AlignmentFile.fetch(chromosome, start, end):
+	bamfile=pysam.AlignmentFile(bamfilein,'rb')	
+
+	for read in bamfile.fetch(chromosome,start,end):
 
 		if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
 
-			if read.reference_start <= start and read.reference_end >= end: 
+			read_start=read.reference_start
+			read_end=read.reference_end
 
-				counter +=1
+			if read_start <= start and read_end >= end:
 
-	if counter >= coverage:
+				sequence=read.seq
+				coord=sub_none(read.get_reference_positions(full_length=True))
+				header=read.query_name
 
-		return True,counter
-   
-	else:
+				s_,e_=min(coord, key=lambda x:abs(x-start)), min(coord, key=lambda x:abs(x-end)) 
+				s_i,e_i = [i for i,e in enumerate(coord) if e == s_][0], [i for i,e in enumerate(coord) if e == e_][0]
+				finalseq=sequence[s_i:e_i+1]
 
-		return False,counter
+				headers.append(header)
+				sequences.append(finalseq)
+				lengths.append(len(finalseq))
 
-
-def Bamfile_Analyzer(bamfilein,chromosome,start,end, coverage, out, processor):
-
-
-	start=start-350
-	end=end+350
-	bamfile=pysam.AlignmentFile(bamfilein,'rb')
-	progress,cov=check_coverage(bamfile, chromosome, start, end, coverage)
-
-	if progress:
-
-		for read in bamfile.fetch(chromosome,start,end):
-
-			if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
-
-				read_start=read.reference_start
-				read_end=read.reference_end
-
-				if read_start <= start and read_end >= end:
-
-					sequence=read.seq
-					coord=sub_none(read.get_reference_positions(full_length=True))
-					header=read.query_name
-
-					s_,e_=min(coord, key=lambda x:abs(x-start)), min(coord, key=lambda x:abs(x-end)) 
-					s_i,e_i = [i for i,e in enumerate(coord) if e == s_][0], [i for i,e in enumerate(coord) if e == e_][0] 
-
-					with open(os.path.abspath(out+'/' + processor + '.unaligned.fa'),'a') as fastaout:
-
-						fastaout.write('>' + header + '\n' + sequence[s_i:e_i+1] + '\n')
 
 	bamfile.close()
+
+	if len(sequences) >= coverage:
+
+		averagelen=statistics.mean(lengths)
+		stdevlen=statistics.stdev(lengths)
+
+		minbound=averagelen-3*stdevlen
+		maxbound=averagelen+3*stdevlen
+
+		fasta=''
+
+		for head,seq,leng in zip(headers,sequences,lengths):
+
+			if leng <= minbound or leng >= maxbound:
+
+				continue
+
+			else:
+
+				cov+=1
+				fasta+='>' + head + '\n' + seq + '\n'
+
+		if cov >= coverage:
+
+			with open(os.path.abspath(out+'/' + processor + '.unaligned.fa'),'w') as fastaout:
+
+				fastaout.write(fasta.rstrip())
+	else:
+
+		cov=len(sequences)
+
 	return cov
 
 
@@ -469,8 +485,6 @@ def VCF_HeaderModifier(rawheader, samples, output):
 		with open(os.path.abspath(output + '/TRiCoLOR.vcf'), 'w') as vcfout:
 
 			vcfout.write(newheader)
-
-
 
 
 def GetGTandGS(test,ref,alts):
