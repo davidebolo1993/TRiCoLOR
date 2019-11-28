@@ -37,7 +37,7 @@ def Bamfile_Analyzer(bamfilein,chromosome,start,end, coverage, out, processor):
 
 	for read in bamfile.fetch(chromosome,start,end):
 
-		if not read.is_unmapped and not read.is_secondary and not read.is_supplementary :
+		if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
 
 			read_start=read.reference_start
 			read_end=read.reference_end
@@ -58,30 +58,36 @@ def Bamfile_Analyzer(bamfilein,chromosome,start,end, coverage, out, processor):
 
 
 	bamfile.close()
-	
-	averagelen=statistics.mean(lengths)
-	stdevlen=statistics.stdev(lengths)
 
-	minbound=averagelen-3*stdevlen
-	maxbound=averagelen+3*stdevlen
+	if len(sequences) >= coverage:
 
-	fasta=''
+		averagelen=statistics.mean(lengths)
+		stdevlen=statistics.stdev(lengths)
 
-	for head,seq,leng in zip(headers,sequences,lengths):
+		minbound=averagelen-3*stdevlen
+		maxbound=averagelen+3*stdevlen
 
-		if leng <= minbound or leng >= maxbound:
+		fasta=''
 
-			continue
+		for head,seq,leng in zip(headers,sequences,lengths):
 
-		else:
+			if leng <= minbound or leng >= maxbound:
 
-			cov+=1
-			fasta+='>' + head + '\n' + seq + '\n'
+				continue
 
-	if cov >= coverage:
+			else:
 
-		with open(os.path.abspath(out+'/' + processor + '.unaligned.fa'),'w') as fastaout:
+				cov+=1
+				fasta+='>' + head + '\n' + seq + '\n'
 
-			fastaout.write(fasta.rstrip())
+		if cov >= coverage:
+
+			with open(os.path.abspath(out+'/' + processor + '.unaligned.fa'),'w') as fastaout:
+
+				fastaout.write(fasta.rstrip())
+
+	else:
+
+		cov=len(sequences)
 
 	return cov
