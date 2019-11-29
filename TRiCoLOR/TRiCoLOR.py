@@ -67,10 +67,10 @@ def main():
 	algorithm.add_argument('--precisemotif', help='coherce -m/--motif to find only repetitions with specified motif size', action='store_true')
 	algorithm.add_argument('--precisetimes', help='coherce -t/--times to find only repetitions occuring specified number of times', action='store_true')	
 
-
-	utilities = parser_refer.add_argument_group('Coverage treshold')
+	utilities = parser_refer.add_argument_group('Coverage and soft clipping tresholds')
 
 	utilities.add_argument('-c', '--coverage', type=int, help='minimum number of reads to call a consensus sequence for region [5]', metavar='', default=5)
+	utilities.add_argument('-sc', '--softclipping', type=float, help='maximum percentage of soft-clipped bases allowed in consensus sequences [40.0]', metavar='', default=40.0)
 	
 	additionals = parser_refer.add_argument_group('Additional parameters')
 
@@ -98,9 +98,10 @@ def main():
 	consensus.add_argument('--gapopen', type=int, help='penalty for gap opening [-8]', metavar='', default = -8)
 	consensus.add_argument('--gapextend', type=int, help='penalty for gap extending [-6]', metavar='', default = -6)
 
-	utilities = parser_sage.add_argument_group('Coverage treshold')
+	utilities = parser_sage.add_argument_group('Coverage and soft-clipping tresholds')
 
 	utilities.add_argument('-c', '--coverage', type=int, help='minimum number of reads to call a consensus sequence in region [5]', metavar='', default=5)
+	utilities.add_argument('-sc', '--softclipping', type=float, help='maximum percentage of soft-clipped bases allowed in consensus sequences [40.0]', metavar='', default=40.0)
 
 	additionals = parser_sage.add_argument_group('Additional parameters')
 
