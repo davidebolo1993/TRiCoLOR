@@ -176,6 +176,7 @@ def run(parser, args):
 	logging.info('Minimum repeated region size: ' + str(args.size))
 	logging.info('Haplotypes: ' + str(len(bams)))
 	logging.info('Coverage treshold: ' + str(args.coverage))
+	logging.info('Soft-clipping treshold: ' + str(args.softclipping))
 	logging.info('Long reads type: ' + str(args.readstype))
 
 	if args.threads > multiprocessing.cpu_count():
@@ -284,7 +285,7 @@ def run(parser, args):
 
 					writer.VCF_headerwriter(os.path.abspath(bams[0]), None, args.samplename, ','.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey), os.path.abspath(args.output), processor)				
 
-			p=multiprocessing.Process(target=Runner, args=(processor,sli,refseq,regex,args.maxmotif,args.size,bamfile1,bamfile2,args.coverage,args.editdistance,chromind,args.readstype,os.path.abspath(args.output),Rrep,H1rep,H2rep,Cpath,SHCpath,args.match,args.mismatch,args.gapopen,args.gapextend))
+			p=multiprocessing.Process(target=Runner, args=(processor,sli,refseq,regex,args.maxmotif,args.size,bamfile1,bamfile2,args.coverage,args.editdistance,chromind,args.readstype,os.path.abspath(args.output),Rrep,H1rep,H2rep,Cpath,SHCpath,args.match,args.mismatch,args.gapopen,args.gapextend,args.softclipping))
 			p.start()
 			processes.append(p)
 		
@@ -411,7 +412,7 @@ def Chunks(l,n):
 	return [l[i:i+n] for i in range(0, len(l), n)]
 
 
-def Runner(processor,sli,refseq,regex,maxmotif,size,bamfile1,bamfile2,coverage,allowed,chromind,readtype,output,Rrep,H1rep,H2rep,Cpath,SHCpath,match,mismatch,gapopen,gapextend):
+def Runner(processor,sli,refseq,regex,maxmotif,size,bamfile1,bamfile2,coverage,allowed,chromind,readtype,output,Rrep,H1rep,H2rep,Cpath,SHCpath,match,mismatch,gapopen,gapextend,clipping):
 
 	Ritem = Rrep[processor] = list()
 	H1item = H1rep[processor] = list()
@@ -433,7 +434,7 @@ def Runner(processor,sli,refseq,regex,maxmotif,size,bamfile1,bamfile2,coverage,a
 					Ritem.extend(pR)
 
 				out1=os.path.abspath(output + '/haplotype1')
-				pH1,pS1,pC1,pCOV1,pQ1=HaploReps(SHCpath,Cpath, bamfile1,s, coverage, regex, maxmotif, size, allowed, refseq, chromind, out1, processor,i,readtype,match,mismatch,gapopen, gapextend)
+				pH1,pS1,pC1,pCOV1,pQ1=HaploReps(SHCpath,Cpath, bamfile1,s, coverage, regex, maxmotif, size, allowed, refseq, chromind, out1, processor,i,readtype,match,mismatch,gapopen, gapextend,clipping)
 
 				if pH1 != []:
 
@@ -443,7 +444,7 @@ def Runner(processor,sli,refseq,regex,maxmotif,size,bamfile1,bamfile2,coverage,a
 
 				if bamfile2 is not None:
 					
-					pH2,pS2,pC2,pCOV2,pQ2=HaploReps(SHCpath,Cpath, bamfile2,s, coverage, regex, maxmotif, size, allowed, refseq, chromind, out2, processor,i,readtype,match,mismatch,gapopen,gapextend)
+					pH2,pS2,pC2,pCOV2,pQ2=HaploReps(SHCpath,Cpath, bamfile2,s, coverage, regex, maxmotif, size, allowed, refseq, chromind, out2, processor,i,readtype,match,mismatch,gapopen,gapextend, clipping)
 
 					if pH2 != []:
 
@@ -510,7 +511,7 @@ def ReferenceReps(s,refseq,regex,maxmotif,size):
 		return filtered
 
 
-def HaploReps(SHCpath,Cpath, bamfile,s, coverage, regex, maxmotif, size, allowed, refseq, chromind, out, processor,iteration, readtype,match,mismatch,gapopen,gapextend):
+def HaploReps(SHCpath,Cpath, bamfile,s, coverage, regex, maxmotif, size, allowed, refseq, chromind, out, processor,iteration, readtype,match,mismatch,gapopen,gapextend, clipping):
 
 
 	chromosome,start,end=s[0],s[1],s[2]
@@ -539,7 +540,7 @@ def HaploReps(SHCpath,Cpath, bamfile,s, coverage, regex, maxmotif, size, allowed
 
 		subprocess.call(['bash', SHCpath, out, Cpath, processor, os.path.basename(file), mmivar, chromind, str(match), str(mismatch), str(gapopen), str(gapextend)],stdout=open(os.devnull, 'wb'),stderr=open(os.devnull, 'wb'))
 		c_bam=os.path.abspath(out + '/' + processor + '.cs.srt.bam')
-		coords,seq,qual=finder.Get_Alignment_Positions(c_bam)
+		coords,seq,qual=finder.Get_Alignment_Positions(c_bam,clipping)
 
 		if seq==[]:
 
