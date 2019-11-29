@@ -271,7 +271,7 @@ def RepeatsFinder(string, regex, maxkmerlength):
 	return seen
 
 
-def Get_Alignment_Positions(bamfilein):
+def Get_Alignment_Positions(bamfilein,softclipped):
 
   
 	coords=[]
@@ -288,6 +288,21 @@ def Get_Alignment_Positions(bamfilein):
 			coords = read.get_reference_positions(full_length=True)
 			seq=read.seq
 			qual=read.mapping_quality
+			cigar=read.cigartuples
+
+			cigardict=defaultdict(int)
+
+			for operation,length in cigar:
+
+				cigardict[operation] += length
+
+			if 4 in cigardict.keys():
+
+				if (cigardict[4]/len(seq))*100 >= softclipped:
+
+					coords=[]
+					seq=[]
+					qual=[]
 
 	bamfile.close()
 
