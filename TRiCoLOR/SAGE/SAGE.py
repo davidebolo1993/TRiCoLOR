@@ -13,6 +13,7 @@ import itertools
 import multiprocessing
 from shutil import which
 from bisect import bisect_left,bisect_right
+from collections import defaultdict
 
 # additional modules
 
@@ -153,6 +154,7 @@ def run(parser, args):
 	logging.info('Gap opening penalty for consensus computation: ' + str(args.gapopen))
 	logging.info('Gap extending penalty for consensus computation: ' + str(args.gapextend))
 	logging.info('Coverage treshold: ' + str(args.coverage))
+	logging.info('Soft-clipping treshold: ' + str(args.softclipping))
 	logging.info('Long reads type: ' + str(args.readstype))
 	logging.info('Cores: ' + str(cores))
 
@@ -201,7 +203,7 @@ def run(parser, args):
 		for i,sli in enumerate(slices):
 
 			processor='p'+str(i+1)
-			p=multiprocessing.Process(target=Runner, args=(SHCpath,Cpath,gendir,processor,names,PROC_ENTRIES,sli,couples[0],couples[1],args.coverage,args.match, args.mismatch, args.gapopen, args.gapextend,os.path.abspath(args.output), args.readstype))
+			p=multiprocessing.Process(target=Runner, args=(SHCpath,Cpath,gendir,processor,names,PROC_ENTRIES,sli,couples[0],couples[1],args.coverage,args.match, args.mismatch, args.gapopen, args.gapextend,os.path.abspath(args.output), args.readstype,args.softclipping))
 			p.start()
 			processes.append(p)
 
@@ -381,9 +383,9 @@ def Bamfile_Analyzer(bamfilein,chromosome,start,end, coverage, out, processor):
 	return cov
 
 
-def Get_Alignment_Positions(bamfilein):
+def Get_Alignment_Positions(bamfilein,softclipped):
 
-	  
+  
 	coords=[]
 	seq=[]
 
@@ -395,6 +397,20 @@ def Get_Alignment_Positions(bamfilein):
 
 			coords = read.get_reference_positions(full_length=True)
 			seq=read.seq
+			cigar=read.cigartuples
+
+			cigardict=defaultdict(int)
+
+			for operation,length in cigar:
+
+				cigardict[operation] += length
+
+			if 4 in cigardict.keys():
+
+				if (cigardict[4]/len(seq))*100 >= softclipped:
+
+					coords=[]
+					seq=[]
 
 	bamfile.close()
 
@@ -519,7 +535,7 @@ def GetGTandGS(test,ref,alts):
 
 
 
-def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,coverage,match, mismatch, gapopen, gapextend, output, readstype):
+def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,coverage,match, mismatch, gapopen, gapextend, output, readstype,softclipping):
 
 
 	Entries = PROC_ENTRIES[processor] = list()
@@ -551,7 +567,7 @@ def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,covera
 
 			subprocess.call(['bash', SHCpath, out1, Cpath, processor, os.path.basename(file1), mmivar, chromind, str(match), str(mismatch), str(gapopen), str(gapextend)],stdout=open(os.devnull, 'wb'),stderr=open(os.devnull, 'wb'))
 			c_bam1=os.path.abspath(out1 + '/' + processor + '.cs.srt.bam')
-			coords,seq=Get_Alignment_Positions(c_bam1)
+			coords,seq=Get_Alignment_Positions(c_bam1,softclipping)
 			os.remove(c_bam1)
 			os.remove(c_bam1+'.bai')
 
@@ -574,7 +590,7 @@ def Runner(SHCpath,Cpath,gendir,processor,name,PROC_ENTRIES,sli,bam1,bam2,covera
 
 			subprocess.call(['bash', SHCpath, out2, Cpath, processor, os.path.basename(file2), mmivar, chromind, str(match), str(mismatch), str(gapopen), str(gapextend)],stdout=open(os.devnull, 'wb'),stderr=open(os.devnull, 'wb'))
 			c_bam2=os.path.abspath(out2 + '/' + processor + '.cs.srt.bam')
-			coords,seq=Get_Alignment_Positions(c_bam2)
+			coords,seq=Get_Alignment_Positions(c_bam2,softclipping)
 			os.remove(c_bam2)
 			os.remove(c_bam2+'.bai')
 
