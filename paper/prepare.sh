@@ -2,7 +2,7 @@
 
 ##resolving haplotypes of a long-read BAM using publicly available data from Chaisson et al., 2019.
 ##for in-house long reads sequencing experiment, have a look at longshot (https://github.com/pjedge/longshot)
-##if dealing with a haplotype-tagged BAM from whatshap (https://whatshap.readthedocs.io/en/latest/), bamtools should serve the purpose (bamtools split -tag HP)
+##if dealing with a haplotype-tagged BAM from whatshap (https://whatshap.readthedocs.io/en/latest/), bamtools (https://github.com/pezmaster31/bamtools) should serve the purpose (bamtools split -tag HP)
 
 ##requires samtools, bgzip, tabix, bcftools and alfred (https://github.com/tobiasrausch/alfred)
 ##run with sh prepare.sh in.vcf.gz in.srt.bam in.ref.fa in.alfredpath
