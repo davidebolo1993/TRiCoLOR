@@ -39,6 +39,6 @@ sed 's/[[:blank:]]*$//' ${id}.fixed.tmp.vcf > ${id}.fixed.vcf && rm ${id}.vcf &&
 bgzip ${id}.fixed.vcf && tabix ${id}.fixed.vcf.gz
 bcftools view -m2 -M2 -c 1 -C 1 -e 'GT[*] = "mis"' -O b -o ${id}.fixed.bcf ${id}.fixed.vcf.gz && rm ${id}.fixed.vcf.gz*
 bcftools index ${id}.fixed.bcf
-${alfred} split -r ${reference} -s ${id} -v index ${id}.fixed.bcf -p ${id}.h1.bam -q ${id}.h2.bam ${bam}
+${alfred} split -r ${reference} -s ${id} -v ${id}.fixed.bcf -p ${id}.h1.bam -q ${id}.h2.bam ${bam}
 
 #end 
