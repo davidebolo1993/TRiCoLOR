@@ -23,7 +23,7 @@ def main():
 	parameters = parser.add_argument_group('Arguments')
 
 	parameters.add_argument('-g', '--genome', help='Reference genome', required=True)
-	parameters.add_argument('-b', '--bed', help='BED containing known tandem repetitions for the reference genome in -r/--reference', required=True)
+	parameters.add_argument('-b', '--bed', help='BED containing known tandem repetitions for the reference genome in -g/--genome', required=True)
 	parameters.add_argument('-s', '--size', help='Size of the sliding window. Used to train the entropy treshold [20]', default=20, type=int)
 
 	args = parser.parse_args()
