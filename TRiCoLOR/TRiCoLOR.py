@@ -25,7 +25,7 @@ def main():
 	algorithm = parser_sensor.add_argument_group('Parameters for BAM scanning')
 
 	algorithm.add_argument('-s', '--scansize', type=int, help='scansize (#bps) for BAM scanning [20]', metavar='',default=20)
-	algorithm.add_argument('-e', '--entropy', type=float, help='Shannon entropy treshold [1.25]', metavar='',default=1.25) #? HAS BEEN TRAINED
+	algorithm.add_argument('-e', '--entropy', type=float, help='Shannon entropy treshold [1.23]', metavar='',default=1.23) #? HAS BEEN TRAINED
 	algorithm.add_argument('-c', '--call', type=int, help='minimum number of reads supporting the entropy drops [5]', metavar='',default=5)
 	algorithm.add_argument('-l', '--length', type=int, help='minimum length of the entropy drops [30]', metavar='', default=30)
 	algorithm.add_argument('-id', '--innerdistance', type=int, help='maximum distance range (#bps) to merge nearby intervals on the same haplotype [100]', metavar='', default=100)
