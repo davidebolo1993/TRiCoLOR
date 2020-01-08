@@ -86,7 +86,7 @@ def run(parser, args):
 
 			try:
 
-				subprocess.call(['samtools', 'index', os.path.abspath(args.bamfile1)], stderr=open(os.devnull, 'wb'))
+				subprocess.call(['samtools', 'index', os.path.abspath(bam)], stderr=open(os.devnull, 'wb'))
 
 			except:
 
