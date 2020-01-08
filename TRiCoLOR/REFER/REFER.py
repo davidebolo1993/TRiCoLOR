@@ -93,9 +93,9 @@ def run(parser, args):
 
 	bams=args.bamfile[0]
 
-	if len(bams) > 2:
+	if len(bams) != 2:
 
-		logging.error('TRiCoLOR supports haploid and diploid genomes only')
+		logging.error('TRiCoLOR supports only diploid individuals')
 		exitonerror()
 
 	for bam in bams:
@@ -256,18 +256,9 @@ def run(parser, args):
 		manager = multiprocessing.Manager()
 		Rrep=manager.dict()
 		H1rep=manager.dict()
-		
+		H2rep=manager.dict()
 		bamfile1=bams[0]
-
-		if len(bams)==2:
-
-			H2rep=manager.dict()
-			bamfile2=bams[1]
-
-		else:
-
-			H2rep=None
-			bamfile2=None
+		bamfile2=bams[1]
 
 		processes = []
 
@@ -277,13 +268,7 @@ def run(parser, args):
 
 			if not os.path.exists(os.path.abspath(args.output + '/' + processor + '.TRiCoLOR.vcf')):
 
-				if len(bams) == 2:
-
-					writer.VCF_headerwriter(os.path.abspath(bams[0]), os.path.abspath(bams[1]), args.samplename, ','.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey), os.path.abspath(args.output), processor)
-
-				else:
-
-					writer.VCF_headerwriter(os.path.abspath(bams[0]), None, args.samplename, ','.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey), os.path.abspath(args.output), processor)				
+				writer.VCF_headerwriter(os.path.abspath(bamfile1), os.path.abspath(bamfile2), args.samplename, ','.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey), os.path.abspath(args.output), processor)
 
 			p=multiprocessing.Process(target=Runner, args=(processor,sli,refseq,regex,args.maxmotif,args.size,bamfile1,bamfile2,args.coverage,args.editdistance,chromind,args.readstype,os.path.abspath(args.output),Rrep,H1rep,H2rep,Cpath,SHCpath,args.match,args.mismatch,args.gapopen,args.gapextend,args.softclipping))
 			p.start()
@@ -297,22 +282,9 @@ def run(parser, args):
 
 			writer.BED_repswriter(b_chrom,Rrep[key],os.path.abspath(args.output + '/reference'))
 			writer.BED_repswriter(b_chrom,H1rep[key],os.path.abspath(args.output + '/haplotype1'))
+			writer.BED_repswriter(b_chrom,[],os.path.abspath(args.output + '/haplotype2'))
 
-			if H2rep is not None:
-
-				writer.BED_repswriter(b_chrom,H2rep[key],os.path.abspath(args.output + '/haplotype2'))
-
-			else:
-
-				writer.BED_repswriter(b_chrom,[],os.path.abspath(args.output + '/haplotype2'))
-
-		if len(bams) == 2:
-
-			CleanResults(SHMpath, b_chrom, os.path.abspath(args.output), os.path.abspath(bams[0]), os.path.abspath(bams[1]), cores)
-
-		else:
-
-			CleanResults(SHMpath, b_chrom, os.path.abspath(args.output), os.path.abspath(bams[0]), None, cores)
+		CleanResults(SHMpath, b_chrom, os.path.abspath(args.output), os.path.abspath(bamfile1), os.path.abspath(bamfile2), cores)
 
 		logging.info('Processed chromosome ' + b_chrom)
 		print('Processed chromosome ' + b_chrom)
@@ -416,10 +388,7 @@ def Runner(processor,sli,refseq,regex,maxmotif,size,bamfile1,bamfile2,coverage,a
 
 	Ritem = Rrep[processor] = list()
 	H1item = H1rep[processor] = list()
-
-	if H2rep is not None:
-
-		H2item = H2rep[processor] =list()
+	H2item = H2rep[processor] =list()
 	
 	for i,s in enumerate(sli):
 
@@ -440,26 +409,12 @@ def Runner(processor,sli,refseq,regex,maxmotif,size,bamfile1,bamfile2,coverage,a
 
 					H1item.extend(pH1)
 
-				out2=os.path.abspath(output + '/haplotype2')
+				out2=os.path.abspath(output + '/haplotype2')				
+				pH2,pS2,pC2,pCOV2,pQ2=HaploReps(SHCpath,Cpath, bamfile2,s, coverage, regex, maxmotif, size, allowed, refseq, chromind, out2, processor,i,readtype,match,mismatch,gapopen,gapextend, clipping)
 
-				if bamfile2 is not None:
-					
-					pH2,pS2,pC2,pCOV2,pQ2=HaploReps(SHCpath,Cpath, bamfile2,s, coverage, regex, maxmotif, size, allowed, refseq, chromind, out2, processor,i,readtype,match,mismatch,gapopen,gapextend, clipping)
+				if pH2 != []:
 
-					if pH2 != []:
-
-						H2item.extend(pH2)
-
-				else:
-
-					pH2=[]
-					pS2=[]
-					pC2=[]
-					pCOV2=[]
-					pQ2=[]
-
-					open(os.path.abspath(out2 +'/' + processor + '.' + str(i +1) + '.srt.bam'), 'w').close()
-					open(os.path.abspath(out2 +'/' + processor + '.' + str(i +1) + '.srt.bam.bai'), 'w').close()
+					H2item.extend(pH2)
 
 				writer.VCF_writer(s[0], pR, refseq, pH1, pS1,pC1,pCOV1,pQ1,pH2, pS2,pC2,pCOV2,pQ2,output, processor)
 
@@ -486,10 +441,7 @@ def Runner(processor,sli,refseq,regex,maxmotif,size,bamfile1,bamfile2,coverage,a
 
 	Rrep[processor] = Ritem
 	H1rep[processor] = H1item
-
-	if H2rep is not None:
-
-		H2rep[processor] = H2item
+	H2rep[processor] = H2item
 
 
 def ReferenceReps(s,refseq,regex,maxmotif,size):
@@ -572,7 +524,4 @@ def CleanResults(SHMpath,chromosome, out, bamfile1, bamfile2,cores):
 
 
 	subprocess.call(['bash', SHMpath, os.path.abspath(out + '/haplotype1'), bamfile1,chromosome,str(cores-1)],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
-
-	if bamfile2 is not None:
-
-		subprocess.call(['bash', SHMpath, os.path.abspath(out + '/haplotype2'), bamfile2,chromosome,str(cores-1)],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))
+	subprocess.call(['bash', SHMpath, os.path.abspath(out + '/haplotype2'), bamfile2,chromosome,str(cores-1)],stdout=open(os.devnull, 'wb'), stderr=open(os.devnull, 'wb'))

@@ -75,9 +75,9 @@ def run(parser, args):
 
 	bams=args.bamfile[0]
 
-	if len(bams) > 2:
+	if len(bams) != 2:
 
-		logging.error('TRiCoLOR supports haploid and diploid genomes only')
+		logging.error('TRiCoLOR supports only diploid individuals')
 
 	for bam in bams:
 
@@ -99,7 +99,6 @@ def run(parser, args):
 	b_in=Bed_Reader(args.bedfile)
 	b_chrom = set(iter(b_in))
 	labels_set=set()
-
 	logging.info('Generating plots ...')
 	print('Generating plots ...')
 
@@ -165,7 +164,6 @@ class Bed_Reader():
 							if line[0] == self.chromosome:
 
 								yield (line[0], int(line[1]), int(line[2]), line[3])
-
 
 #FUNCTIONS
 
@@ -283,16 +281,8 @@ def Modifier(list_of_coord,seq):
 def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_table,hap_table,label,out):
 
 
-	if len(hap_bam) == 1:
-
-		bam1_coords,bam1_seq=Get_Alignment_Positions(hap_bam[0],chromosome,start,end)
-		bam2_coords,bam2_seq=[],[]
-
-	else:
-
-		bam1_coords,bam1_seq=Get_Alignment_Positions(hap_bam[0],chromosome,start,end)
-		bam2_coords,bam2_seq=Get_Alignment_Positions(hap_bam[1],chromosome,start,end)
-
+	bam1_coords,bam1_seq=Get_Alignment_Positions(os.path.abspath(hap_bam[0]),chromosome,start,end)
+	bam2_coords,bam2_seq=Get_Alignment_Positions(os.path.abspath(hap_bam[1]),chromosome,start,end)
 
 	if hap_table is None:
 

@@ -46,7 +46,7 @@ def main():
 
 	required.add_argument('-g','--genome', help='reference genome', metavar='FASTA',required=True)
 	required.add_argument('-bed','--bedfile', help='BED generated with SENSoR or equivalent proprietary BED containing putative repetitive regions', metavar='BED',required=True)
-	required.add_argument('-bam','--bamfile', help='one or two haplotype-resolved BAM',metavar='BAM', nargs='+', action='append', required=True)
+	required.add_argument('-bam','--bamfile', help='haplotype-resolved BAM',metavar='BAM', nargs='+', action='append', required=True)
 	required.add_argument('-o','--output', help='output folder',metavar='folder',required=True)
 
 	consensus = parser_refer.add_argument_group('Consensus-building parameters')
@@ -88,7 +88,7 @@ def main():
 
 	required.add_argument('-g','--genome', help='reference genome', metavar='FASTA',required=True)
 	required.add_argument('-bcf','--bcffile', help='BCF generated with REFER', metavar='BCF',required=True)
-	required.add_argument('-bam', '--bamfile', help='one or more comma-separated couples of haplotype-resolved BAM from individuals related to the one already genotyped with REFER', dest='bamfile', metavar='BAM', type=BAM, nargs='+', required=True)
+	required.add_argument('-bam', '--bamfile', help='comma-separated couples of haplotype-resolved BAM from individuals related to the one already genotyped with REFER', dest='bamfile', metavar='BAM', type=BAM, nargs='+', required=True)
 	required.add_argument('-o','--output', help='output folder',metavar='folder',required=True)
 
 	consensus = parser_sage.add_argument_group('Consensus-building parameters')
@@ -120,7 +120,7 @@ def main():
 	required = parser_app.add_argument_group('Required I/O arguments')
 
 	required.add_argument('-g', '--genome', metavar='FASTA', help='reference genome', required=True)
-	required.add_argument('-bam','--bamfile', help='one or two consensus BAM generated with REFER',metavar='BAM', nargs='+', action='append', required=True)
+	required.add_argument('-bam','--bamfile', help='haplotype-resolved consensus BAM generated with REFER',metavar='BAM', nargs='+', action='append', required=True)
 	required.add_argument('-bed','--bedfile', metavar='BED', help='propietary BED (CHROM,START,END,LABEL) with regions to plot',required=True)	
 	required.add_argument('-o', '--output', metavar='folder', help='output folder',required=True)
 

@@ -64,9 +64,9 @@ def run(parser, args):
 
 	bams=args.bamfile[0]
 
-	if len(bams) > 2:
+	if len(bams) != 2:
 
-		logging.error('TRiCoLOR supports haploid and diploid genomes only')
+		logging.error('TRiCoLOR supports only diploid individuals')
 		exitonerror()
 
 	for bam in bams:
@@ -117,80 +117,52 @@ def run(parser, args):
 	logging.info('Scanning ...')
 	print('Scanning ...')
 
-	if len(bams) == 1:
+	try:
 
-		try:
+		runInParallel(BScanner, (bams[0], args.chromosomes, os.path.abspath(args.output + '/H1.bed'), args.scansize, args.entropy, args.call, args.length),(bams[1], args.chromosomes, os.path.abspath(args.output + '/H2.bed'), args.scansize, args.entropy, args.call,args.length))
 
-			BScanner(bams[0], args.chromosomes, os.path.abspath(args.output + '/H1.bed'), args.scansize, args.entropy, args.call, args.length)
+	except:
 
-		except:
+		logging.exception('Unexpected error while scanning. Log is below')
+		exitonerror()
 
-			logging.exception('Unexpected error while scanning. Log is below')
-			exitonerror()
+	logging.info('Done')
+	logging.info('Writing final BED to output folder ...')
 
-		logging.info('Done')
-		logging.info('Writing final BED to output folder')
-
-		with open(os.path.abspath(args.output + '/TRiCoLOR.srt.bed.tmp'), 'w') as srtbed1:
+	with open(os.path.abspath(args.output + '/H1.srt.bed'), 'w') as srtbed1:
 		
-			subprocess.call(['bedtools', 'sort', '-i', os.path.abspath(args.output + '/H1.bed')],stdout=srtbed1, stderr=open(os.devnull, 'wb'))
+		subprocess.call(['bedtools', 'sort', '-i', os.path.abspath(args.output + '/H1.bed')],stdout=srtbed1, stderr=open(os.devnull, 'wb'))
 
-		os.remove(os.path.abspath(args.output + '/H1.bed'))
-
-		with open(os.path.abspath(args.output + '/TRiCoLOR.srt.bed'), 'a') as finalbedout:
-
-			subprocess.call(['bedtools', 'merge', '-i', os.path.abspath(args.output + '/TRiCoLOR.srt.bed.tmp'), '-c', '4,4,4', '-o', 'mean,stdev,collapse', '-d', str(args.innerdistance)],stdout=finalbedout, stderr=open(os.devnull, 'wb'))
-
-		os.remove(os.path.abspath(args.output + '/TRiCoLOR.srt.bed.tmp'))
-
-	else:
-
-		try:
-
-			runInParallel(BScanner, (bams[0], args.chromosomes, os.path.abspath(args.output + '/H1.bed'), args.scansize, args.entropy, args.call, args.length),(bams[1], args.chromosomes, os.path.abspath(args.output + '/H2.bed'), args.scansize, args.entropy, args.call,args.length))
-
-		except:
-
-			logging.exception('Unexpected error while scanning. Log is below')
-			exitonerror()
-
-		logging.info('Done')
-		logging.info('Writing final BED to output folder ...')
-
-		with open(os.path.abspath(args.output + '/H1.srt.bed'), 'w') as srtbed1:
+	with open(os.path.abspath(args.output + '/H2.srt.bed'), 'w') as srtbed2:
 		
-			subprocess.call(['bedtools', 'sort', '-i', os.path.abspath(args.output + '/H1.bed')],stdout=srtbed1, stderr=open(os.devnull, 'wb'))
+		subprocess.call(['bedtools', 'sort', '-i', os.path.abspath(args.output + '/H2.bed')],stdout=srtbed2, stderr=open(os.devnull, 'wb'))
 
-		with open(os.path.abspath(args.output + '/H2.srt.bed'), 'w') as srtbed2:
+	os.remove(os.path.abspath(args.output + '/H1.bed'))
+	os.remove(os.path.abspath(args.output + '/H2.bed'))
+
+	with open(os.path.abspath(args.output + '/H1.srt.merged.bed'), 'w') as mergedbed1:
 		
-			subprocess.call(['bedtools', 'sort', '-i', os.path.abspath(args.output + '/H2.bed')],stdout=srtbed2, stderr=open(os.devnull, 'wb'))
+		subprocess.call(['bedtools', 'merge', '-i', os.path.abspath(args.output + '/H1.srt.bed'), '-c', '4,4,4', '-o', 'mean,stdev,collapse', '-d', str(args.innerdistance)],stdout=mergedbed1, stderr=open(os.devnull, 'wb'))
 
-		os.remove(os.path.abspath(args.output + '/H1.bed'))
-		os.remove(os.path.abspath(args.output + '/H2.bed'))
-
-		with open(os.path.abspath(args.output + '/H1.srt.merged.bed'), 'w') as mergedbed1:
+	with open(os.path.abspath(args.output + '/H2.srt.merged.bed'), 'w') as mergedbed2:
 		
-			subprocess.call(['bedtools', 'merge', '-i', os.path.abspath(args.output + '/H1.srt.bed'), '-c', '4,4,4', '-o', 'mean,stdev,collapse', '-d', str(args.innerdistance)],stdout=mergedbed1, stderr=open(os.devnull, 'wb'))
+		subprocess.call(['bedtools', 'merge', '-i', os.path.abspath(args.output + '/H2.srt.bed'), '-c', '4,4,4', '-o', 'mean,stdev,collapse', '-d', str(args.innerdistance)],stdout=mergedbed2, stderr=open(os.devnull, 'wb'))
 
-		with open(os.path.abspath(args.output + '/H2.srt.merged.bed'), 'w') as mergedbed2:
-		
-			subprocess.call(['bedtools', 'merge', '-i', os.path.abspath(args.output + '/H2.srt.bed'), '-c', '4,4,4', '-o', 'mean,stdev,collapse', '-d', str(args.innerdistance)],stdout=mergedbed2, stderr=open(os.devnull, 'wb'))
+	os.remove(os.path.abspath(args.output + '/H1.srt.bed'))
+	os.remove(os.path.abspath(args.output + '/H2.srt.bed'))
 
-		os.remove(os.path.abspath(args.output + '/H1.srt.bed'))
-		os.remove(os.path.abspath(args.output + '/H2.srt.bed'))
+	with open(os.path.abspath(args.output + '/TRiCoLOR.srt.bed.tmp'), 'w') as bedout:
 
-		with open(os.path.abspath(args.output + '/TRiCoLOR.srt.bed.tmp'), 'w') as bedout:
+		subprocess.call(['bedops', '-u', os.path.abspath(args.output + '/H1.srt.merged.bed'), os.path.abspath(args.output + '/H2.srt.merged.bed')], stderr=open(os.devnull, 'wb'), stdout=bedout)
 
-			subprocess.call(['bedops', '-u', os.path.abspath(args.output + '/H1.srt.merged.bed'), os.path.abspath(args.output + '/H2.srt.merged.bed')], stderr=open(os.devnull, 'wb'), stdout=bedout)
+	os.remove(os.path.abspath(args.output + '/H1.srt.merged.bed'))
+	os.remove(os.path.abspath(args.output + '/H2.srt.merged.bed'))
 
-		os.remove(os.path.abspath(args.output + '/H1.srt.merged.bed'))
-		os.remove(os.path.abspath(args.output + '/H2.srt.merged.bed'))
+	with open(os.path.abspath(args.output + '/TRiCoLOR.srt.bed'), 'a') as finalbedout:
 
-		with open(os.path.abspath(args.output + '/TRiCoLOR.srt.bed'), 'a') as finalbedout:
+		subprocess.call(['bedtools', 'merge', '-i', os.path.abspath(args.output + '/TRiCoLOR.srt.bed.tmp'), '-c', '4,4,4', '-o', 'mean,stdev,collapse', '-d', str(args.outerdistance)],stderr=open(os.devnull, 'wb'), stdout=finalbedout)
 
-			subprocess.call(['bedtools', 'merge', '-i', os.path.abspath(args.output + '/TRiCoLOR.srt.bed.tmp'), '-c', '4,4,4', '-o', 'mean,stdev,collapse', '-d', str(args.outerdistance)],stderr=open(os.devnull, 'wb'), stdout=finalbedout)
-
-		os.remove(os.path.abspath(args.output + '/TRiCoLOR.srt.bed.tmp'))
+	os.remove(os.path.abspath(args.output + '/TRiCoLOR.srt.bed.tmp'))
 
 	logging.info('Done')
 	print('Done')

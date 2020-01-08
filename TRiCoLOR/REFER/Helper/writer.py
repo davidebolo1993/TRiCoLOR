@@ -48,16 +48,11 @@ def VCF_headerwriter(bamfile1, bamfile2, samplename, commandline, out, processor
 	header1=bam1.header
 	chromosomes_info1=list(header1.items())[1][1]
 
-	if bamfile2 is not None:
-
-		bam2=pysam.AlignmentFile(bamfile2,'rb')
-		header2=bam2.header
-		chromosomes_info2=list(header2.items())[1][1]
-		chromosomes_info = list({x['SN']:x for x in chromosomes_info1 + chromosomes_info2}.values())
-
-	else:
-
-		chromosomes_info = list({x['SN']:x for x in chromosomes_info1}.values())
+	bam2=pysam.AlignmentFile(bamfile2,'rb')
+	header2=bam2.header
+	chromosomes_info2=list(header2.items())[1][1]
+	
+	chromosomes_info = list({x['SN']:x for x in chromosomes_info1 + chromosomes_info2}.values())
 
 	chromosomes=[]
 	sizes=[]
