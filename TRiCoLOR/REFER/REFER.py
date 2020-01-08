@@ -282,7 +282,7 @@ def run(parser, args):
 
 			writer.BED_repswriter(b_chrom,Rrep[key],os.path.abspath(args.output + '/reference'))
 			writer.BED_repswriter(b_chrom,H1rep[key],os.path.abspath(args.output + '/haplotype1'))
-			writer.BED_repswriter(b_chrom,[],os.path.abspath(args.output + '/haplotype2'))
+			writer.BED_repswriter(b_chrom,H2rep[key],os.path.abspath(args.output + '/haplotype2'))
 
 		CleanResults(SHMpath, b_chrom, os.path.abspath(args.output), os.path.abspath(bamfile1), os.path.abspath(bamfile2), cores)
 
