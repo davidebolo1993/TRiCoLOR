@@ -19,7 +19,7 @@ def main():
 
 	required = parser_sensor.add_argument_group('Required I/O arguments')
 
-	required.add_argument('-bam', '--bamfile', help='one or two haplotype-resolved BAM', metavar='BAM', nargs='+', action='append', required=True)
+	required.add_argument('-bam', '--bamfile', help='haplotype-resolved BAM', metavar='BAM', nargs='+', action='append', required=True)
 	required.add_argument('-o', '--output', metavar='folder', help='output folder',required=True)
 
 	algorithm = parser_sensor.add_argument_group('Parameters for BAM scanning')
