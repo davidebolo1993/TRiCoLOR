@@ -10,7 +10,6 @@ import sys
 import pandas as pd
 import re 
 import glob
-import logging
 import pysam
 
 import argparse
