@@ -7,3 +7,6 @@ Please have a look at [TRiCoLOR documentation](https://davidebolo1993.github.io/
 [Source Code](https://github.com/davidebolo1993/TRiCoLOR/tree/master/TRiCoLOR)
 
 [Documentation](https://davidebolo1993.github.io/tricolordoc/)
+
+
+TRiCoLOR manuscript is submitted to a peer-reviewed journal.
