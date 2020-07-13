@@ -133,7 +133,14 @@ def main():
 
 	args = parser.parse_args()
 
-	args.func(parser, args)
+	try:
+	
+		args.func(parser, args)
+	
+	except:
+		
+		parser.print_help()
+		sys.exit(0)
 
 
 ## CLASS
