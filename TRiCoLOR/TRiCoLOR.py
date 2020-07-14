@@ -9,7 +9,7 @@ from argparse import HelpFormatter
 def main():
 
 	
-	parser = argparse.ArgumentParser(prog='TRiCoLOR', description='''TRiCoLOR: Tandem Repeats Caller fOr LOng Reads''', epilog='''This program was developed by Davide Bolognini and Tobias Rausch at the European Molecular Biology Laboratory/European Bioinformatic Institute (EMBL/EBI)''', formatter_class=CustomFormat) 
+	parser = argparse.ArgumentParser(prog='tricolor', description='''TRiCoLOR: Tandem Repeats Caller fOr LOng Reads''', epilog='''This program was developed by Davide Bolognini and Tobias Rausch at the European Molecular Biology Laboratory/European Bioinformatic Institute (EMBL/EBI)''', formatter_class=CustomFormat) 
 
 	subparsers = parser.add_subparsers(title='modules', dest='command', metavar='sensor, refer, sage, app')
 
@@ -82,7 +82,7 @@ def main():
 
 	## SAGE ##
 
-	parser_sage = subparsers.add_parser('sage', help='SAmple GEnotyper. Derive the rough genotype of repetitive regions from individuals related to the one genotyped with REFER')
+	parser_sage = subparsers.add_parser('sage', help='SAmple GEnotyper. Derive the rough genotype of repetitive regions from individuals related to the one genotyped with refer')
 
 	required = parser_sage.add_argument_group('Required I/O arguments')
 
