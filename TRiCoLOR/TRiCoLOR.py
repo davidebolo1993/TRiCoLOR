@@ -11,7 +11,7 @@ def main():
 	
 	parser = argparse.ArgumentParser(prog='TRiCoLOR', description='''TRiCoLOR: Tandem Repeats Caller fOr LOng Reads''', epilog='''This program was developed by Davide Bolognini and Tobias Rausch at the European Molecular Biology Laboratory/European Bioinformatic Institute (EMBL/EBI)''', formatter_class=CustomFormat) 
 
-	subparsers = parser.add_subparsers(title='modules', dest='command', metavar='sensor, refer, sage, app')
+	subparsers = parser.add_subparsers(title='modules', dest='command', metavar='SENSoR, REFER, SAGE, ApP')
 
 	## SENSoR ##
 
