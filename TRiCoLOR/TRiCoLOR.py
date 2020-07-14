@@ -15,7 +15,7 @@ def main():
 
 	## SENSoR ##
 
-	parser_sensor = subparsers.add_parser('sensor', help='Shannon ENtropy ScanneR. Scan haplotype-resolved BAM, calculate Shannon entropy along chromosomes and identify putative repetitive regions')
+	parser_sensor = subparsers.add_parser('SENSoR', help='Shannon ENtropy ScanneR. Scan haplotype-resolved BAM, calculate Shannon entropy along chromosomes and identify putative repetitive regions')
 
 	required = parser_sensor.add_argument_group('Required I/O arguments')
 
@@ -40,7 +40,7 @@ def main():
 
 	## REFER ##
 
-	parser_refer = subparsers.add_parser('refer', help='REpeats FindER. Search repetitions in regions from BED using a regular-expression approach modified to allow errors')
+	parser_refer = subparsers.add_parser('REFER', help='REpeats FindER. Search repetitions in regions from BED using a regular-expression approach modified to allow errors')
 
 	required = parser_refer.add_argument_group('Required I/O arguments')
 
@@ -82,7 +82,7 @@ def main():
 
 	## SAGE ##
 
-	parser_sage = subparsers.add_parser('sage', help='SAmple GEnotyper. Derive the rough genotype of repetitive regions from individuals related to the one genotyped with refer')
+	parser_sage = subparsers.add_parser('SAGE', help='SAmple GEnotyper. Derive the rough genotype of repetitive regions from individuals related to the one genotyped with refer')
 
 	required = parser_sage.add_argument_group('Required I/O arguments')
 
@@ -115,7 +115,7 @@ def main():
 
 	## ApP ## Alignment Plotter ##
 
-	parser_app = subparsers.add_parser('app', help='Alignment Plotter. Generate an interactive HTML highlighting alignments and repetitions')
+	parser_app = subparsers.add_parser('ApP', help='Alignment Plotter. Generate an interactive HTML highlighting alignments and repetitions')
 
 	required = parser_app.add_argument_group('Required I/O arguments')
 
@@ -130,12 +130,32 @@ def main():
 	tables.add_argument('-hb', '--haplotypebed', metavar='', default=None, help='one or more ordered BED generated with REFER with repetitions in BAM to -bam/--bamfile [None]',nargs='+', action='append')
 	
 	parser_app.set_defaults(func=run_subtool)
-
+	
+	#print help if no subcommand nor --help provided
+	
 	if len(sys.argv)==1:
     	
 		parser.print_help(sys.stderr)
 		sys.exit(1)
 
+	
+	#case-insensitive submodules
+	
+	if sys.argv[1].lower() == "sensor":
+
+		sys.argv[1] = "SENSoR"
+
+	elif sys.argv[1].lower() == "refer":
+
+		sys.argv[1] = "REFER"
+
+	elif sys.argv[1].lower() == "sage":
+
+		sys.argv[1] = "SAGE"
+
+	elif sys.argv[1].lower() == "app":
+
+		sys.argv[1] = "ApP"
 
 	args = parser.parse_args()
 	args.func(parser, args)
