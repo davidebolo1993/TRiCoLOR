@@ -223,19 +223,19 @@ def BAM(s):
 def run_subtool(parser, args):
 
 
-	if args.command == 'sensor': #Shannon ENtropy ScanneR
+	if args.command == 'SENSoR': #Shannon ENtropy ScanneR
 
 		from .SENSoR import SENSoR as submodule
 	
-	elif args.command == 'refer': #REpeats FindER
+	elif args.command == 'REFER': #REpeats FindER
 
 		from .REFER import REFER as submodule
 
-	elif args.command == 'sage': #SAmple GEnotyper
+	elif args.command == 'SAGE': #SAmple GEnotyper
 
 		from .SAGE import SAGE as submodule
 
-	elif args.command == 'app': #Alignment Plotter
+	elif args.command == 'ApP': #Alignment Plotter
 
 		from .ApP import ApP as submodule
 
