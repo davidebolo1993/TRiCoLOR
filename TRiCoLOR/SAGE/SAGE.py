@@ -57,7 +57,7 @@ def run(parser, args):
 
 	if which('samtools') is None:
 
-		logging.error('samtools cannot be executed. Install samtools and re-run TRiCoLOR sage')
+		logging.error('samtools cannot be executed. Install samtools and re-run TRiCoLOR SAGE')
 		exitonerror()
 
 	for couples in args.bamfile:
