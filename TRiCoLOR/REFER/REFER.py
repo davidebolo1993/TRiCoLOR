@@ -77,7 +77,7 @@ def run(parser, args):
 
 		if which(tools) is None:
 
-			logging.error(tools + ' cannot be executed. Install ' + tools + ' and re-run TRiCoLOR refer')
+			logging.error(tools + ' cannot be executed. Install ' + tools + ' and re-run TRiCoLOR REFER')
 			exitonerror()
 
 	try:
