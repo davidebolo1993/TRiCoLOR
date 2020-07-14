@@ -16,7 +16,7 @@ RUN conda update -y conda
 RUN conda create -y -n tricolorenv python=3.7
 RUN echo "source activate tricolorenv" > ~/.bashrc
 ENV PATH /miniconda/envs/tricolorenv/bin:$PATH
-RUN conda install -y -n tricolorenv -c bioconda samtools bedtools bedops bamtools minimap2 bcftools pysam pyfaidx cyvcf2
+RUN conda install -y -n tricolorenv -c bioconda samtools bedtools bedops minimap2 bcftools pysam pyfaidx cyvcf2
 RUN git clone --recursive https://github.com/davidebolo1993/TRiCoLOR.git && cd TRiCoLOR && ./configure && python setup.py install
 
 #Pull with:
