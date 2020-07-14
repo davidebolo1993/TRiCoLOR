@@ -131,16 +131,15 @@ def main():
 	
 	parser_app.set_defaults(func=run_subtool)
 
-	args = parser.parse_args()
+	if len(sys.argv)==1:
+    	
+		parser.print_help(sys.stderr)
+		sys.exit(1)
 
-	try:
-	
-		args.func(parser, args)
-	
-	except:
-		
-		parser.print_help()
-		sys.exit(0)
+
+	args = parser.parse_args()
+	args.func(parser, args)
+
 
 
 ## CLASS
