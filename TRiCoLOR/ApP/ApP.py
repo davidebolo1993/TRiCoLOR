@@ -60,7 +60,7 @@ def run(parser, args):
 
 	if which('samtools') is None:
 
-		logging.error('samtools cannot be executed. Install samtools and re-run TRiCoLOR app')
+		logging.error('samtools cannot be executed. Install samtools and re-run TRiCoLOR ApP')
 		exitonerror()
 
 	try:
