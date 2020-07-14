@@ -59,7 +59,7 @@ def run(parser, args):
 
 		if which(tools) is None:
 
-			logging.error(tools + ' cannot be executed. Install ' + tools + ' and re-run TRiCoLOR SENSoR')
+			logging.error(tools + ' cannot be executed. Install ' + tools + ' and re-run TRiCoLOR sensor')
 			exitonerror()
 
 	bams=args.bamfile[0]
