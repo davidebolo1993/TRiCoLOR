@@ -11,11 +11,11 @@ def main():
 	
 	parser = argparse.ArgumentParser(prog='TRiCoLOR', description='''TRiCoLOR: Tandem Repeats Caller fOr LOng Reads''', epilog='''This program was developed by Davide Bolognini and Tobias Rausch at the European Molecular Biology Laboratory/European Bioinformatic Institute (EMBL/EBI)''', formatter_class=CustomFormat) 
 
-	subparsers = parser.add_subparsers(title='modules', dest='command', metavar='SENSoR, REFER, SAGE, ApP')
+	subparsers = parser.add_subparsers(title='modules', dest='command', metavar='sensor, refer, sage, app')
 
 	## SENSoR ##
 
-	parser_sensor = subparsers.add_parser('SENSoR', help='Shannon ENtropy ScanneR. Scan haplotype-resolved BAM, calculate Shannon entropy along chromosomes and identify putative repetitive regions')
+	parser_sensor = subparsers.add_parser('sensor', help='Shannon ENtropy ScanneR. Scan haplotype-resolved BAM, calculate Shannon entropy along chromosomes and identify putative repetitive regions')
 
 	required = parser_sensor.add_argument_group('Required I/O arguments')
 
@@ -40,7 +40,7 @@ def main():
 
 	## REFER ##
 
-	parser_refer = subparsers.add_parser('REFER', help='REpeats FindER. Search repetitions in regions from BED using a regular-expression approach modified to allow errors')
+	parser_refer = subparsers.add_parser('refer', help='REpeats FindER. Search repetitions in regions from BED using a regular-expression approach modified to allow errors')
 
 	required = parser_refer.add_argument_group('Required I/O arguments')
 
@@ -82,7 +82,7 @@ def main():
 
 	## SAGE ##
 
-	parser_sage = subparsers.add_parser('SAGE', help='SAmple GEnotyper. Derive the rough genotype of repetitive regions from individuals related to the one genotyped with REFER')
+	parser_sage = subparsers.add_parser('sage', help='SAmple GEnotyper. Derive the rough genotype of repetitive regions from individuals related to the one genotyped with REFER')
 
 	required = parser_sage.add_argument_group('Required I/O arguments')
 
@@ -115,7 +115,7 @@ def main():
 
 	## ApP ## Alignment Plotter ##
 
-	parser_app = subparsers.add_parser('ApP', help='Alignment Plotter. Generate an interactive HTML highlighting alignments and repetitions')
+	parser_app = subparsers.add_parser('app', help='Alignment Plotter. Generate an interactive HTML highlighting alignments and repetitions')
 
 	required = parser_app.add_argument_group('Required I/O arguments')
 
@@ -198,25 +198,25 @@ def BAM(s):
 	
 	except:
 
-		raise argparse.ArgumentTypeError('BAM files to SAGE -bam/--bamfile must be given as couples of BAM files: BAM1h1,BAM1h2 BAM2h1,BAM2h2 ...')
+		raise argparse.ArgumentTypeError('BAM files to sage -bam/--bamfile must be given as couples of BAM files: BAM1h1,BAM1h2 BAM2h1,BAM2h2 ...')
 
 
 def run_subtool(parser, args):
 
 
-	if args.command == 'SENSoR': #Shannon ENtropy ScanneR
+	if args.command == 'sensor': #Shannon ENtropy ScanneR
 
 		from .SENSoR import SENSoR as submodule
 	
-	elif args.command == 'REFER': #REpeats FindER
+	elif args.command == 'refer': #REpeats FindER
 
 		from .REFER import REFER as submodule
 
-	elif args.command == 'SAGE': #SAmple GEnotyper
+	elif args.command == 'sage': #SAmple GEnotyper
 
 		from .SAGE import SAGE as submodule
 
-	elif args.command == 'ApP': #Alignment Plotter
+	elif args.command == 'app': #Alignment Plotter
 
 		from .ApP import ApP as submodule
 
