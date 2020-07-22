@@ -369,7 +369,14 @@ def Bamfile_Analyzer(bamfilein,chromosome,start,end, coverage, out, processor):
 			else:
 
 				cov+=1
-				fasta+='>' + head + '\n' + seq + '\n'
+				
+				if cov > 100: #same as REFER
+					
+					break
+					
+				else:
+					
+					fasta+='>' + head + '\n' + seq + '\n'
 
 		if cov >= coverage:
 
