@@ -78,7 +78,14 @@ def Bamfile_Analyzer(bamfilein,chromosome,start,end, coverage, out, processor):
 			else:
 
 				cov+=1
-				fasta+='>' + head + '\n' + seq + '\n'
+				
+				if cov > 100:
+					
+					break #do not add other sequences, as it slows down the subsequent consensus computation
+					
+				else:
+				
+					fasta+='>' + head + '\n' + seq + '\n'
 
 		if cov >= coverage:
 
