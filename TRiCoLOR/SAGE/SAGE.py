@@ -136,7 +136,14 @@ def run(parser, args):
 
 	Cpath=os.path.abspath(os.path.dirname(os.path.dirname(__file__)) + '/REFER/consensus')
 	SHCpath=os.path.abspath(os.path.dirname(os.path.dirname(__file__)) + '/REFER/consensus.sh')
-	gendir=os.path.abspath(os.path.dirname(args.genome))
+
+	if args.mmidir is None:
+
+		gendir=os.path.abspath(os.path.dirname(args.genome))
+
+	else:
+
+		gendir=os.path.abspath(args.mmidir) #this should exist as this module is run after REFER
 
 	logging.info('Related individuals to genotype: ' + str(len(snames)))
 
