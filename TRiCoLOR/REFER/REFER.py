@@ -194,7 +194,19 @@ def run(parser, args):
 	SHCpath=os.path.abspath(os.path.dirname(__file__) + '/consensus.sh')
 	SHMpath=os.path.abspath(os.path.dirname(__file__) + '/merging.sh')	
 	ref=pyfaidx.Fasta(os.path.abspath(args.genome))
-	gendir=os.path.abspath(os.path.dirname(args.genome))
+	
+	if args.mmidir is None:
+
+		gendir=os.path.abspath(os.path.dirname(args.genome))
+
+	else:
+
+		gendir=os.path.abspath(args.mmidir)
+
+		if not os.path.exists(gendir):
+
+			os.mkdir(gendir)
+
 	b_in=Bed_Reader(os.path.abspath(args.bedfile))
 	b_chroms=sorted(set(iter(b_in)), key=natural_keys)
 
