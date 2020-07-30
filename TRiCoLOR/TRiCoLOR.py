@@ -77,6 +77,7 @@ def main():
 	additionals.add_argument('--samplename', help='sample name in BCF header [SAMPLE]', metavar='',default='SAMPLE')
 	additionals.add_argument('--readstype', help='long reads technology (ONT, PB) [ONT]', metavar='', default='ONT', choices=['ONT', 'PB'])
 	additionals.add_argument('--threads', help='number of cores [1]',metavar='', default=1, type=int)
+	additionals.add_argument('--mmidir', help='if provided, store (and read) minimap2 indexes for the processed chromosomes into a different directory', metavar='')
 
 	parser_refer.set_defaults(func=run_subtool)
 
@@ -110,6 +111,7 @@ def main():
 	additionals.add_argument('--readstype', help='long reads technology (ONT, PB) [ONT]', metavar='', default='ONT', choices=['ONT', 'PB'])
 	additionals.add_argument('--threads', help='number of cores [1]',metavar='', default=1, type=int)
 	additionals.add_argument('--store', help=argparse.SUPPRESS, action='store_true')
+	additionals.add_argument('--mmidir', help='if provided, store (and read) minimap2 indexes for the processed chromosomes into a different directory', metavar='')
 
 	parser_sage.set_defaults(func=run_subtool)
 
