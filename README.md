@@ -1,6 +1,6 @@
 # TRiCoLOR
 
-![Docker CI](https://img.shields.io/docker/cloud/build/davidebolo1993/tricolor)
+![Docker CI](https://img.shields.io/docker/cloud/build/davidebolo1993/tricolor?style=for-the-badge)
 
 ![alt text](TRiCoLOR.png)
 
