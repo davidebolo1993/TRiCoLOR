@@ -1,4 +1,7 @@
 # TRiCoLOR
+
+[![Docker CI](https://img.shields.io/docker/cloud/build/davidebolo1993/tricolor)
+
 ![alt text](TRiCoLOR.png)
 
 ## TRiCoLOR: tandem repeats profiler for long-read sequencing data
