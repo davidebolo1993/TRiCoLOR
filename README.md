@@ -11,4 +11,6 @@ Please have a look at [TRiCoLOR documentation](https://davidebolo1993.github.io/
 
 [Documentation](https://davidebolo1993.github.io/tricolordoc/)
 
-## Citation (coming soon)
+## Citation
+
+coming soon...
