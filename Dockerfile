@@ -1,7 +1,7 @@
 #Build with:
 #sudo docker build -t davidebolo1993/tricolor .
 
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 # File author/maintainer info
 MAINTAINER Davide Bolognini <davidebolognini7@gmail.com>
@@ -13,10 +13,10 @@ RUN bash Miniconda-latest-Linux-x86_64.sh -p /miniconda -b
 RUN rm Miniconda-latest-Linux-x86_64.sh
 ENV PATH=/miniconda/bin:${PATH}
 RUN conda update -y conda
-RUN conda create -y -n tricolorenv python=3.7
+RUN conda create -y -n tricolorenv python=3.8
 RUN echo "source activate tricolorenv" > ~/.bashrc
 ENV PATH /miniconda/envs/tricolorenv/bin:$PATH
-RUN conda install -y -n tricolorenv -c bioconda samtools bedtools bedops minimap2 bcftools pysam pyfaidx cyvcf2
+RUN conda install -y -n tricolorenv -c bioconda samtools>=1.9 bedtools bcftools>=1.9
 RUN git clone --recursive https://github.com/davidebolo1993/TRiCoLOR.git && cd TRiCoLOR && ./configure && python setup.py install
 
 #Pull with:

@@ -1,204 +1,68 @@
-#!/usr/bin/python env
+#!/usr/bin/python3 env
 
 #Python 3 standard library
 
 import os
 import glob
 import math
-import logging
 import sys
-import subprocess
-import csv
+import re
 from collections import defaultdict
-from shutil import which
+from datetime import datetime
 
 # additional modules
 
 import pyfaidx
 import pysam
-import pandas as pd
+import pandas as pd 
 import plotly.plotly as py
 import plotly.graph_objs as go
 from plotly.offline import plot
 
 
-def run(parser, args):
+class c():
 
+	'''
+	Container. This stores argparser parameters. Used to pass multiple parameters at once.
+	'''
 
-	if not os.path.exists(os.path.abspath(args.output)):
+	BAM = list()
+	OUT = ''
+	REF = ''
+	chromosome = ''
+	start = 0
+	end = 0
+	label=''
+	genomebed=None
+	haplotype1bed=None
+	haplotype2bed=None
 
-		try:
 
-			os.makedirs(os.path.abspath(args.output))
+def Get_Alignment_Positions(bam,c):
 
-		except:
+	'''
+	Get coordinates and sequence of interest
+	'''
 
-			print('Cannot create the output folder')
-			sys.exit(1)
+	seq,coords=[],[]
 
-	else:
+	bamfile=pysam.AlignmentFile(bam,'rb')
 
-		if not os.access(os.path.abspath(args.output),os.W_OK):
+	for read in bamfile.fetch(c.chromosome,c.start,c.end):
 
-			print('Missing write permissions on the output folder')			
-			sys.exit(1)
-			
-		elif os.listdir(os.path.abspath(args.output)):
-
-			print('The output folder is not empty. Specify another output folder or clean the one previsouly chosen')
-			sys.exit(1)
-
-	command_dict= vars(args)
-	
-	notkey=['func']
-	command_string= ' '.join("{}={}".format(key,val) for key,val in command_dict.items() if key not in notkey)
-	logging.basicConfig(filename=os.path.abspath(args.output + '/TRiCoLOR.ApP.log'), filemode='w', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-	
-	print('Initialized .log file ' + os.path.abspath(args.output + '/TRiCoLOR.ApP.log'))
-
-	logging.info('main=TRiCoLOR ' + command_string)
-
-	if which('samtools') is None:
-
-		logging.error('samtools cannot be executed. Install samtools and re-run TRiCoLOR ApP')
-		exitonerror()
-
-	try:
-
-		with open(os.path.abspath(args.genome),'r') as file:
-
-			assert(file.readline().startswith('>'))
-	except:
-
-		logging.error('Reference file does not exist, is not readable or is not a valid FASTA')
-		exitonerror()
-
-	bams=args.bamfile[0]
-
-	if len(bams) != 2:
-
-		logging.error('TRiCoLOR supports only diploid individuals')
-
-	for bam in bams:
-
-		try:
-
-			subprocess.call(['samtools','quickcheck', os.path.abspath(bam)],stderr=open(os.devnull, 'wb'))
-
-		except:
-
-			logging.error('BAM ' + bam + ' does not exist, is not readable or is not a valid BAM')
-			exitonerror()
-
-		if not os.path.exists(os.path.abspath(bam + '.bai')):
-
-			logging.error('Missing index for BAM ' + bam + '. Not a BAM generated with REFER')
-			exitonerror()
-
-	logging.info('Haplotypes: ' + str(len(bams)))
-	b_in=Bed_Reader(args.bedfile)
-	b_chrom = set(iter(b_in))
-	labels_set=set()
-	logging.info('Generating plots ...')
-	print('Generating plots ...')
-
-	for chromosome in b_chrom:
-
-		b_in2=Bed_Reader(args.bedfile,chromosome)
-		p_reg=list(iter(b_in2))
-
-		for el in p_reg:
-
-			start,end,label = el[1], el[2], el[3]
-
-			if label in labels_set:
-
-				logging.warning('Skipped region with duplicated label')
-				
-			else:
-
-				try:
-
-					Generate_Alignment_ToPlot(args.genome,bams,chromosome,start,end,args.genomebed,args.haplotypebed,label,args.output)
-
-				except:
-
-					logging.exception('Unexpected error while analyzing region ' + chromosome + ':' + str(start) + '-' +str(end) + ". Log is below")
-
-	logging.info('Done')
-	print('Done')
-
-
-#CLASS
-
-
-class Bed_Reader():
-
-
-	def __init__(self,bedfile,chromosome=None):
-
-		self.bedfile=bedfile
-		self.chromosome=chromosome
-
-	def __iter__(self):
-
-		with open (self.bedfile, 'r') as bedin:
-
-			for line in csv.reader(bedin, delimiter='\t'): #? FIND ANOTHER, FASTER, WAY TO PARSE BED. NOT PRIORITY
-
-				if not line[0].startswith('#') and line !=[]: 
-
-					if len(line) < 4:
-
-						logging.error('BED to TRiCoLOR ApP -bed/--bedfile must contain at least: chromosome, start, end, label (other fields are ignored)')
-						exitonerror()
-
-					else:
-
-						if self.chromosome is None:
-
-							yield (line[0])
-
-						else:
-
-							if line[0] == self.chromosome:
-
-								yield (line[0], int(line[1]), int(line[2]), line[3])
-
-#FUNCTIONS
-
-
-def exitonerror():
-
-	print('An error occured. Check the log file for more details')
-	sys.exit(1)
-
-
-def Get_Alignment_Positions(bamfile,chromosome,start,end):
-
-
-	coords=[]
-	seq=[]
-
-	BamFile=pysam.AlignmentFile(bamfile,'rb')
-
-	if start==end:
-
-		end=start+1
-
-
-	for read in BamFile.fetch(chromosome, start-1, end-1):
-
-		if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
+		if not read.is_unmapped and not read.is_secondary and not read.is_supplementary: #we kept only primary consensus alignment
 
 			coords = read.get_reference_positions(full_length=True)
-			seq=read.seq
+			seq= read.seq
 
 	return coords,seq
 
 
 def list_duplicates(list_of_seq):
 
+	'''
+	Check duplicated entries (insertions) in list of coordinates
+	'''
 
 	a_=defaultdict(list)
 
@@ -211,27 +75,33 @@ def list_duplicates(list_of_seq):
 
 def modifier(coordinates):
 
-    
-    coordinates=[el+1 if el is not None else el for el in coordinates]
-    start=next(ele for ele in coordinates if ele is not None)
+	'''
+	Substitute None with closest not None
+	'''
 
-    for ind, ele in enumerate(coordinates):
-        
-        if ele is None:
-                
-            coordinates[ind] = start
-        
-        else:
+	coordinates=[el+1 if el is not None else el for el in coordinates]
+	start=next(ele for ele in coordinates if ele is not None)
 
-            start = ele
+	for ind, ele in enumerate(coordinates):
+		
+		if ele is None:
+				
+			coordinates[ind] = start
+		
+		else:
 
-    return coordinates
+			start = ele
+
+	return coordinates
 
 
-def Modifier(list_of_coord,seq):
+def Modifier(coords,seq):
 
+	'''
+	Modify coordinates. This is a trick-function that modify sequence and coordinates so that they can be plotted properly with respect to reference
+	'''
 
-	coords_without_insertions=modifier(list_of_coord)
+	coords_without_insertions=modifier(coords)
 
 	where_dup=[]
 
@@ -271,52 +141,33 @@ def Modifier(list_of_coord,seq):
 			coords_purified.append(coords_without_insertions[i])
 			NewSeq+=seq[i]
 
-
 	coords_purified.append(coords_without_insertions[-1])
 	NewSeq += seq[-1]
 
 	return coords_purified,NewSeq
 
 
-def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_table,hap_table,label,out):
+def Generate_Alignment_ToPlot(c):
 
+	'''
+	Generate plot and store
+	'''
 
-	bam1_coords,bam1_seq=Get_Alignment_Positions(os.path.abspath(hap_bam[0]),chromosome,start,end)
-	bam2_coords,bam2_seq=Get_Alignment_Positions(os.path.abspath(hap_bam[1]),chromosome,start,end)
+	hap1_table=c.haplotype1bed
+	hap2_table=c.haplotype2bed
+	ref_table=c.genomebed
 
-	if hap_table is None:
+	bam1_coords,bam1_seq=Get_Alignment_Positions(c.BAM[0],c)
+	bam2_coords,bam2_seq=Get_Alignment_Positions(c.BAM[1],c)
 
-		hap1_table = None
-		hap2_table = None
-
-	else:
-
-		if len(hap_table[0]) == 1:
-
-			if len(hap_bam) == 1:
-
-				hap1_table = hap_table[0][0]
-				hap2_table = None
-
-			else: 
-
-				logging.warning('Double input to -bam/--bamfile and single input to -hb/--haplotypebed: cannot say to which BAM BED refers. Skipped repetitions highlighting in haplotypes.')
-
-				hap1_table = None
-				hap2_table = None
-
-		else:
-
-			hap1_table = hap_table[0][0]
-			hap2_table = hap_table[0][1]
 
 	if len(bam1_seq) == 0 and len(bam2_seq) == 0:
 
-		min_=start-1000
-		max_=end+1000
+		min_=c.start-1000
+		max_=c.end+1000
 
-		ref=pyfaidx.Fasta(reference_fasta)
-		chrom=ref[chromosome]
+		ref=pyfaidx.Fasta(c.REF)
+		chrom=ref[c.chromosome]
 		ref_seq=chrom[:len(chrom)].seq
 		ref_seq=ref_seq[min_-1:max_]
 
@@ -336,27 +187,28 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 
 		if ref_table is None:
 
-			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'))
+			layout = dict(title='Repetitions in '+c.chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'))
 			fig = dict(data=data, layout=layout)
-			plot(fig,filename=os.path.abspath(out)+'/'+label+'.html',auto_open=False)
+			plot(fig,filename=os.path.abspath(c.OUT+'/'+c.label+'.html'),auto_open=False)
 
 		else:
 
 			ref_rep=pd.read_csv(os.path.abspath(ref_table),sep='\t')
+			ref_rep=ref_rep.loc[ref_rep['Chromosome'] == c.chromosome]
 			cluster_ref=[]
 
 			for i in range(len(ref_rep['Start'])):
 
 				if ref_rep['Start'][i] >= min_ and ref_rep['End'][i] <= max_:
 
-					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]-.1,y0=-.15,x1=ref_rep['End'][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]+.2,y0=-.15,x1=ref_rep['End'][i]+.8,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Reference Repetitions',method = 'relayout',args = ['shapes', cluster_ref])]))])
-			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
+			layout = dict(title='Repetitions in '+c.chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
 		
 		fig = dict(data=data, layout=layout)
-		plot(fig,filename=os.path.abspath(out)+'/'+label+'.html',auto_open=False)
+		plot(fig,filename=os.path.abspath(c.OUT+'/'+c.label+'.html'),auto_open=False)
 
 	elif len(bam1_seq) == 0 and len(bam2_seq) != 0:
 
@@ -365,8 +217,8 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 		min_=math.floor(next(item for item in bam2_mod_coords if item is not None))
 		max_=math.ceil(next(item for item in reversed(bam2_mod_coords) if item is not None))
 
-		ref=pyfaidx.Fasta(reference_fasta)
-		chrom=ref[chromosome]
+		ref=pyfaidx.Fasta(c.REF)
+		chrom=ref[c.chromosome]
 		ref_seq=chrom[:len(chrom)].seq
 		ref_seq=ref_seq[min_-1:max_]
 
@@ -398,68 +250,71 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 
 		if ref_table is None and hap2_table is None:
 
-			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'))
+			layout = dict(title='Repetitions in '+c.chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'))
 			fig = dict(data=data, layout=layout)
-			plot(fig,filename=os.path.abspath(out)+'/'+label+'.html',auto_open=False)
+			plot(fig,filename=os.path.abspath(c.OUT+'/'+c.label+'.html'),auto_open=False)
 
 		elif ref_table is not None and hap2_table is None:
 
 			ref_rep=pd.read_csv(os.path.abspath(ref_table),sep='\t')
+			ref_rep=ref_rep.loc[ref_rep['Chromosome'] == c.chromosome]
 			cluster_ref=[]
 
 			for i in range(len(ref_rep['Start'])):
 
 				if ref_rep['Start'][i] >= min_ and ref_rep['End'][i] <= max_:
 
-					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]-.1,y0=-.15,x1=ref_rep['End'][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]+.2,y0=-.15,x1=ref_rep['End'][i]+.8,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
-
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Reference Repetitions',method = 'relayout',args = ['shapes', cluster_ref])]))])
-			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
+			layout = dict(title='Repetitions in '+c.chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
 
 		elif ref_table is None and hap2_table is not None:
 
 			hap2_rep=pd.read_csv(os.path.abspath(hap2_table),sep='\t')
+			hap2_rep=hap2_rep.loc[hap2_rep['Chromosome'] == c.chromosome]
 			cluster_hap2=[]
 
 			for i in range(len(hap2_rep['Start'])):
 
 				if hap2_rep['Start'][i] >= min_ and hap2_rep['End'][i] <= max_:
 
-					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap2_rep['Start'][i]-.1,y0=-.15,x1=hap2_rep['End'][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap2_rep['Start'][i]+.2,y0=-.15,x1=hap2_rep['End'][i]+.8,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Haplotype 2 Repetitions',method = 'relayout',args = ['shapes', cluster_hap2])]))])
-			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
+			layout = dict(title='Repetitions in '+c.chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
 
 		elif ref_table is not None and hap2_table is not None:
 
 			ref_rep=pd.read_csv(os.path.abspath(ref_table),sep='\t')
+			ref_rep=ref_rep.loc[ref_rep['Chromosome'] == c.chromosome]
 			cluster_ref=[]
 
 			for i in range(len(ref_rep['Start'])):
 
 				if ref_rep['Start'][i] >= min_ and ref_rep['End'][i] <= max_:
 
-					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]-.1,y0=-.15,x1=ref_rep['End'][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]+.2,y0=-.15,x1=ref_rep['End'][i]+.8,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
 			hap2_rep=pd.read_csv(os.path.abspath(hap2_table),sep='\t')
+			hap2_rep=hap2_rep.loc[hap2_rep['Chromosome'] == c.chromosome]
 			cluster_hap2=[]
 
 			for i in range(len(hap2_rep['Start'])):
 
 				if hap2_rep['Start'][i] >= min_ and hap2_rep['End'][i] <= max_:
 
-					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap2_rep['Start'][i]-.1,y0=-1.15,x1=hap2_rep['End'][i]+.1,y1=-.85, opacity=.25,line=dict(color='#f1c31f'),fillcolor='#f1c31f')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap2_rep['Start'][i]+.2,y0=-1.15,x1=hap2_rep['End'][i]+.8,y1=-.85, opacity=.25,line=dict(color='#f1c31f'),fillcolor='#f1c31f')
 					cluster_hap2.append(cluster_dict)
 
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Reference Repetitions',method = 'relayout',args = ['shapes', cluster_ref]),dict(label = 'Haplotype 2 Repetitions',method ='relayout',args = ['shapes', cluster_hap2]),dict(label = 'Both',method = 'relayout',args = ['shapes', cluster_ref+cluster_hap2])]))])
-			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
+			layout = dict(title='Repetitions in '+c.chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
 
 		fig = dict(data=data, layout=layout)
-		plot(fig,filename=os.path.abspath(out)+'/'+label+'.html',auto_open=False)
+		plot(fig,filename=os.path.abspath(c.OUT+'/'+c.label+'.html'),auto_open=False)
 
 	elif len(bam1_seq) != 0 and len(bam2_seq) == 0:
 
@@ -468,8 +323,8 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 		min_=math.floor(next(item for item in bam1_mod_coords if item is not None))
 		max_=math.ceil(next(item for item in reversed(bam1_mod_coords) if item is not None))
 
-		ref=pyfaidx.Fasta(reference_fasta)
-		chrom=ref[chromosome]
+		ref=pyfaidx.Fasta(c.REF)
+		chrom=ref[c.chromosome]
 		ref_seq=chrom[:len(chrom)].seq
 		ref_seq=ref_seq[min_-1:max_]
 
@@ -501,67 +356,71 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 
 		if ref_table is None and hap1_table is None:
 
-			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'))
+			layout = dict(title='Repetitions in '+c.chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'))
 			fig = dict(data=data, layout=layout)
-			plot(fig,filename=os.path.abspath(out)+'/'+label+'.html',auto_open=False)
+			plot(fig,filename=os.path.abspath(c.OUT+'/'+c.label+'.html'),auto_open=False)
 
 		elif ref_table is not None and hap1_table is None:
 
 			ref_rep=pd.read_csv(os.path.abspath(ref_table),sep='\t')
+			ref_rep=ref_rep.loc[ref_rep['Chromosome'] == c.chromosome]
 			cluster_ref=[]
 
 			for i in range(len(ref_rep['Start'])):
 
 				if ref_rep['Start'][i] >= min_ and ref_rep['End'][i] <= max_:
 
-					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]-.1,y0=-.15,x1=ref_rep['End'][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]+.2,y0=-.15,x1=ref_rep['End'][i]+.8,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Reference Repetitions',method = 'relayout',args = ['shapes', cluster_ref])]))])
-			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
+			layout = dict(title='Repetitions in '+c.chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
 
 		elif ref_table is None and hap1_table is not None:
 
 			hap1_rep=pd.read_csv(os.path.abspath(hap1_table),sep='\t')
+			hap1_rep=hap1_rep.loc[hap1_rep['Chromosome'] == c.chromosome]
 			cluster_hap1=[]
 
 			for i in range(len(hap1_rep['Start'])):
 
 				if hap1_rep['Start'][i] >= min_ and hap1_rep['End'][i] <= max_: 
 
-					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap1_rep['Start'][i]-.1,y0=.85,x1=hap1_rep['End'][i]+.1,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap1_rep['Start'][i]+.2,y0=.85,x1=hap1_rep['End'][i]+.8,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
 					cluster_hap1.append(cluster_dict)
 
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Haplotype 1 Repetitions',method = 'relayout',args = ['shapes', cluster_hap1])]))])
-			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
+			layout = dict(title='Repetitions in '+c.chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
 
 		elif ref_table is not None and hap1_table is not None:
 
 			ref_rep=pd.read_csv(os.path.abspath(ref_table),sep='\t')
+			ref_rep=ref_rep.loc[ref_rep['Chromosome'] == c.chromosome]
 			cluster_ref=[]
 
 			for i in range(len(ref_rep['Start'])):
 
 				if ref_rep['Start'][i] >= min_ and ref_rep['End'][i] <= max_:
 
-					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]-.1,y0=-.15,x1=ref_rep['End'][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]+.2,y0=-.15,x1=ref_rep['End'][i]+.8,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
 			hap1_rep=pd.read_csv(os.path.abspath(hap1_table),sep='\t')
+			hap1_rep=hap1_rep.loc[hap1_rep['Chromosome'] == c.chromosome]
 			cluster_hap1=[]
 
 			for i in range(len(hap1_rep['Start'])):
 
 				if hap1_rep['Start'][i] >= min_ and hap1_rep['End'][i] <= max_: 
 
-					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap1_rep['Start'][i]-.1,y0=.85,x1=hap1_rep['End'][i]+.1,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap1_rep['Start'][i]+.2,y0=.85,x1=hap1_rep['End'][i]+.8,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
 					cluster_hap1.append(cluster_dict)
 
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Reference Repetitions',method = 'relayout',args = ['shapes', cluster_ref]),dict(label = 'Haplotype 1 Repetitions',method ='relayout',args = ['shapes', cluster_hap1]),dict(label = 'Both',method = 'relayout',args = ['shapes', cluster_ref+cluster_hap1])]))])
-			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
+			layout = dict(title='Repetitions in '+c.chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
 
 		fig = dict(data=data, layout=layout)
-		plot(fig,filename=os.path.abspath(out)+'/'+label+'.html',auto_open=False)
+		plot(fig,filename=os.path.abspath(c.OUT+'/'+c.label+'.html'),auto_open=False)
 
 	else:
 
@@ -571,8 +430,8 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 		maxs=[((next(item for item in reversed(bam1_mod_coords) if item is not None)),(next(item for item in reversed(bam2_mod_coords) if item is not None)))][0]
 		min_=math.floor(min(mins))
 		max_=math.ceil(max(maxs))
-		ref=pyfaidx.Fasta(reference_fasta)
-		chrom=ref[chromosome]
+		ref=pyfaidx.Fasta(c.REF)
+		chrom=ref[c.chromosome]
 		ref_seq=chrom[:len(chrom)].seq
 		ref_seq=ref_seq[min_-1:max_]
 
@@ -616,164 +475,301 @@ def Generate_Alignment_ToPlot(reference_fasta,hap_bam,chromosome,start,end,ref_t
 
 		if ref_table is None and hap1_table is None and hap2_table is None:
 
-			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'))
+			layout = dict(title='Repetitions in '+c.chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'))
 			fig = dict(data=data, layout=layout)
-			plot(fig,filename=os.path.abspath(out)+'/'+label+'.html',auto_open=False)
+			plot(fig,filename=os.path.abspath(c.OUT+'/'+c.label+'.html'),auto_open=False)
 
 		elif ref_table is not None and hap1_table is None and hap2_table is None:
 
 			ref_rep=pd.read_csv(os.path.abspath(ref_table),sep='\t')
+			ref_rep=ref_rep.loc[ref_rep['Chromosome'] == c.chromosome]
 			cluster_ref=[]
 
 			for i in range(len(ref_rep['Start'])):
 
 				if ref_rep['Start'][i] >= min_ and ref_rep['End'][i] <= max_:
 
-					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]-.1,y0=-.15,x1=ref_rep['End'][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]+.2,y0=-.15,x1=ref_rep['End'][i]+.8,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Reference Repetitions',method = 'relayout',args = ['shapes', cluster_ref])]))])
-			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
+			layout = dict(title='Repetitions in '+c.chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
 
 		elif ref_table is None and hap1_table is not None and hap2_table is None:
 
 			hap1_rep=pd.read_csv(os.path.abspath(hap1_table),sep='\t')
+			hap1_rep=hap1_rep.loc[hap1_rep['Chromosome'] == c.chromosome]
 			cluster_hap1=[]
 
 			for i in range(len(hap1_rep['Start'])):
 
 				if hap1_rep['Start'][i] >= min_ and hap1_rep['End'][i] <= max_: 
 
-					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap1_rep['Start'][i]-.1,y0=.85,x1=hap1_rep['End'][i]+.1,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap1_rep['Start'][i]+.2,y0=.85,x1=hap1_rep['End'][i]+.8,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
 					cluster_hap1.append(cluster_dict)
 
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Haplotype 1 Repetitions',method = 'relayout',args = ['shapes', cluster_hap1])]))])
-			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
+			layout = dict(title='Repetitions in '+c.chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
 
 		elif ref_table is None and hap1_table is None and hap2_table is not None:
 
 			hap2_rep=pd.read_csv(os.path.abspath(hap2_table),sep='\t')
+			hap2_rep=hap2_rep.loc[hap2_rep['Chromosome'] == c.chromosome]
 			cluster_hap2=[]
 
 			for i in range(len(hap2_rep['Start'])):
 
 				if hap2_rep['Start'][i] >= min_ and hap2_rep['End'][i] <= max_:
 
-					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap2_rep['Start'][i]-.1,y0=-1.15,x1=hap2_rep['End'][i]+.1,y1=-.85, opacity=.25,line=dict(color='#f1c31f'),fillcolor='#f1c31f')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap2_rep['Start'][i]+.2,y0=-1.15,x1=hap2_rep['End'][i]+.8,y1=-.85, opacity=.25,line=dict(color='#f1c31f'),fillcolor='#f1c31f')
 					cluster_hap2.append(cluster_dict)
 
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Haplotype 2 Repetitions',method = 'relayout',args = ['shapes', cluster_hap2])]))])
-			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
+			layout = dict(title='Repetitions in '+c.chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
 
 		elif ref_table is not None and hap1_table is not None and hap2_table is None:
 
 			ref_rep=pd.read_csv(os.path.abspath(ref_table),sep='\t')
+			ref_rep=ref_rep.loc[ref_rep['Chromosome'] == c.chromosome]
 			cluster_ref=[]
 
 			for i in range(len(ref_rep['Start'])):
 
 				if ref_rep['Start'][i] >= min_ and ref_rep['End'][i] <= max_:
 
-					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]-.1,y0=-.15,x1=ref_rep['End'][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]+.2,y0=-.15,x1=ref_rep['End'][i]+.8,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
 			hap1_rep=pd.read_csv(os.path.abspath(hap1_table),sep='\t')
+			hap1_rep=hap1_rep.loc[hap1_rep['Chromosome'] == c.chromosome]
 			cluster_hap1=[]
 
 			for i in range(len(hap1_rep['Start'])):
 
 				if hap1_rep['Start'][i] >= min_ and hap1_rep['End'][i] <= max_: 
 
-					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap1_rep['Start'][i]-.1,y0=.85,x1=hap1_rep['End'][i]+.1,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap1_rep['Start'][i]+.2,y0=.85,x1=hap1_rep['End'][i]+.8,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
 					cluster_hap1.append(cluster_dict)
 
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Reference Repetitions',method = 'relayout',args = ['shapes', cluster_ref]),dict(label = 'Haplotype 1 Repetitions',method ='relayout',args = ['shapes', cluster_hap1]),dict(label = 'Both',method = 'relayout',args = ['shapes', cluster_ref+cluster_hap1])]))])
-			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
+			layout = dict(title='Repetitions in '+c.chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
 
 		elif ref_table is not None and hap1_table is None and hap2_table is not None:
 
 			ref_rep=pd.read_csv(os.path.abspath(ref_table),sep='\t')
+			ref_rep=ref_rep.loc[ref_rep['Chromosome'] == c.chromosome]
 			cluster_ref=[]
 
 			for i in range(len(ref_rep['Start'])):
 
 				if ref_rep['Start'][i] >= min_ and ref_rep['End'][i] <= max_:
 
-					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]-.1,y0=-.15,x1=ref_rep['End'][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]+.2,y0=-.15,x1=ref_rep['End'][i]+.8,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
 			hap2_rep=pd.read_csv(os.path.abspath(hap2_table),sep='\t')
+			hap2_rep=hap2_rep.loc[hap2_rep['Chromosome'] == c.chromosome]
 			cluster_hap2=[]
 
 			for i in range(len(hap2_rep['Start'])):
 
 				if hap2_rep['Start'][i] >= min_ and hap2_rep['End'][i] <= max_:
 
-					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap2_rep['Start'][i]-.1,y0=-1.15,x1=hap2_rep['End'][i]+.1,y1=-.85, opacity=.25,line=dict(color='#f1c31f'),fillcolor='#f1c31f')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap2_rep['Start'][i]+.2,y0=-1.15,x1=hap2_rep['End'][i]+.8,y1=-.85, opacity=.25,line=dict(color='#f1c31f'),fillcolor='#f1c31f')
 					cluster_hap2.append(cluster_dict)
 
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Reference Repetitions',method = 'relayout',args = ['shapes', cluster_ref]),dict(label = 'Haplotype 2 Repetitions',method ='relayout',args = ['shapes', cluster_hap2]),dict(label = 'Both',method = 'relayout',args = ['shapes', cluster_ref+cluster_hap2])]))])
-			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
+			layout = dict(title='Repetitions in '+c.chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
 
 		elif ref_table is None and hap1_table is not None and hap2_table is not None:
 
 			hap1_rep=pd.read_csv(os.path.abspath(hap1_table),sep='\t')
+			hap1_rep=hap1_rep.loc[hap1_rep['Chromosome'] == c.chromosome]
 			cluster_hap1=[]
 
 			for i in range(len(hap1_rep['Start'])):
 
 				if hap1_rep['Start'][i] >= min_ and hap1_rep['End'][i] <= max_: 
 
-					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap1_rep['Start'][i]-.1,y0=.85,x1=hap1_rep['End'][i]+.1,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap1_rep['Start'][i]+.2,y0=.85,x1=hap1_rep['End'][i]+.8,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
 					cluster_hap1.append(cluster_dict)
 
 			hap2_rep=pd.read_csv(os.path.abspath(hap2_table),sep='\t')
+			hap2_rep=hap2_rep.loc[hap2_rep['Chromosome'] == c.chromosome]
 			cluster_hap2=[]
 
 			for i in range(len(hap2_rep['Start'])):
 
 				if hap2_rep['Start'][i] >= min_ and hap2_rep['End'][i] <= max_:
 
-					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap2_rep['Start'][i]-.1,y0=-1.15,x1=hap2_rep['End'][i]+.1,y1=-.85, opacity=.25,line=dict(color='#f1c31f'),fillcolor='#f1c31f')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap2_rep['Start'][i]+.2,y0=-1.15,x1=hap2_rep['End'][i]+.8,y1=-.85, opacity=.25,line=dict(color='#f1c31f'),fillcolor='#f1c31f')
 					cluster_hap2.append(cluster_dict)
 
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Haplotype 1 Repetitions',method = 'relayout',args = ['shapes', cluster_hap1]),dict(label = 'Haplotype 2 Repetitions',method ='relayout',args = ['shapes', cluster_hap2]),dict(label = 'Both',method = 'relayout',args = ['shapes', cluster_hap1+cluster_hap2])]))])
-			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
+			layout = dict(title='Repetitions in '+c.chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
 
 		else:
 
 			ref_rep=pd.read_csv(os.path.abspath(ref_table),sep='\t')
+			ref_rep=ref_rep.loc[ref_rep['Chromosome'] == c.chromosome]
 			cluster_ref=[]
 
 			for i in range(len(ref_rep['Start'])):
 
 				if ref_rep['Start'][i] >= min_ and ref_rep['End'][i] <= max_:
 
-					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]-.1,y0=-.15,x1=ref_rep['End'][i]+.1,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=ref_rep['Start'][i]+.2,y0=-.15,x1=ref_rep['End'][i]+.8,y1=.15, opacity=.25,line=dict(color='rgb(0, 190, 110)'),fillcolor='rgb(0, 190, 110)')
 					cluster_ref.append(cluster_dict)
 
 			hap1_rep=pd.read_csv(os.path.abspath(hap1_table),sep='\t')
+			hap1_rep=hap1_rep.loc[hap1_rep['Chromosome'] == c.chromosome]
 			cluster_hap1=[]
 
 			for i in range(len(hap1_rep['Start'])):
 
 				if hap1_rep['Start'][i] >= min_ and hap1_rep['End'][i] <= max_: 
 
-					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap1_rep['Start'][i]-.1,y0=.85,x1=hap1_rep['End'][i]+.1,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap1_rep['Start'][i]+.2,y0=.85,x1=hap1_rep['End'][i]+.8,y1=1.15, opacity=.25,line=dict(color='#d10cf1'),fillcolor='#d10cf1')
 					cluster_hap1.append(cluster_dict)
 
 			hap2_rep=pd.read_csv(os.path.abspath(hap2_table),sep='\t')
+			hap2_rep=hap2_rep.loc[hap2_rep['Chromosome'] == c.chromosome]
 			cluster_hap2=[]
 
 			for i in range(len(hap2_rep['Start'])):
 
 				if hap2_rep['Start'][i] >= min_ and hap2_rep['End'][i] <= max_:
 
-					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap2_rep['Start'][i]-.1,y0=-1.15,x1=hap2_rep['End'][i]+.1,y1=-.85, opacity=.25,line=dict(color='#f1c31f'),fillcolor='#f1c31f')
+					cluster_dict=dict(type='rectangule',xref='x',yref='y',x0=hap2_rep['Start'][i]+.2,y0=-1.15,x1=hap2_rep['End'][i]+.8,y1=-.85, opacity=.25,line=dict(color='#f1c31f'),fillcolor='#f1c31f')
 					cluster_hap2.append(cluster_dict)
 
 			updatemenus = list([dict(type='buttons',buttons=list([dict(label = 'None',method = 'relayout',args = ['shapes', []]),dict(label = 'Reference Repetitions',method = 'relayout',args = ['shapes', cluster_ref]),dict(label = 'Haplotype 1 Repetitions',method ='relayout',args = ['shapes', cluster_hap1]),dict(label = 'Haplotype 2 Repetitions',method ='relayout',args = ['shapes', cluster_hap2]),dict(label = 'All',method = 'relayout',args = ['shapes', cluster_ref+cluster_hap1+cluster_hap2])]))])
-			layout = dict(title='Repetitions in '+chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
+			layout = dict(title='Repetitions in '+c.chromosome+' '+str(min_)+'-'+str(max_),yaxis=dict(range=[-4,+4],showticklabels=False,ticks=''),xaxis=dict(title='Genomic Position'),updatemenus=updatemenus)
 
 		fig = dict(data=data, layout=layout)
-		plot(fig,filename=os.path.abspath(out)+'/'+label+'.html',auto_open=False)
+		plot(fig,filename=os.path.abspath(c.OUT+'/'+c.label+'.html'),auto_open=False)
+
+
+def run(parser, args):
+
+	now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+	print('[' + now + '][Message] TRiCoLOR ApP v1.1')
+
+	'''
+	Check arguments, run functions
+	'''
+
+	#fill container
+
+	c.BAM=[os.path.abspath(x) for x in args.bamfile[0]]
+	c.OUT=os.path.abspath(args.output)
+	c.REF=os.path.abspath(args.genome)
+	c.genomebed=args.genomebed
+	c.haplotype1bed=args.haplotype1bed
+	c.haplotype2bed=args.haplotype2bed
+	c.label=args.region
+
+	#fcheck REGION format
+
+	r=re.compile('.*:.*-.*')
+
+	if r.match(args.region) is not None:
+
+		c.chromosome=args.region.split(':')[0]
+		c.start=int(args.region.split(':')[1].split('-')[0])
+		c.end=int(args.region.split(':')[1].split('-')[1])
+
+	else:
+
+		now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+		print('[' + now + '][Error] Invalid region string format')
+
+	
+	if not os.path.exists(c.OUT):
+
+		try:
+
+			os.makedirs(c.OUT)
+
+		except:
+
+			now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+			print('[' + now + '][Error] Cannot create the output folder')
+			sys.exit(1)
+
+	else:
+
+		if not os.access(os.path.abspath(c.OUT),os.W_OK):
+
+			now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+			print('[' + now + '][Error] Missing write permissions on the output folder')
+			sys.exit(1)
+			
+		elif os.path.exists(os.path.abspath(c.OUT+'/'+c.label+'.html')):
+
+			now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+			print('[' + now + '][Error] The output folder already contains this plot: specify another output folder or remove the previous one')
+			sys.exit(1)
+
+	if len(c.BAM) != 2:
+
+		now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+		print('[' + now + '][Error] ApP strictly requires a couple of splitted consensus BAM haplotypes generated by REFER')
+		sys.exit(1)
+
+	#this is probably redundat, as BAM are generated by REFER. 
+
+	for bam in c.BAM:
+
+		try:
+
+			pysam.quickcheck(bam)
+
+		except:
+
+			now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+			print('[' + now + '][Errror] BAM ' + bam + ' does not exist, is not readable or is not a valid BAM')
+			sys.exit(1)
+
+		if not os.path.exists(bam + '.bai'):
+
+			now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+			print('[' + now + '][Warning] Missing ' + bam + ' index. Creating')
+
+			try:
+
+				pysam.index(bam)
+
+			except:
+
+				now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+				print('[' + now + '][Errror] BAM ' + bam + ' could not be indexed')
+				sys.exit(1)	
+
+	try:
+
+		ref=pyfaidx.Fasta(c.REF)
+
+	except:
+
+		now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+		print('[' + now + '][Errror] Reference file does not exist, is not readable or is not a valid FASTA')
+		sys.exit(1)
+
+
+	now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+	print('[' + now + '][Message] Plotting')
+
+	try:
+
+		Generate_Alignment_ToPlot(c)
+
+	except Exception as e:
+
+		now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+		print('[' + now + '][Error] Unexpected error while plotting: ' + str(e))
+		sys.exit(1)
+
+	now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+	print('[' + now + '][Message] Done')
+	sys.exit(0)

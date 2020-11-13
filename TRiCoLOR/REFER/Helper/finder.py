@@ -1,4 +1,4 @@
-#!/usr/bin/python env
+#!/usr/bin/python3 env
 
 
 #python 3 standard library
@@ -7,19 +7,125 @@ import re
 from collections import defaultdict, Counter
 from operator import itemgetter
 
-
 #additional modules
 
-import pyfaidx
-import pysam
 import editdistance
 
 
-## FUNCTIONS
+def possible_rotations(word):
+
+	'''
+	Build possible rotations of a motif
+	'''
+
+	p = []
+
+	for i in range(len(word)):
+
+		p.append(word[i:]+word[:i])
+		
+	return p
+
+
+def RegexBuilder(c):
+
+	'''
+	Build a RegEx to find repeated patterns in a consensus string
+	'''
+
+	if (c.motif == 0 or c.motif==1) and (c.times == 0 or c.times==1):
+
+		if not c.precisemotif:
+
+			my_regex = r'(.+?)\1+' if not c.overlapping else r'(?=(.+?)\1+)'
+
+		else:
+
+			if c.motif == 1:
+
+				my_regex = r'(.{1})\1+' if not c.overlapping else r'(?=(.{1})\1+)'
+
+	elif (c.motif == 0 or c.motif == 1) and (c.times !=0 and c.times!=1):
+
+		if not c.precisemotif:
+
+			if not c.precisetimes:
+
+				my_regex = r'(.+?)\1{' + str(c.times-1) + r',}' if not c.overlapping else r'(?=(.+?)\1{' + str(c.times-1) + r',})'
+
+			else:
+
+				my_regex = r'(.+?)\1{' + str(c.times-1) + r'}' if not c.overlapping else r'(?=(.+?)\1{' + str(c.times-1) + r'})'
+
+		else:
+
+			if c.motif==1:
+
+				if not c.precisetimes:
+
+					my_regex = r'(.{1})\1{' + str(c.times-1) + r',}' if not c.overlapping else r'(?=(.{1})\1{' + str(c.times-1) + r',})'
+
+				else:
+
+					my_regex = r'(.{1})\1{' + str(c.times-1) + r'}' if not c.overlapping else r'(?=(.{1})\1{' + str(c.times-1) + r'})'                    
+
+	elif (c.motif != 0 and c.motif !=1) and (c.times==0 or c.times ==1):
+
+		if not c.precisemotif:
+
+			my_regex = r'(.{'  + str(c.motif) + r',})\1+' if not c.overlapping else r'(?=(.{'  + str(c.motif) + r',})\1+)'
+
+		else:
+
+			my_regex = r'(.{'  + str(c.motif) + r'})\1+' if not c.overlapping else r'(?=(.{'  + str(c.motif) + r'})\1+)'
+
+	elif (c.motif != 0 and c.motif !=1) and (c.times !=0 and c.times!=1):
+
+		if not c.precisemotif and not c.precisetimes:
+
+			my_regex = r'(.{'  + str(c.motif) + r',})\1{' + str(c.times-1) + r',}' if not c.overlapping else r'(?=(.{'  + str(c.motif) + r',})\1{' + str(c.times-1) + r',})'
+
+		elif c.precisemotif and not c.precisetimes:
+
+			my_regex = r'(.{'  + str(c.motif) + r'})\1{' + str(c.times-1) + r',}' if not c.overlapping else r'(?=(.{'  + str(c.motif) + r'})\1{' + str(c.times-1) + r',})'
+
+		elif not c.precisemotif and c.precisetimes:
+
+			my_regex = r'(.{'  + str(c.motif) + r',})\1{' + str(c.times-1) + r'}' if not c.overlapping else r'(?=(.{'  + str(c.motif) + r',})\1{' + str(c.times-1) + r'})'
+
+		else:
+
+			my_regex = r'(.{'  + str(c.motif) + r'})\1{' + str(c.times-1) + r'}' if not c.overlapping else r'(?=(.{'  + str(c.motif) + r'})\1{' + str(c.times-1) + r'})'
+
+	return my_regex
+
+
+def RepeatsFinder(string,c):
+
+	'''
+	Find repeated motifs in consensus string, having a RegEx built
+	'''
+
+	seen=set()
+
+	r=re.compile(c.regex)
+
+	for match in r.finditer(string):
+
+		motif=match.group(1)
+
+		if len(motif) <= c.maxmotif:
+
+			seen.add(motif)
+
+	return seen
 
 
 def SolveNestedR(SortedIntervals):
 
+	'''
+	Solve nested repeats in reference sequence (no errors)
+	'''
 
 	extended=[]
 
@@ -48,8 +154,27 @@ def SolveNestedR(SortedIntervals):
 	return extended
 
 
-def ReferenceFilter(reference_reps,wanted,size,start): 
+def dfs(adj_list, visited, vertex, result, key):
 
+	'''
+	Collapse overlapping edges recursively
+	'''
+
+	visited.add(vertex)
+	result[key].append(vertex)
+
+	for neighbor in adj_list[vertex]:
+
+		if neighbor not in visited:
+
+			dfs(adj_list, visited, neighbor, result, key)
+
+
+def ReferenceFilter(chromosome,reference_reps,wanted,c,start):
+
+	'''
+	Identify repeated substring/s
+	'''
 
 	corr_=[]
 
@@ -82,7 +207,7 @@ def ReferenceFilter(reference_reps,wanted,size,start):
 
 		if len(result) !=0:
 
-			new_reps=[(reps, start+val[0], start+val[-1]+len(reps)-1, len(val)) for val in list(result.values()) if val[-1]+len(reps)-val[0] >= size]
+			new_reps=[(reps, start+val[0], start+val[-1]+len(reps)-1, len(val)) for val in list(result.values()) if val[-1]+len(reps)-val[0] >= c.size]
 			corr_.extend(new_reps)
 
 	if corr_ == []:
@@ -94,11 +219,65 @@ def ReferenceFilter(reference_reps,wanted,size,start):
 		s_corr_=sorted(corr_, key=itemgetter(1,2))
 		mod_int=SolveNestedR(s_corr_)
 
-		return mod_int
+		return [(chromosome,a,b,c,d) for a,b,c,d in zip([x[0] for x in mod_int],[x[1]-1 for x in mod_int],[x[2]-1 for x in mod_int],[x[3] for x in mod_int])] #convert to 0-based
+
+
+def look_for_self(motif,sequence):
+
+	'''
+	Find all occurence of a motif in string
+
+	'''
+
+	r=re.compile(motif)
+
+	for match in r.finditer(sequence):
+
+		yield (match.group(), match.start(), match.start()+len(match.group())*int(len(match.group())/len(match.group()))-1,int(len(match.group())/len(match.group())))
+
+
+def check_edit(string1, string2, allowed):
+
+	'''
+	Check if the edit-distance between motif and substring is accepted
+	'''
+
+
+	if len(string2) <= allowed:
+
+		return True
+
+	elif editdistance.eval(string1,string2) <= allowed:
+
+		return True
+
+	return False
+
+
+def Markovchain(motif,string):
+
+	'''
+	If 2 motifs overlap, choose the most-likely based on N-gram occurences (Markov chain)
+	'''
+
+	state_len = len(motif)
+	model = defaultdict(Counter)
+
+	for i in range(len(string) - state_len):
+		state = string[i:i + state_len]
+		next_ = string[i + state_len :i + state_len*2]
+		model[state][next_] += 1
+
+	motif_probability=((model[motif][motif])/len(string))*state_len + state_len/len(string)
+
+	return motif_probability, string.count(motif)
 
 
 def SolveNestedH(SortedIntervals, string, size):
 
+	'''
+	If 2 motifs overlap, choose the most likely
+	'''
 
 	extended=[]
 	
@@ -174,246 +353,32 @@ def SolveNestedH(SortedIntervals, string, size):
 	return extended
 
 
-def possible_rotations(word):
+def corrector(chromosome,c, string, repetitions, coordinates):
 
-	p = []
+	'''
+	Solve imperfect repetitions. Only perfect occurences are counted but fuzzy occurences are merged into the repeated string
+	'''
 
-	for i in range(len(word)):
-
-		p.append(word[i:]+word[:i])
-		
-	return p
-
-
-def RegexBuilder(kmer,times,overlapping,strictmotif,strictimes):
-
-	if (kmer == 0 or kmer==1) and (times == 0 or times==1):
-
-		if not strictmotif:
-
-			my_regex = r'(.+?)\1+' if not overlapping else r'(?=(.+?)\1+)'
-
-		else:
-
-			if kmer == 1:
-
-				my_regex = r'(.{1})\1+' if not overlapping else r'(?=(.{1})\1+)'
-
-	elif (kmer == 0 or kmer == 1) and (times !=0 and times!=1):
-
-		if not strictmotif:
-
-			if not strictimes:
-
-				my_regex = r'(.+?)\1{' + str(times-1) + r',}' if not overlapping else r'(?=(.+?)\1{' + str(times-1) + r',})'
-
-			else:
-
-				my_regex = r'(.+?)\1{' + str(times-1) + r'}' if not overlapping else r'(?=(.+?)\1{' + str(times-1) + r'})'
-
-		else:
-
-			if kmer==1:
-
-				if not strictimes:
-
-					my_regex = r'(.{1})\1{' + str(times-1) + r',}' if not overlapping else r'(?=(.{1})\1{' + str(times-1) + r',})'
-
-				else:
-
-					my_regex = r'(.{1})\1{' + str(times-1) + r'}' if not overlapping else r'(?=(.{1})\1{' + str(times-1) + r'})'                    
-
-	elif (kmer != 0 and kmer !=1) and (times==0 or times ==1):
-
-		if not strictmotif:
-
-			my_regex = r'(.{'  + str(kmer) + r',})\1+' if not overlapping else r'(?=(.{'  + str(kmer) + r',})\1+)'
-
-		else:
-
-			my_regex = r'(.{'  + str(kmer) + r'})\1+' if not overlapping else r'(?=(.{'  + str(kmer) + r'})\1+)'
-
-	elif (kmer != 0 and kmer !=1) and (times !=0 and times!=1):
-
-		if not strictmotif and not strictimes:
-
-			my_regex = r'(.{'  + str(kmer) + r',})\1{' + str(times-1) + r',}' if not overlapping else r'(?=(.{'  + str(kmer) + r',})\1{' + str(times-1) + r',})'
-
-		elif strictmotif and not strictimes:
-
-			my_regex = r'(.{'  + str(kmer) + r'})\1{' + str(times-1) + r',}' if not overlapping else r'(?=(.{'  + str(kmer) + r'})\1{' + str(times-1) + r',})'
-
-		elif not strictmotif and strictimes:
-
-			my_regex = r'(.{'  + str(kmer) + r',})\1{' + str(times-1) + r'}' if not overlapping else r'(?=(.{'  + str(kmer) + r',})\1{' + str(times-1) + r'})'
-
-		else:
-
-			my_regex = r'(.{'  + str(kmer) + r'})\1{' + str(times-1) + r'}' if not overlapping else r'(?=(.{'  + str(kmer) + r'})\1{' + str(times-1) + r'})'
-
-	return my_regex
-
-
-def RepeatsFinder(string, regex, maxkmerlength): 
-
-	seen=set()
-
-	r=re.compile(regex)
-
-	for match in r.finditer(string):
-
-		motif=match.group(1)
-
-		if len(motif) <= maxkmerlength:
-
-			seen.add(motif)
-
-	return seen
-
-
-def Get_Alignment_Positions(bamfilein,softclipped):
-
-  
-	coords=[]
-	seq=[]
-	qual=[]
-
-
-	bamfile=pysam.AlignmentFile(bamfilein,'rb')
-
-	for read in bamfile.fetch():
-
-		if not read.is_unmapped and not read.is_secondary and not read.is_supplementary:
-
-			coords = read.get_reference_positions(full_length=True)
-			seq=read.seq
-			qual=read.mapping_quality
-			cigar=read.cigartuples
-
-			cigardict=defaultdict(int)
-
-			for operation,length in cigar:
-
-				cigardict[operation] += length
-
-			if 4 in cigardict.keys():
-
-				if (cigardict[4]/len(seq))*100 >= softclipped:
-
-					coords=[]
-					seq=[]
-					qual=[]
-
-	bamfile.close()
-
-	return coords,seq,qual
-
-
-def modifier(coordinates):
-
-	
-	coordinates=[el+1 if el is not None else el for el in coordinates]
-	start=next(ele for ele in coordinates if ele is not None)
-
-	for ind, ele in enumerate(coordinates):
-		
-		if ele is None:
-
-			coordinates[ind] = start
-		
-		else:
-
-			start = ele
-
-	return coordinates
-
-
-def Get_Alignment_Coordinates(coord_list,repetitions):
-
-
-	rep_coord_list=[(a,b,c,d) for a,b,c,d in zip([repetition[0] for repetition in repetitions],[coord_list[repetition[1]] for repetition in repetitions],[coord_list[repetition[2]] for repetition in repetitions],[repetition[3] for repetition in repetitions])]
-
-	return rep_coord_list
-
-
-def look_for_self(rep,sequence):
-
-
-	r=re.compile(rep)
-
-	for match in r.finditer(sequence):
-
-		yield (match.group(), match.start(), match.start()+len(match.group())*int(len(match.group())/len(match.group()))-1,int(len(match.group())/len(match.group())))
-
-
-def dfs(adj_list, visited, vertex, result, key):
-
-
-	visited.add(vertex)
-	result[key].append(vertex)
-
-	for neighbor in adj_list[vertex]:
-
-		if neighbor not in visited:
-
-			dfs(adj_list, visited, neighbor, result, key)
-
-
-def check_edit(string1, string2, allowed):
-
-
-	if len(string2) <= allowed:
-
-		return True
-
-	elif editdistance.eval(string1,string2) <= allowed:
-
-		return True
-
-	return False
-
-
-def Markovchain(motif,string):
-
-
-	STATE_LEN = len(motif)
-
-	model = defaultdict(Counter)
-
-	for i in range(len(string) - STATE_LEN):
-		state = string[i:i + STATE_LEN]
-		next_ = string[i + STATE_LEN :i + STATE_LEN*2]
-		model[state][next_] += 1
-
-	motif_probability=((model[motif][motif])/len(string))*STATE_LEN + STATE_LEN/len(string)
-
-	return motif_probability, string.count(motif)
-
-
-
-def corrector(reference, string, repetitions, coordinates, size, allowed):
-
-	corr_=[]
-	coords=modifier(coordinates)
+	corrected=[]
 
 	for reps in repetitions:
 
-		self_=list(look_for_self(reps,string))
-		self__= Get_Alignment_Coordinates(coords,self_)
+		self_=list(look_for_self(reps,string)) #indices in consensus
+		self__=[(a,b,c,d) for a,b,c,d in zip([x[0] for x in self_],[coordinates[x[1]] for x in self_],[coordinates[x[2]] for x in self_],[x[3] for x in self_])] #corresponding BAM coordinates
 
 		ranges=[]
 
 		for i in range(len(self_)-1):
 
-			if self_[i+1][1]-self_[i][1] == len(reps): 
+			if self_[i+1][1]-self_[i][1] == len(reps): #subsequent motif
 
 				ranges.append((self_[i][1],self_[i+1][1]))
 
 			else:
 
-				if len(reps) > 1:
+				if len(reps) > 1: 
 
-					if check_edit(reps,string[self_[i][1]+len(reps):self_[i+1][1]], allowed):
+					if check_edit(reps,string[self_[i][1]+len(reps):self_[i+1][1]], c.editdistance): #if interruption of perfect reps below treshold
 
 						ranges.append((self_[i][1],self_[i+1][1]))
 
@@ -426,22 +391,18 @@ def corrector(reference, string, repetitions, coordinates, size, allowed):
 
 		result = defaultdict(list)
 		visited = set()
-	  
+
 		for vertex in collapsed_ranges:
 
 			if vertex not in visited:
 
 				dfs(collapsed_ranges, visited, vertex, result, vertex)
+
 		if len(result) != 0:
 
-			corr_.extend([(reps, interv[0], interv[-1]+(len(reps)-1)) for interv in result.values() if interv[-1]+len(reps)-interv[0] >= size])
+			corrected.extend([(reps, interv[0], interv[-1]+(len(reps)-1)) for interv in result.values() if interv[-1]+len(reps)-interv[0] >= c.size])
 
-		else:
+	corrected_srtd=sorted(corrected, key=itemgetter(1,2))
+	corrected_srtd_fltrd=SolveNestedH(corrected_srtd,string,c.size)
 
-			continue
-
-	s_corr_=sorted(corr_, key=itemgetter(1,2))
-
-	mod_int=SolveNestedH(s_corr_, string,size)
-
-	return Get_Alignment_Coordinates(coords,mod_int), string, coords
+	return [(chromosome,a,b,c,d) for a,b,c,d in zip([x[0] for x in corrected_srtd_fltrd],[coordinates[x[1]] for x in corrected_srtd_fltrd],[coordinates[x[2]] for x in corrected_srtd_fltrd],[x[3] for x in corrected_srtd_fltrd])] #corresponding BAM coordinates
