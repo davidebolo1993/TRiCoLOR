@@ -7,10 +7,11 @@ FROM ubuntu:20.04
 MAINTAINER Davide Bolognini <davidebolognini7@gmail.com>
 
 # Install dependencies
-RUN apt-get update && apt-get install -y nano curl git build-essential g++ cmake && apt-get clean
-RUN curl -LO http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh
-RUN bash Miniconda-latest-Linux-x86_64.sh -p /miniconda -b
-RUN rm Miniconda-latest-Linux-x86_64.sh
+ENV DEBIAN_FRONTEND=noninteractive 
+RUN apt-get update && apt-get install -y nano curl git build-essential g++ cmake libz-dev && apt-get clean
+RUN curl -LO https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+RUN bash Miniconda3-latest-Linux-x86_64.sh -p /miniconda -b
+RUN rm Miniconda3-latest-Linux-x86_64.sh
 ENV PATH=/miniconda/bin:${PATH}
 RUN conda update -y conda
 RUN conda create -y -n tricolorenv python=3.8
