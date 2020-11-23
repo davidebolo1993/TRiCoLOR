@@ -173,7 +173,9 @@ def BScanner_parallel(bamfilein, bedfileout, c):
 				if len(group) >= c.length:
 
 					value=np.median(chr_array[group])
-					intervals.append((group[0]-350,group[-1]+350, value))
+					start_g=(0 if group[0]-350 < 0 else group[0]-350) 
+					end_g=(chrom_dict[chromosome]-1 if group[1]+350 > chrom_dict[chromosome]-1 else group[1]+350) #but for the end coordinate, this should not happen
+					intervals.append((start_g,end_g, value))
 
 			with open (bedfileout, 'a') as bedout:
 
@@ -260,7 +262,9 @@ def BScanner(c):
 				if len(group) >= c.length:
 
 					value=np.median(chr_array1[group])
-					intervals.append((group[0]-350,group[-1]+350, value))
+					start_g=(0 if group[0]-350 < 0 else group[0]-350) 
+					end_g=(chrom_dict[chromosome]-1 if group[1]+350 > chrom_dict[chromosome]-1 else group[1]+350) #but for the end coordinate, this should not happen
+					intervals.append((start_g,end_g, value))
 
 			with open (os.path.abspath(c.OUT + '/H1.bed'), 'a') as bedout:
 
@@ -284,7 +288,9 @@ def BScanner(c):
 				if len(group) >= c.length:
 
 					value=np.median(chr_array2[group])
-					intervals.append((group[0]-350,group[-1]+350, value))
+					start_g=(0 if group[0]-350 < 0 else group[0]-350) 
+					end_g=(chrom_dict[chromosome]-1 if group[1]+350 > chrom_dict[chromosome]-1 else group[1]+350) #but for the end coordinate, this should not happen
+					intervals.append((start_g,end_g, value))
 
 			with open (os.path.abspath(c.OUT + '/H2.bed'), 'a') as bedout:
 
