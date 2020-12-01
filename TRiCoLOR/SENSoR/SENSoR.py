@@ -459,7 +459,7 @@ def run(parser, args):
 	#cat and sort/merge
 
 	catted=bedmerged1.cat(bedmerged2, postmerge=True, c=[4,4,4], o=['mean', 'stdev', 'collapse'], d=c.outerdistance)
-	header='CHROM\tSTART\tEND\tCOVMEAN\tCOVSTD\tCOVCOLLAPSED\n'
+	header='#CHROM\tSTART\tEND\tCOVMEAN\tCOVSTD\tCOVCOLLAPSED\n' #removed, as this create
 	catted.saveas(os.path.abspath(c.OUT + '/TRiCoLOR.srt.bed.gz'), compressed=True, trackline=header) #this are approximate regions. No need to be precise on 0-based start and 1-based end
 
 	os.remove(os.path.abspath(c.OUT + '/H1.bed'))

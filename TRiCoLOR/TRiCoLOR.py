@@ -60,8 +60,10 @@ def main():
 
 	required.add_argument('-g','--genome', help='reference genome', metavar='FASTA',required=True, type=str)
 	required.add_argument('-bed','--bedfile', help='BED generated with SENSoR or equivalent proprietary BED containing putative repetitive regions', metavar='BED',required=True, type=str)
-	required.add_argument('-bam','--bamfile', help='a couple of splitted BAM haplotypes or a single HP-tagged BAM',metavar='BAM', nargs='+', action='append', required=True)
 	required.add_argument('-o','--output', help='output folder',metavar='folder',required=True, type=str)
+	group = required.add_mutually_exclusive_group(required=True)
+	group.add_argument('-bam','--bamfile', help='a couple of splitted BAM haplotypes or a single HP-tagged BAM',metavar='BAM', nargs='+', action='append')
+	group.add_argument('--index_only', help = 'only create mappy .mmi indexes for chromosomes in BED (exluding those given in --exclude), and store them in the output folder. This output folder can be given as --mmidir to REFER when calling repetitions in order not to re-build indexes', action='store_true')
 
 	consensus = parser_refer.add_argument_group('Consensus-building parameters')
 

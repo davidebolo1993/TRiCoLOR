@@ -400,10 +400,10 @@ def run(parser, args):
 
 	#fill container
 
-	c.BAM=[os.path.abspath(x) for x in args.bamfile[0]]
 	c.OUT=os.path.abspath(args.output)
 	c.REF=os.path.abspath(args.genome)
 	c.BED=os.path.abspath(args.bedfile)
+
 	c.match=args.match
 	c.mismatch=args.mismatch
 	c.gapopen=args.gapopen
@@ -445,15 +445,11 @@ def run(parser, args):
 			print('[' + now + '][Error] Missing write permissions on the output folder')
 			sys.exit(1)
 			
-		elif os.listdir(os.path.abspath(c.OUT)):
+		elif not args.index_only and os.listdir(os.path.abspath(c.OUT)):
 
 			now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
 			print('[' + now + '][Error] The output folder is not empty: specify another output folder or clean the current one')
 			sys.exit(1)
-
-	os.makedirs(os.path.abspath(c.OUT + '/reference'))
-	os.makedirs(os.path.abspath(c.OUT + '/haplotype1'))
-	os.makedirs(os.path.abspath(c.OUT + '/haplotype2'))
 
 	#check if bedtools is in PATH. As from v1.1, TRiCoLOR does not perform subprocess calls to bedtools but this bedtools is still required in PATH
 
@@ -462,6 +458,98 @@ def run(parser, args):
 		now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
 		print('[' + now + '][Error] bedtools must be in PATH')
 		sys.exit(1)
+
+	try:
+
+		bedfile=pybedtools.BedTool(c.BED)
+		bedsrtd=bedfile.sort()
+
+	except:
+
+		now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+		print('[' + now + '][Errror] BED does not exist, is not readable or is not a valid BED')
+		sys.exit(1)
+
+
+	try:
+
+		ref=pyfaidx.Fasta(c.REF)
+
+	except:
+
+		now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+		print('[' + now + '][Errror] Reference file does not exist, is not readable or is not a valid FASTA')
+		sys.exit(1)
+
+	skip_c=[]
+
+	if c.exclude is not None:
+
+		if not os.path.exists(os.path.abspath(c.exclude)):
+
+			now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+			print('[' + now + '][Error] File containing chromosomes to exclude is provided but does not exist')
+
+		else:
+
+			with open(os.path.abspath(c.exclude)) as fin:
+
+				for line in fin:
+
+					skip_c.append(line.rstrip())
+
+	if args.index_only:
+
+		now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+		print('[' + now + '][Message] Only creating mappy .mmi indexes for chromosomes in BED')
+		b_chroms={x.chrom for x in bedsrtd if x.chrom not in skip_c}
+	
+		for b_chrom in b_chroms:
+
+			chromind=os.path.abspath(c.OUT + '/' + b_chrom + '.mmi')
+
+			if not os.path.exists(chromind):
+
+				try:
+					
+					chrom=ref[b_chrom] #extract pyfaidx chrom
+
+				except:
+
+					now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+					print('[' + now + '][Error] Missing ' + b_chrom + ' in reference file')
+					sys.exit(1)
+
+				refseq=chrom[:len(chrom)].seq #get chromosome reference sequence
+				now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+				print('[' + now + '][Message] Creating .mmi index for chromosome ' + b_chrom)
+
+				#removed subprocess call to samtools
+				if not os.path.exists(os.path.abspath(c.OUT + '/' + b_chrom + '.fa')): #create .fa first if this does not exist
+
+					with open(os.path.abspath(c.OUT + '/' + b_chrom + '.fa'), 'w') as chromout:
+
+						chromout.write('>' + b_chrom + '\n' + refseq)
+
+				#removed subprocess call to minimap2
+				mp.Aligner(os.path.abspath(c.OUT + '/' + b_chrom + '.fa'),fn_idx_out=chromind, preset='asm10') #standard present for consensus-to-ref alignment
+				os.remove(os.path.abspath(c.OUT + '/' + b_chrom + '.fa'))
+
+			else:
+
+				now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+				print('[' + now + '][Warning] .mmi index for chromosome ' + b_chrom + ' already exists: skipped')
+
+		now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+		print('[' + now + '][Message] Done')
+		sys.exit(0)
+
+	#this is only if we are calling repetitions
+	os.makedirs(os.path.abspath(c.OUT + '/reference'))
+	os.makedirs(os.path.abspath(c.OUT + '/haplotype1'))
+	os.makedirs(os.path.abspath(c.OUT + '/haplotype2'))
+
+	c.BAM=[os.path.abspath(x) for x in args.bamfile[0]]
 
 	if len(c.BAM) > 2:
 
@@ -496,27 +584,6 @@ def run(parser, args):
 				print('[' + now + '][Errror] BAM ' + bam + ' could not be indexed')
 				sys.exit(1)	
 
-	try:
-
-		ref=pyfaidx.Fasta(c.REF)
-
-	except:
-
-		now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-		print('[' + now + '][Errror] Reference file does not exist, is not readable or is not a valid FASTA')
-		sys.exit(1)
-
-	try:
-
-		bedfile=pybedtools.BedTool(c.BED)
-		bedsrtd=bedfile.sort()
-
-	except:
-
-		now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-		print('[' + now + '][Errror] BED does not exist, is not readable or is not a valid BED')
-		sys.exit(1)
-
 	c.regex=finder.RegexBuilder(c) #regex builder
 	now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
 	print('[' + now + '][Message] Using RegEx ' + c.regex)
@@ -537,30 +604,13 @@ def run(parser, args):
 
 		if not os.path.exists(gendir):
 
-			os.mkdirs(gendir)
+			os.makedirs(gendir)
 
 		if not os.access(gendir, os.W_OK): #test write permissions one for all
 
 			now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
 			print('[' + now + '][Message] Missing write permissions on the folder chosen to store .mmi indexes')
 			sys.exit(1)
-
-	skip_c=[]
-
-	if c.exclude is not None:
-
-		if not os.path.exists(os.path.abspath(c.exclude)):
-
-			now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-			print('[' + now + '][Error] File containing chromosomes to exclude is provided but does not exist')
-
-		else:
-
-			with open(os.path.abspath(c.exclude)) as fin:
-
-				for line in fin:
-
-					skip_c.append(line.rstrip())
 
 	now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
 	b_chroms={x.chrom for x in bedsrtd if x.chrom not in skip_c} #all the chromosomes in BED except those to exclude
@@ -576,7 +626,7 @@ def run(parser, args):
 	H2bam=manager.list()
 	SortedVCF=list()
 
-	BEDheader='Chromosome\tStart\tEnd\tRepeated Motif\tRepetitions Number\n'
+	BEDheader='#Chromosome\tStart\tEnd\tRepeated Motif\tRepetitions Number\n'
 	rBEDstring=''
 	h1BEDstring=''
 	h2BEDstring=''

@@ -194,7 +194,7 @@ def Generate_Alignment_ToPlot(c):
 		else:
 
 			ref_rep=pd.read_csv(os.path.abspath(ref_table),sep='\t')
-			ref_rep=ref_rep.loc[ref_rep['Chromosome'] == c.chromosome]
+			ref_rep=ref_rep.loc[ref_rep['#Chromosome'] == c.chromosome]
 			cluster_ref=[]
 
 			for i in range(len(ref_rep['Start'])):
@@ -257,7 +257,7 @@ def Generate_Alignment_ToPlot(c):
 		elif ref_table is not None and hap2_table is None:
 
 			ref_rep=pd.read_csv(os.path.abspath(ref_table),sep='\t')
-			ref_rep=ref_rep.loc[ref_rep['Chromosome'] == c.chromosome]
+			ref_rep=ref_rep.loc[ref_rep['#Chromosome'] == c.chromosome]
 			cluster_ref=[]
 
 			for i in range(len(ref_rep['Start'])):
@@ -273,7 +273,7 @@ def Generate_Alignment_ToPlot(c):
 		elif ref_table is None and hap2_table is not None:
 
 			hap2_rep=pd.read_csv(os.path.abspath(hap2_table),sep='\t')
-			hap2_rep=hap2_rep.loc[hap2_rep['Chromosome'] == c.chromosome]
+			hap2_rep=hap2_rep.loc[hap2_rep['#Chromosome'] == c.chromosome]
 			cluster_hap2=[]
 
 			for i in range(len(hap2_rep['Start'])):
@@ -289,7 +289,7 @@ def Generate_Alignment_ToPlot(c):
 		elif ref_table is not None and hap2_table is not None:
 
 			ref_rep=pd.read_csv(os.path.abspath(ref_table),sep='\t')
-			ref_rep=ref_rep.loc[ref_rep['Chromosome'] == c.chromosome]
+			ref_rep=ref_rep.loc[ref_rep['#Chromosome'] == c.chromosome]
 			cluster_ref=[]
 
 			for i in range(len(ref_rep['Start'])):
@@ -300,7 +300,7 @@ def Generate_Alignment_ToPlot(c):
 					cluster_ref.append(cluster_dict)
 
 			hap2_rep=pd.read_csv(os.path.abspath(hap2_table),sep='\t')
-			hap2_rep=hap2_rep.loc[hap2_rep['Chromosome'] == c.chromosome]
+			hap2_rep=hap2_rep.loc[hap2_rep['#Chromosome'] == c.chromosome]
 			cluster_hap2=[]
 
 			for i in range(len(hap2_rep['Start'])):
@@ -363,7 +363,7 @@ def Generate_Alignment_ToPlot(c):
 		elif ref_table is not None and hap1_table is None:
 
 			ref_rep=pd.read_csv(os.path.abspath(ref_table),sep='\t')
-			ref_rep=ref_rep.loc[ref_rep['Chromosome'] == c.chromosome]
+			ref_rep=ref_rep.loc[ref_rep['#Chromosome'] == c.chromosome]
 			cluster_ref=[]
 
 			for i in range(len(ref_rep['Start'])):
@@ -379,7 +379,7 @@ def Generate_Alignment_ToPlot(c):
 		elif ref_table is None and hap1_table is not None:
 
 			hap1_rep=pd.read_csv(os.path.abspath(hap1_table),sep='\t')
-			hap1_rep=hap1_rep.loc[hap1_rep['Chromosome'] == c.chromosome]
+			hap1_rep=hap1_rep.loc[hap1_rep['#Chromosome'] == c.chromosome]
 			cluster_hap1=[]
 
 			for i in range(len(hap1_rep['Start'])):
@@ -395,7 +395,7 @@ def Generate_Alignment_ToPlot(c):
 		elif ref_table is not None and hap1_table is not None:
 
 			ref_rep=pd.read_csv(os.path.abspath(ref_table),sep='\t')
-			ref_rep=ref_rep.loc[ref_rep['Chromosome'] == c.chromosome]
+			ref_rep=ref_rep.loc[ref_rep['#Chromosome'] == c.chromosome]
 			cluster_ref=[]
 
 			for i in range(len(ref_rep['Start'])):
@@ -406,7 +406,7 @@ def Generate_Alignment_ToPlot(c):
 					cluster_ref.append(cluster_dict)
 
 			hap1_rep=pd.read_csv(os.path.abspath(hap1_table),sep='\t')
-			hap1_rep=hap1_rep.loc[hap1_rep['Chromosome'] == c.chromosome]
+			hap1_rep=hap1_rep.loc[hap1_rep['#Chromosome'] == c.chromosome]
 			cluster_hap1=[]
 
 			for i in range(len(hap1_rep['Start'])):
@@ -482,7 +482,7 @@ def Generate_Alignment_ToPlot(c):
 		elif ref_table is not None and hap1_table is None and hap2_table is None:
 
 			ref_rep=pd.read_csv(os.path.abspath(ref_table),sep='\t')
-			ref_rep=ref_rep.loc[ref_rep['Chromosome'] == c.chromosome]
+			ref_rep=ref_rep.loc[ref_rep['#Chromosome'] == c.chromosome]
 			cluster_ref=[]
 
 			for i in range(len(ref_rep['Start'])):
@@ -498,7 +498,7 @@ def Generate_Alignment_ToPlot(c):
 		elif ref_table is None and hap1_table is not None and hap2_table is None:
 
 			hap1_rep=pd.read_csv(os.path.abspath(hap1_table),sep='\t')
-			hap1_rep=hap1_rep.loc[hap1_rep['Chromosome'] == c.chromosome]
+			hap1_rep=hap1_rep.loc[hap1_rep['#Chromosome'] == c.chromosome]
 			cluster_hap1=[]
 
 			for i in range(len(hap1_rep['Start'])):
@@ -514,7 +514,7 @@ def Generate_Alignment_ToPlot(c):
 		elif ref_table is None and hap1_table is None and hap2_table is not None:
 
 			hap2_rep=pd.read_csv(os.path.abspath(hap2_table),sep='\t')
-			hap2_rep=hap2_rep.loc[hap2_rep['Chromosome'] == c.chromosome]
+			hap2_rep=hap2_rep.loc[hap2_rep['#Chromosome'] == c.chromosome]
 			cluster_hap2=[]
 
 			for i in range(len(hap2_rep['Start'])):
@@ -530,7 +530,7 @@ def Generate_Alignment_ToPlot(c):
 		elif ref_table is not None and hap1_table is not None and hap2_table is None:
 
 			ref_rep=pd.read_csv(os.path.abspath(ref_table),sep='\t')
-			ref_rep=ref_rep.loc[ref_rep['Chromosome'] == c.chromosome]
+			ref_rep=ref_rep.loc[ref_rep['#Chromosome'] == c.chromosome]
 			cluster_ref=[]
 
 			for i in range(len(ref_rep['Start'])):
@@ -541,7 +541,7 @@ def Generate_Alignment_ToPlot(c):
 					cluster_ref.append(cluster_dict)
 
 			hap1_rep=pd.read_csv(os.path.abspath(hap1_table),sep='\t')
-			hap1_rep=hap1_rep.loc[hap1_rep['Chromosome'] == c.chromosome]
+			hap1_rep=hap1_rep.loc[hap1_rep['#Chromosome'] == c.chromosome]
 			cluster_hap1=[]
 
 			for i in range(len(hap1_rep['Start'])):
@@ -557,7 +557,7 @@ def Generate_Alignment_ToPlot(c):
 		elif ref_table is not None and hap1_table is None and hap2_table is not None:
 
 			ref_rep=pd.read_csv(os.path.abspath(ref_table),sep='\t')
-			ref_rep=ref_rep.loc[ref_rep['Chromosome'] == c.chromosome]
+			ref_rep=ref_rep.loc[ref_rep['#Chromosome'] == c.chromosome]
 			cluster_ref=[]
 
 			for i in range(len(ref_rep['Start'])):
@@ -568,7 +568,7 @@ def Generate_Alignment_ToPlot(c):
 					cluster_ref.append(cluster_dict)
 
 			hap2_rep=pd.read_csv(os.path.abspath(hap2_table),sep='\t')
-			hap2_rep=hap2_rep.loc[hap2_rep['Chromosome'] == c.chromosome]
+			hap2_rep=hap2_rep.loc[hap2_rep['#Chromosome'] == c.chromosome]
 			cluster_hap2=[]
 
 			for i in range(len(hap2_rep['Start'])):
@@ -584,7 +584,7 @@ def Generate_Alignment_ToPlot(c):
 		elif ref_table is None and hap1_table is not None and hap2_table is not None:
 
 			hap1_rep=pd.read_csv(os.path.abspath(hap1_table),sep='\t')
-			hap1_rep=hap1_rep.loc[hap1_rep['Chromosome'] == c.chromosome]
+			hap1_rep=hap1_rep.loc[hap1_rep['#Chromosome'] == c.chromosome]
 			cluster_hap1=[]
 
 			for i in range(len(hap1_rep['Start'])):
@@ -595,7 +595,7 @@ def Generate_Alignment_ToPlot(c):
 					cluster_hap1.append(cluster_dict)
 
 			hap2_rep=pd.read_csv(os.path.abspath(hap2_table),sep='\t')
-			hap2_rep=hap2_rep.loc[hap2_rep['Chromosome'] == c.chromosome]
+			hap2_rep=hap2_rep.loc[hap2_rep['#Chromosome'] == c.chromosome]
 			cluster_hap2=[]
 
 			for i in range(len(hap2_rep['Start'])):
@@ -611,7 +611,7 @@ def Generate_Alignment_ToPlot(c):
 		else:
 
 			ref_rep=pd.read_csv(os.path.abspath(ref_table),sep='\t')
-			ref_rep=ref_rep.loc[ref_rep['Chromosome'] == c.chromosome]
+			ref_rep=ref_rep.loc[ref_rep['#Chromosome'] == c.chromosome]
 			cluster_ref=[]
 
 			for i in range(len(ref_rep['Start'])):
@@ -622,7 +622,7 @@ def Generate_Alignment_ToPlot(c):
 					cluster_ref.append(cluster_dict)
 
 			hap1_rep=pd.read_csv(os.path.abspath(hap1_table),sep='\t')
-			hap1_rep=hap1_rep.loc[hap1_rep['Chromosome'] == c.chromosome]
+			hap1_rep=hap1_rep.loc[hap1_rep['#Chromosome'] == c.chromosome]
 			cluster_hap1=[]
 
 			for i in range(len(hap1_rep['Start'])):
@@ -633,7 +633,7 @@ def Generate_Alignment_ToPlot(c):
 					cluster_hap1.append(cluster_dict)
 
 			hap2_rep=pd.read_csv(os.path.abspath(hap2_table),sep='\t')
-			hap2_rep=hap2_rep.loc[hap2_rep['Chromosome'] == c.chromosome]
+			hap2_rep=hap2_rep.loc[hap2_rep['#Chromosome'] == c.chromosome]
 			cluster_hap2=[]
 
 			for i in range(len(hap2_rep['Start'])):
