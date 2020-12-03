@@ -16,7 +16,9 @@ echo ""
 echo "Testing TRiCoLOR REFER"
 echo ""
 echo ""
-wget ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/GRCh38_reference_genome/GRCh38_full_analysis_set_plus_decoy_hla.fa
+while true;do
+wget -T 15 -c ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/GRCh38_reference_genome/GRCh38_full_analysis_set_plus_decoy_hla.fa && break
+done
 TRiCoLOR REFER -h
 TRiCoLOR REFER -g GRCh38_full_analysis_set_plus_decoy_hla.fa -bam test/son/sim.srt.bam -bed test/sensor_son/TRiCoLOR.srt.bed.gz -o test/refer_son -s 20 --samplename SON
 echo ""
