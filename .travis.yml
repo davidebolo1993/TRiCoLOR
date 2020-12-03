@@ -13,8 +13,9 @@ python:
 before_install:
   
   - sudo apt-get update -q
-  - sudo apt-get install -y -q wget build-essential g++ cmake libz-dev libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev libncurses5-dev bedtools
+  - sudo apt-get install -y -q wget build-essential g++ cmake libz-dev libcurl4-openssl-dev libssl-dev libbz2-dev liblzma-dev libncurses5-dev
   - sudo apt-get clean
+  - wget https://github.com/arq5x/bedtools2/releases/download/v2.29.1/bedtools-2.29.1.tar.gz && tar -zxvf bedtools-2.29.1.tar.gz && cd bedtools2 && make && sudo make install
   - ./configure
 
 install:
