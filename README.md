@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/davidebolo1993/TRiCoLOR.svg?branch=master)](https://travis-ci.com/davidebolo1993/TRiCoLOR)
+
 # TRiCoLOR
 
 ![alt text](TRiCoLOR.png)
