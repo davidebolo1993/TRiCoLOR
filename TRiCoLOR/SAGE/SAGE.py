@@ -10,7 +10,6 @@ import math
 import statistics
 import itertools
 import multiprocessing
-from shutil import which
 from collections import defaultdict
 from datetime import datetime,date
 
@@ -531,17 +530,13 @@ def Runner(sli,name,bam_s,c,processor,Slist):
 	'''
 	Run genotyping in parallel
 	'''
+	out1=os.path.abspath(c.OUT + '/' + name +'/haplotype1')
+	out2=os.path.abspath(c.OUT + '/' + name +'/haplotype2')
+	out=os.path.dirname(out1)
 
 	for s in sli:
 
 		chromosome,start,end,ref,alt,genchild,raed,aed,dp1,dp2,length=s
-
-		out1=os.path.abspath(c.OUT + '/' + name +'/haplotype1')
-		out2=os.path.abspath(c.OUT + '/' + name +'/haplotype2')
-		out=os.path.dirname(out1)
-
-		os.makedirs(out1)
-		os.makedirs(out2)
 
 		if type(bam_s) == str: #hp-tagged BAM
 
@@ -792,7 +787,6 @@ def run(parser, args):
 
 	else:
 
-		
 		if len(c.samplename[0]) != 2:
 
 			now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
@@ -845,6 +839,8 @@ def run(parser, args):
 
 	for name,bam_s in zip(c.names,c.BAM):
 
+		os.makedirs(os.path.abspath(c.OUT + '/' + name +'/haplotype1'))
+		os.makedirs(os.path.abspath(c.OUT + '/' + name +'/haplotype2'))
 		now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
 		print('[' + now + '][Message] Genotyping ' + name)
 
@@ -894,9 +890,6 @@ def run(parser, args):
 				toadd.append(Namesdict[names][i][10] + ':' + str(Namesdict[names][i][14])  + ':' + str(Namesdict[names][i][15]) + ':' + repr(Namesdict[names][i][11]))
 				seqs.append(names + ':' + Namesdict[names][i][12] + ',' + Namesdict[names][i][13])
 				missing += Namesdict[names][i][10].count('.')
-				os.rmdir(os.path.abspath(c.OUT + '/' + names + '/haplotype1'))
-				os.rmdir(os.path.abspath(c.OUT + '/' + names + '/haplotype2'))
-				os.rmdir(os.path.abspath(c.OUT + '/' + names ))
 
 			MISSR=missing/((len(c.names)+1)*2)
 			
@@ -911,6 +904,13 @@ def run(parser, args):
 			vcfout.write(CHROM + '\t' + POS + '\t' + ID + '\t' + REF + '\t' + ALT + '\t' + QUAL + '\t' + FILTER + '\t' + 'TREND='+END + ';TRLEN='+ LENGTH + ';RAED=' +RAED + ';AED=' + AED + ';MISSR=' + str(MISSR) + ';MENDEL=' + str(MENDEL) + '\t' + FORMAT + '\t' + GENCHILD + ':'+ DP1 + ':' + DP2 + ':' + str(QUALCHILD) + '\t' + '\t'.join(x for x in toadd) + '\n')
 
 	pysam.tabix_index(os.path.abspath(c.OUT + '/TRiCoLOR.srt.vcf'), preset='vcf')
+
+	#final clean-up
+	for names in c.names:
+
+		os.rmdir(os.path.abspath(c.OUT + '/' + names + '/haplotype1'))
+		os.rmdir(os.path.abspath(c.OUT + '/' + names + '/haplotype2'))
+		os.rmdir(os.path.abspath(c.OUT + '/' + names))
 
 	now=datetime.now().strftime('%d/%m/%Y %H:%M:%S')
 	print('[' + now + '][Message] Done')

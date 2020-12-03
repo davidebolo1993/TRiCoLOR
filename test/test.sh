@@ -27,7 +27,7 @@ echo "Testing TRiCoLOR ApP"
 echo ""
 echo ""
 TRiCoLOR ApP -h
-TRiCoLOR ApP -g GRCh38_full_analysis_set_plus_decoy_hla.fa -bam test/refer_son/haplotype1/TRiCoLOR.srt.bam refer_son/haplotype2/TRiCoLOR.srt.bam -o test/app_son -gb test/refer_son/reference/TRiCoLOR.srt.bed.gz -h1b test/refer_son/haplotype1/TRiCoLOR.srt.bed.gz -h2b test/refer_son/haplotype2/TRiCoLOR.srt.bed.gz chr20:17553795-17553825
+TRiCoLOR ApP -g GRCh38_full_analysis_set_plus_decoy_hla.fa -bam test/refer_son/haplotype1/TRiCoLOR.srt.bam test/refer_son/haplotype2/TRiCoLOR.srt.bam -o test/app_son -gb test/refer_son/reference/TRiCoLOR.srt.bed.gz -h1b test/refer_son/haplotype1/TRiCoLOR.srt.bed.gz -h2b test/refer_son/haplotype2/TRiCoLOR.srt.bed.gz chr20:17553795-17553825
 echo ""
 echo ""
 echo "Testing TRiCoLOR SAGE"
