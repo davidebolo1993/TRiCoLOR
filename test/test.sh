@@ -10,7 +10,7 @@ echo "Testing TRiCoLOR SENSoR"
 echo ""
 echo ""
 TRiCoLOR SENSoR -h
-TRiCoLOR SENSoR -bam test/son/sim.srt.bam -o sensor_son
+TRiCoLOR SENSoR -bam test/son/sim.srt.bam -o test/sensor_son
 echo ""
 echo ""
 echo "Testing TRiCoLOR REFER"
