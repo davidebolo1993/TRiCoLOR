@@ -443,7 +443,7 @@ def Bamfile_Analyzer_Single(bamfilein,chromosome,start,end,c,out,processor):
 
 	else:
 
-		cov1=len(sequences)
+		cov1=len(sequences1)
 
 
 	#hap2
@@ -484,7 +484,7 @@ def Bamfile_Analyzer_Single(bamfilein,chromosome,start,end,c,out,processor):
 
 	else:
 
-		cov2=len(sequences)
+		cov2=len(sequences2)
 
 
 	return cov1,cov2
